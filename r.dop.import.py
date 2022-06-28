@@ -2,7 +2,7 @@
 #
 ############################################################################
 #
-# MODULE:      r.get.dop
+# MODULE:      r.dop.import
 # AUTHOR(S):   Johannes Halbauer
 #
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
@@ -215,7 +215,7 @@ def main():
     else:
         grass.fatal(
             _(
-                "Sorry, area of interest is not located in North Rhine-Westphalia. Digital orthophots can not be downloaded for other federal states yet."
+                "Sorry, area of interest is not located in North Rhine-Westphalia. Digital orthophotos can not be downloaded for other federal states yet."
             )
         )
 
