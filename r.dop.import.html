@@ -1,0 +1,61 @@
+<h2>DESCRIPTION</h2>
+
+<em>r.dop.import</em> downloads digital orthophotos (DOPs) and imports them into GRASS.
+The output will be four raster maps: &ltoutput&gt_red, &ltoutput&gt_green, &ltoutput&gt_blue, &ltoutput&gt_nir, 
+while each raster map displays one virtual raster, combining all DOP-tiles, and &ltoutput&gt is given by <b>output</b> option.
+Note, that the value range is modified from [0 255] to [1 256].
+To download the data, the federal_state(s) of the area of interest has to be given.
+Either given in a text file, comma-separated for multiple federal_states (<b>filepath</b> option).
+Or given directly as input, comma-separated for multiple federal_states (<b>federal_state</b> option).
+By default the data are imported for the current region. With the option <b>aoi_map</b>, some vector map in GRASS, the data are imported only for the given AOI.
+The resolution is set by default to the resolution of the region. With the <b>-r</b> flag the original available resolution of the DOPs is used.
+
+
+Implemented federal state options are:
+<ul>
+    <li>Nordrhein-Westfalen (if only a part of aoi_map or region is located in Nordrhein-Westfalen, the DOPs of this part are imported). Native resolution: 0.1m </li>
+</ul>
+
+<h2>EXAMPLE</h2>
+
+<h3>Load DOPs for region with federal state information given by <b>federal_state</b> option</h3>
+<div class="code"><pre>
+r.dop.import output=dops federal_state=Nordrhein-Westfalen
+</pre></div>
+
+<h3>Load DOPs for region with federal state information given by <b>filepath</b> option</h3>
+
+<div class="code"><pre>
+v.check.bundesland input=polygon_aoi filepath=federal_state.txt
+r.dop.import output=dops filepath=federal_state.txt
+</pre></div>
+
+With file content of <tt>federal_state.txt</tt>:
+
+<div class="code"><pre>
+Berlin,Brandenburg
+</pre>
+
+<h3>Load DOPs for AOI given by <tt>aoi_map_example</tt></h3>
+
+<div class="code"><pre>
+r.dop.import output=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example
+</pre></div>
+
+<h3>Load DOPs for AOI given by <tt>aoi_map_example</tt> and with original DOPs resolution</h3>
+
+<div class="code"><pre>
+r.dop.import output=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example -r
+</pre></div>
+
+<h2>SEE ALSO</h2>
+
+<em>
+<a href="r.buildvrt">r.buildvrt</a>,
+<a href="r.import">r.import</a>,
+<a href="v.check.bundesland.html">v.check.bundesland</a>
+</em>
+
+<h2>AUTHORS</h2>
+
+Johannes Halbauer and Lina Krisztian, <a href="https://www.mundialis.de/">mundialis</a>
