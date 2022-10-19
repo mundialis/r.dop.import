@@ -237,9 +237,12 @@ def main():
             # import DOP tile with original resolution
             kwargs = {"extent": "region"}
             print(f"Started raster import for key: {key} and URL: {URL_tile}")
+            # set memory manually to 1000
+            # Process stuck, when memory is too large (100000)
             grass.run_command("r.import",
                               input=URL_tile[0],
                               output=raster_name,
+                              memory=1000,
                               quiet=True,
                               **kwargs)
             # adjust resolution if required
