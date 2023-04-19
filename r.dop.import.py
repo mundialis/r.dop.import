@@ -69,11 +69,15 @@ import os
 import shutil
 import grass.script as grass
 import sys
-sys.path.insert(1, os.path.join(
-    os.path.dirname(sys.path[0]),
-    'etc',
-    'r.dop.import',
-))
+
+sys.path.insert(
+    1,
+    os.path.join(
+        os.path.dirname(sys.path[0]),
+        "etc",
+        "r.dop.import",
+    ),
+)
 from download_urls import URLS
 from federal_states import FS
 
@@ -99,36 +103,27 @@ def cleanup():
     kwargs = {"flags": "f", "quiet": True, "stderr": nuldev}
     for rmvec in rm_vec:
         if grass.find_file(name=rmvec, element="vector")["file"]:
-            grass.run_command("g.remove",
-                              type="vector",
-                              name=rmvec,
-                              **kwargs)
+            grass.run_command("g.remove", type="vector", name=rmvec, **kwargs)
     for rmrast in rm_rast:
         if grass.find_file(name=rmrast, element="raster")["file"]:
-            grass.run_command("g.remove",
-                              type="raster",
-                              name=rmrast,
-                              **kwargs)
+            grass.run_command("g.remove", type="raster", name=rmrast, **kwargs)
     for rmgroup in rm_group:
         if grass.find_file(name=rmgroup, element="group")["file"]:
-            grass.run_command("g.remove",
-                              type="group",
-                              name=rmgroup,
-                              **kwargs)
+            grass.run_command("g.remove", type="group", name=rmgroup, **kwargs)
     if temp_region:
         # set region back and delete saved region:
         grass.run_command("g.region", region=temp_region)
-        grass.run_command("g.remove",
-                          type='region',
-                          name=temp_region,
-                          flags='f',
-                          quiet=True)
+        grass.run_command(
+            "g.remove", type="region", name=temp_region, flags="f", quiet=True
+        )
     if temp_region_2:
-        grass.run_command("g.remove",
-                          type='region',
-                          name=temp_region_2,
-                          flags='f',
-                          quiet=True)
+        grass.run_command(
+            "g.remove",
+            type="region",
+            name=temp_region_2,
+            flags="f",
+            quiet=True,
+        )
     # remove temp location
     if TMPLOC:
         grass.try_rmdir(os.path.join(GISDBASE, TMPLOC))
@@ -179,7 +174,9 @@ def createTMPlocation(epsg=4326):
         epsg_arg = {"srid": "EPSG:{}".format(epsg)}
     # create temp location from input without import
     grass.verbose(_("Creating temporary location with EPSG:%d...") % epsg)
-    grass.run_command("g.proj", flags="c", location=TMPLOC, quiet=True, **epsg_arg)
+    grass.run_command(
+        "g.proj", flags="c", location=TMPLOC, quiet=True, **epsg_arg
+    )
 
     # switch to temp location
     os.environ["GISRC"] = str(SRCGISRC)
@@ -274,7 +271,7 @@ def create_grid(tile_size, grid_prefix, area):
         if grass.find_file(name=rmv, element="vector")["file"]:
             grass.run_command("g.remove", type="vector", name=rmv, **kwargs)
 
-    return tiles_list #, number_tiles
+    return tiles_list  # , number_tiles
 
 
 def get_tindex(tileindex):
@@ -296,12 +293,12 @@ def get_tindex(tileindex):
     os.system(f"gunzip {download_path}")
 
     # import vector map containing URL for each tile
-    vm_import = f'vm_import_{pid}'
+    vm_import = f"vm_import_{pid}"
     grass.run_command(
         "v.import",
         input=unzipped_path,
         output=vm_import,
-        extent='region',
+        extent="region",
         overwrite=True,
         quiet=True,
     )
@@ -376,20 +373,18 @@ def main():
     #    DOP download links via the UTM-coordinates
 
     # vector maps
-    vm_clip = f'vm_clip_{pid}'
+    vm_clip = f"vm_clip_{pid}"
 
     # read federal state(s) from input options
-    if options['filepath']:
+    if options["filepath"]:
         with open(f'{options["filepath"]}') as f:
             federal_states = f.read()
     else:
-        federal_states = options['federal_state']
+        federal_states = options["federal_state"]
 
     # save current region for setting back later in cleanup
-    temp_region = f'temp_region_{pid}'
-    grass.run_command(
-        "g.region", save=temp_region, overwrite=True, quiet=True
-    )
+    temp_region = f"temp_region_{pid}"
+    grass.run_command("g.region", save=temp_region, overwrite=True, quiet=True)
 
     # create list for each raster band for building entire raster
     # of all given federal states
@@ -421,15 +416,25 @@ def main():
             else:
                 tileindex = URLS[federal_state]
                 if tileindex == None:
-                    grass.warning(_(f"{federal_state} is not yet implemented."))
+                    grass.warning(
+                        _(f"{federal_state} is not yet implemented.")
+                    )
 
         else:
-            if options['filepath']:
-                grass.fatal(_("Non valid name of federal state,"
-                              " in 'filepath'-option given"))
-            elif options['federal_state']:
-                grass.fatal(_("Non valid name of federal state,"
-                              " in 'federal_states'-option given"))
+            if options["filepath"]:
+                grass.fatal(
+                    _(
+                        "Non valid name of federal state,"
+                        " in 'filepath'-option given"
+                    )
+                )
+            elif options["federal_state"]:
+                grass.fatal(
+                    _(
+                        "Non valid name of federal state,"
+                        " in 'federal_states'-option given"
+                    )
+                )
 
         if tileindex:
             # if aoi_map given: set region to aoi_map extens
@@ -440,7 +445,7 @@ def main():
                     "g.region",
                     vector=aoi_map,
                     res=0.2,
-                    flags='a',
+                    flags="a",
                     quiet=True,
                 )
 
@@ -454,7 +459,7 @@ def main():
                     input=vm_import,
                     clip=aoi_map,
                     output=vm_clip,
-                    flags='d',
+                    flags="d",
                     overwrite=True,
                     quiet=True,
                 )
@@ -465,21 +470,24 @@ def main():
 
             # import tiles and rename them according to their band
             # and write them in a list
-            tiles = grass.vector_db_select(
-                vm_clip,
-                columns="location"
-            )["values"].items()
+            tiles = grass.vector_db_select(vm_clip, columns="location")[
+                "values"
+            ].items()
 
             # safe current region
             if not flags["r"]:
-                temp_region_2 = f'temp_region_2_{pid}'
-                grass.run_command("g.region", save=temp_region_2, overwrite=True, quiet=True)
+                temp_region_2 = f"temp_region_2_{pid}"
+                grass.run_command(
+                    "g.region", save=temp_region_2, overwrite=True, quiet=True
+                )
 
                 reg = grass.region()
-                if reg['nsres'] == reg['ewres']:
-                    res = float(reg['nsres'])
+                if reg["nsres"] == reg["ewres"]:
+                    res = float(reg["nsres"])
                 else:
-                    grass.fatal("N/S resolution is not the same as E/W resolution!")
+                    grass.fatal(
+                        "N/S resolution is not the same as E/W resolution!"
+                    )
 
             num_imp = len(tiles)
             num = 0
@@ -490,7 +498,9 @@ def main():
                     f"_pid{pid}"
                 )
                 # import DOP tile with original resolution
-                grass.message(f"Started raster import {num}/{num_imp} from URL: {URL_tile[0]}")
+                grass.message(
+                    f"Started raster import {num}/{num_imp} from URL: {URL_tile[0]}"
+                )
                 # set memory manually to 1000
                 # Process stuck, when memory is too large (100000)
                 if federal_state == "Brandenburg":
@@ -506,28 +516,34 @@ def main():
                         raster=f"{raster_name}.1",
                         quiet=True,
                     )
-                    grass.run_command("g.region",
-                                      res=res,
-                                      flags="a",
-                                      quiet=True)
+                    grass.run_command(
+                        "g.region", res=res, flags="a", quiet=True
+                    )
 
-                    res_rast = float(grass.parse_command("r.info",
-                                                        map=f"{raster_name}.1",
-                                                        flags='g')['nsres'])
-                    res_region = float(grass.parse_command("g.region",
-                                                        flags='g')['nsres'])
+                    res_rast = float(
+                        grass.parse_command(
+                            "r.info", map=f"{raster_name}.1", flags="g"
+                        )["nsres"]
+                    )
+                    res_region = float(
+                        grass.parse_command("g.region", flags="g")["nsres"]
+                    )
                     if res_rast > res_region:
                         for band in range(1, 5):
-                            grass.run_command("r.resamp.interp",
-                                            input=f"{raster_name}.{band}",
-                                            output=f"{raster_name}.{band}",
-                                            overwrite=True)
+                            grass.run_command(
+                                "r.resamp.interp",
+                                input=f"{raster_name}.{band}",
+                                output=f"{raster_name}.{band}",
+                                overwrite=True,
+                            )
                     elif res_rast < res_region:
                         for band in range(1, 5):
-                            grass.run_command("r.resamp.stats",
-                                            input=f"{raster_name}.{band}",
-                                            output=f"{raster_name}.{band}",
-                                            overwrite=True)
+                            grass.run_command(
+                                "r.resamp.stats",
+                                input=f"{raster_name}.{band}",
+                                output=f"{raster_name}.{band}",
+                                overwrite=True,
+                            )
                 # when importing DOPs a 'group' element
                 # named 'raster_name' is created which should be removed
                 # (in most cases already deleted in temp-location of
@@ -541,35 +557,43 @@ def main():
                 grass.run_command("g.region", region=temp_region_2)
 
                 rastername_red = f"{raster_name}_red"
-                grass.run_command("g.rename",
-                                raster=f"{raster_name}.1,{rastername_red}",
-                                quiet=True)
+                grass.run_command(
+                    "g.rename",
+                    raster=f"{raster_name}.1,{rastername_red}",
+                    quiet=True,
+                )
                 raster_red.append(rastername_red)
 
                 rastername_green = f"{raster_name}_green"
-                grass.run_command("g.rename",
-                                raster=f"{raster_name}.2,{rastername_green}",
-                                quiet=True)
+                grass.run_command(
+                    "g.rename",
+                    raster=f"{raster_name}.2,{rastername_green}",
+                    quiet=True,
+                )
                 raster_green.append(rastername_green)
 
                 rastername_blue = f"{raster_name}_blue"
-                grass.run_command("g.rename",
-                                raster=f"{raster_name}.3,{rastername_blue}",
-                                quiet=True)
+                grass.run_command(
+                    "g.rename",
+                    raster=f"{raster_name}.3,{rastername_blue}",
+                    quiet=True,
+                )
                 raster_blue.append(rastername_blue)
 
                 rastername_NIR = f"{raster_name}_NIR"
-                grass.run_command("g.rename",
-                                raster=f"{raster_name}.4,{rastername_NIR}",
-                                quiet=True)
+                grass.run_command(
+                    "g.rename",
+                    raster=f"{raster_name}.4,{rastername_NIR}",
+                    quiet=True,
+                )
                 raster_NIR.append(rastername_NIR)
 
             grass.run_command("g.region", region=temp_region_2)
 
-            rm_rast += raster_red+raster_green+raster_blue+raster_NIR
+            rm_rast += raster_red + raster_green + raster_blue + raster_NIR
 
         else:
-            temp_region_2 = f'temp_region_HE_{pid}'
+            temp_region_2 = f"temp_region_HE_{pid}"
             # save current region first
             grass.run_command("g.region", save=temp_region_2)
 
@@ -580,54 +604,77 @@ def main():
                 # get rgb and cir DOPs through HE WMS
                 wms_HE = "https://www.gds-srv.hessen.de/cgi-bin/lika-services/ogc-free-images.ows?language=ger&"
                 # get CIR DOP
-                grass.run_command("r.in.wms",
-                                  url=wms_HE, layer="he_dop20_cir",
-                                  output=f"cir_{tile}", format="tiff", flags="b", overwrite=True)
+                grass.run_command(
+                    "r.in.wms",
+                    url=wms_HE,
+                    layer="he_dop20_cir",
+                    output=f"cir_{tile}",
+                    format="tiff",
+                    flags="b",
+                    overwrite=True,
+                )
                 # rename NIR band (called red, but its actually NIR in this case)
-                grass.run_command("g.rename",
-                                  raster=f"cir_{tile}.red,{tile}.nir", overwrite=True,
-                                  quiet=True)
+                grass.run_command(
+                    "g.rename",
+                    raster=f"cir_{tile}.red,{tile}.nir",
+                    overwrite=True,
+                    quiet=True,
+                )
                 # drop rest of CIR DOP
-                grass.run_command("g.remove",
-                                  type="raster", pattern="cir_*",
-                                  flags="f")
+                grass.run_command(
+                    "g.remove", type="raster", pattern="cir_*", flags="f"
+                )
                 # get RGB DOP
-                grass.run_command("r.in.wms",
-                                  url=wms_HE, layer="he_dop20_rgb",
-                                  output=tile, format="tiff", flags="b", overwrite=True)
+                grass.run_command(
+                    "r.in.wms",
+                    url=wms_HE,
+                    layer="he_dop20_rgb",
+                    output=tile,
+                    format="tiff",
+                    flags="b",
+                    overwrite=True,
+                )
 
-                rm_group.append(f'cir_{tile}')
+                rm_group.append(f"cir_{tile}")
                 rm_group.append(tile)
 
                 grass.message("Finished raster import")
 
                 rastername_red = f"{tile}_red"
-                grass.run_command("g.rename",
-                                raster=f"{tile}.red,{rastername_red}",
-                                quiet=True)
+                grass.run_command(
+                    "g.rename",
+                    raster=f"{tile}.red,{rastername_red}",
+                    quiet=True,
+                )
                 raster_red.append(rastername_red)
 
                 rastername_green = f"{tile}_green"
-                grass.run_command("g.rename",
-                                raster=f"{tile}.green,{rastername_green}",
-                                quiet=True)
+                grass.run_command(
+                    "g.rename",
+                    raster=f"{tile}.green,{rastername_green}",
+                    quiet=True,
+                )
                 raster_green.append(rastername_green)
 
                 rastername_blue = f"{tile}_blue"
-                grass.run_command("g.rename",
-                                raster=f"{tile}.blue,{rastername_blue}",
-                                quiet=True)
+                grass.run_command(
+                    "g.rename",
+                    raster=f"{tile}.blue,{rastername_blue}",
+                    quiet=True,
+                )
                 raster_blue.append(rastername_blue)
 
                 rastername_NIR = f"{tile}_NIR"
-                grass.run_command("g.rename",
-                                raster=f"{tile}.nir,{rastername_NIR}",
-                                quiet=True)
+                grass.run_command(
+                    "g.rename",
+                    raster=f"{tile}.nir,{rastername_NIR}",
+                    quiet=True,
+                )
                 raster_NIR.append(rastername_NIR)
 
             grass.run_command("g.region", region=temp_region_2)
 
-            rm_rast += raster_red+raster_green+raster_blue+raster_NIR
+            rm_rast += raster_red + raster_green + raster_blue + raster_NIR
 
         if federal_state in URLS:
             # if multiple tiles, build one raster out of all tiles for each band
@@ -642,57 +689,97 @@ def main():
             if tileindex:
                 if len(tiles) > 1:
                     grass.run_command(
-                        "r.buildvrt", input=raster_red, output=output_R, quiet=True
+                        "r.buildvrt",
+                        input=raster_red,
+                        output=output_R,
+                        quiet=True,
                     )
                     grass.run_command(
-                        "r.buildvrt", input=raster_green, output=output_G, quiet=True
+                        "r.buildvrt",
+                        input=raster_green,
+                        output=output_G,
+                        quiet=True,
                     )
                     grass.run_command(
-                        "r.buildvrt", input=raster_blue, output=output_B, quiet=True
+                        "r.buildvrt",
+                        input=raster_blue,
+                        output=output_B,
+                        quiet=True,
                     )
                     grass.run_command(
-                        "r.buildvrt", input=raster_NIR, output=output_NIR, quiet=True
+                        "r.buildvrt",
+                        input=raster_NIR,
+                        output=output_NIR,
+                        quiet=True,
                     )
                 else:
-                    grass.run_command("g.rename",
-                                    raster=f"{raster_red[0]},{output_R}",
-                                    quiet=True)
-                    grass.run_command("g.rename",
-                                    raster=f"{raster_green[0]},{output_G}",
-                                    quiet=True)
-                    grass.run_command("g.rename",
-                                    raster=f"{raster_blue[0]},{output_B}",
-                                    quiet=True)
-                    grass.run_command("g.rename",
-                                    raster=f"{raster_NIR[0]},{output_NIR}",
-                                    quiet=True)
+                    grass.run_command(
+                        "g.rename",
+                        raster=f"{raster_red[0]},{output_R}",
+                        quiet=True,
+                    )
+                    grass.run_command(
+                        "g.rename",
+                        raster=f"{raster_green[0]},{output_G}",
+                        quiet=True,
+                    )
+                    grass.run_command(
+                        "g.rename",
+                        raster=f"{raster_blue[0]},{output_B}",
+                        quiet=True,
+                    )
+                    grass.run_command(
+                        "g.rename",
+                        raster=f"{raster_NIR[0]},{output_NIR}",
+                        quiet=True,
+                    )
             elif federal_state == "Hessen":
                 if len(tiles_list) > 1:
                     grass.run_command(
-                        "r.buildvrt", input=raster_red, output=output_R, quiet=True
+                        "r.buildvrt",
+                        input=raster_red,
+                        output=output_R,
+                        quiet=True,
                     )
                     grass.run_command(
-                        "r.buildvrt", input=raster_green, output=output_G, quiet=True
+                        "r.buildvrt",
+                        input=raster_green,
+                        output=output_G,
+                        quiet=True,
                     )
                     grass.run_command(
-                        "r.buildvrt", input=raster_blue, output=output_B, quiet=True
+                        "r.buildvrt",
+                        input=raster_blue,
+                        output=output_B,
+                        quiet=True,
                     )
                     grass.run_command(
-                        "r.buildvrt", input=raster_NIR, output=output_NIR, quiet=True
+                        "r.buildvrt",
+                        input=raster_NIR,
+                        output=output_NIR,
+                        quiet=True,
                     )
                 else:
-                    grass.run_command("g.rename",
-                                    raster=f"{raster_red[0]},{output_R}",
-                                    quiet=True)
-                    grass.run_command("g.rename",
-                                    raster=f"{raster_green[0]},{output_G}",
-                                    quiet=True)
-                    grass.run_command("g.rename",
-                                    raster=f"{raster_blue[0]},{output_B}",
-                                    quiet=True)
-                    grass.run_command("g.rename",
-                                    raster=f"{raster_NIR[0]},{output_NIR}",
-                                    quiet=True)
+                    grass.run_command(
+                        "g.rename",
+                        raster=f"{raster_red[0]},{output_R}",
+                        quiet=True,
+                    )
+                    grass.run_command(
+                        "g.rename",
+                        raster=f"{raster_green[0]},{output_G}",
+                        quiet=True,
+                    )
+                    grass.run_command(
+                        "g.rename",
+                        raster=f"{raster_blue[0]},{output_B}",
+                        quiet=True,
+                    )
+                    grass.run_command(
+                        "g.rename",
+                        raster=f"{raster_NIR[0]},{output_NIR}",
+                        quiet=True,
+                    )
 
             # build raster for all given federal state(s) if there are >1 given
             if "," in federal_states:
@@ -726,31 +813,35 @@ def main():
     output_NIRp1 = f'{options["output"]}_nir'
     grass.run_command(
         "r.mapcalc",
-        expression=f'{output_Rp1} = {output_R} + 1',
+        expression=f"{output_Rp1} = {output_R} + 1",
         quiet=True,
-        region='intersect'
+        region="intersect",
     )
     grass.run_command(
         "r.mapcalc",
-        expression=f'{output_Gp1} = {output_G} + 1',
+        expression=f"{output_Gp1} = {output_G} + 1",
         quiet=True,
-        region='intersect'
+        region="intersect",
     )
     grass.run_command(
         "r.mapcalc",
-        expression=f'{output_Bp1} = {output_B} + 1',
+        expression=f"{output_Bp1} = {output_B} + 1",
         quiet=True,
-        region='intersect'
+        region="intersect",
     )
     grass.run_command(
         "r.mapcalc",
-        expression=f'{output_NIRp1} = {output_NIR} + 1',
+        expression=f"{output_NIRp1} = {output_NIR} + 1",
         quiet=True,
-        region='intersect'
+        region="intersect",
     )
-    grass.message(_("Generated following raster maps:"
-                    f"{output_Rp1}, {output_Gp1}, "
-                    f"{output_Bp1}, {output_NIRp1}"))
+    grass.message(
+        _(
+            "Generated following raster maps:"
+            f"{output_Rp1}, {output_Gp1}, "
+            f"{output_Bp1}, {output_NIRp1}"
+        )
+    )
 
     if tileindex or aoi_map:
         grass.run_command("g.region", region=temp_region)
