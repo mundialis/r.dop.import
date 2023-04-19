@@ -1,8 +1,10 @@
 URLS = {
     "Brandenburg":
-        None,
+        "https://github.com/mundialis/tile-indices/raw/main/brandenburg/"
+        "geoportalBB_DOP20_tileindex.gpkg.gz",
     "Berlin":
-        None,
+        "https://github.com/mundialis/tile-indices/raw/main/brandenburg/"
+        "geoportalBB_DOP20_tileindex.gpkg.gz",
     "Baden-Württemberg":
         None,
     "Bayern":
