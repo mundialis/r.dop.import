@@ -308,7 +308,7 @@ def get_tindex(tileindex):
 
 def import_and_reproject(url, raster_name, epsg=None):
     """Import DOPs and reprojects them if needed. This is needed for the DOPs
-    of Brandenburg because GDAL (at least smaller 3.6.3) does not support the
+    of Brandenburg and Berlin because GDAL (at least smaller 3.6.3) does not support the
     coordinate reference system in the data.
 
     Args:
@@ -503,7 +503,7 @@ def main():
                 )
                 # set memory manually to 1000
                 # Process stuck, when memory is too large (100000)
-                if federal_state == "Brandenburg":
+                if federal_state in ["Brandenburg", "Berlin"]:
                     import_and_reproject(URL_tile[0], raster_name, epsg=25833)
                 else:
                     import_and_reproject(URL_tile[0], raster_name)
