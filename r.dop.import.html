@@ -1,7 +1,7 @@
 <h2>DESCRIPTION</h2>
 
 <em>r.dop.import</em> downloads digital orthophotos (DOPs) and imports them into GRASS.
-The output will be four raster maps: &ltoutput&gt_red, &ltoutput&gt_green, &ltoutput&gt_blue, &ltoutput&gt_nir, 
+The output will be four raster maps: &ltoutput&gt_red, &ltoutput&gt_green, &ltoutput&gt_blue, &ltoutput&gt_nir,
 while each raster map displays one virtual raster, combining all DOP-tiles, and &ltoutput&gt is given by <b>output</b> option.
 Note, that the value range is modified from [0 255] to [1 256].
 To download the data, the federal_state(s) of the area of interest has to be given.
@@ -49,7 +49,6 @@ r.dop.import output=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_examp
 </pre></div>
 
 <h2>SEE ALSO</h2>
-
 <em>
 <a href="r.buildvrt">r.buildvrt</a>,
 <a href="r.import">r.import</a>,
@@ -57,5 +56,4 @@ r.dop.import output=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_examp
 </em>
 
 <h2>AUTHORS</h2>
-
-Johannes Halbauer and Lina Krisztian, <a href="https://www.mundialis.de/">mundialis</a>
+Johannes Halbauer, Lina Krisztian and Anika Weinmann <a href="https://www.mundialis.de/">mundialis GmbH & Co. KG</a>
