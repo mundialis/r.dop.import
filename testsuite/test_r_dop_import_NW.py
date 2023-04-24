@@ -168,6 +168,8 @@ class TestRDopImport(TestCase):
         # switch location
         if cls.TGTGISRC:
             os.environ["GISRC"] = str(cls.TGTGISRC)
+        # remove test location
+        cls.delete_tmp_location()
 
     def tearDown(self):
         """Remove the outputs created

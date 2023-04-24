@@ -50,8 +50,18 @@
 # % key: federal_state
 # % multiple: yes
 # % required: no
-# % description: Federal state to load DOPs for
+# % description: Federal state to load DOPs for (no alternative to aoi_map; parameter is required/used for getting download-URL only)
 # % options: Brandenburg,Berlin,Baden-Württemberg,Bayern,Bremen,Hessen,Hamburg,Mecklenburg-Vorpommern,Niedersachsen,Nordrhein-Westfalen,Rheinland-Pfalz,Schleswig-Holstein,Saarland,Sachsen,Sachsen-Anhalt
+# %end
+
+# %option
+# % key: nprocs
+# % type: integer
+# % required: no
+# % multiple: no
+# % label: Number of parallel processes
+# % description: Number of cores for multiprocessing, -2 is the number of available cores - 1
+# % answer: -2
 # %end
 
 # %flag
@@ -64,12 +74,13 @@
 # % excludes: filepath, federal_state
 # %end
 
-
 import atexit
 import wget
 import os
 import shutil
+import multiprocessing as mp
 import grass.script as grass
+from grass.pygrass.modules import Module, ParallelModuleQueue
 import sys
 
 sys.path.insert(
@@ -81,6 +92,7 @@ sys.path.insert(
     ),
 )
 from download_urls import URLS
+from download_urls import WMS_HE
 from federal_states import FS
 
 tmp_dir = None
@@ -88,11 +100,12 @@ resolution_to_import = None
 rm_vec = []
 rm_rast = []
 rm_group = []
-temp_region = None
+orig_region = None
 TMPLOC = None
 SRCGISRC = None
 TGTGISRC = None
 GISDBASE = None
+mapset_names = []
 
 
 def cleanup():
@@ -111,17 +124,45 @@ def cleanup():
     for rmgroup in rm_group:
         if grass.find_file(name=rmgroup, element="group")["file"]:
             grass.run_command("g.remove", type="group", name=rmgroup, **kwargs)
-    if temp_region:
+    if orig_region:
         # set region back and delete saved region:
-        grass.run_command("g.region", region=temp_region)
+        grass.run_command("g.region", region=orig_region)
         grass.run_command(
-            "g.remove", type="region", name=temp_region, flags="f", quiet=True
+            "g.remove", type="region", name=orig_region, flags="f", quiet=True
         )
     # remove temp location
     if TMPLOC:
         grass.try_rmdir(os.path.join(GISDBASE, TMPLOC))
     if SRCGISRC:
         grass.try_remove(SRCGISRC)
+    for rm_mapset in mapset_names:
+        gisenv = grass.gisenv()
+        mapset_path = os.path.join(
+            gisenv["GISDBASE"], gisenv["LOCATION_NAME"], rm_mapset
+        )
+        grass.try_rmdir(mapset_path)
+
+
+def setup_parallel_processing(nprocs):
+    if nprocs == -2:
+        nprocs = mp.cpu_count() - 1 if mp.cpu_count() > 1 else 1
+    else:
+        # Test nprocs settings
+        nprocs_real = mp.cpu_count()
+        if nprocs > nprocs_real:
+            grass.warning(
+                "Using %d parallel processes but only %d CPUs available."
+                % (nprocs, nprocs_real)
+            )
+
+    # set some common environmental variables, like:
+    os.environ.update(
+        dict(
+            GRASS_COMPRESSOR="LZ4",
+            GRASS_MESSAGE_FORMAT="plain",
+        )
+    )
+    return nprocs
 
 
 def reset_region(region):
@@ -136,50 +177,6 @@ def reset_region(region):
         if grass.find_file(name=region, element="windows")["file"]:
             grass.run_command("g.region", region=region)
             grass.run_command("g.remove", type="region", name=region, **kwargs)
-
-
-def get_actual_location():
-    global TGTGISRC, GISDBASE
-    # get actual location, mapset, ...
-    grassenv = grass.gisenv()
-    tgtloc = grassenv["LOCATION_NAME"]
-    tgtmapset = grassenv["MAPSET"]
-    GISDBASE = grassenv["GISDBASE"]
-    TGTGISRC = os.environ["GISRC"]
-    return tgtloc, tgtmapset
-
-
-def createTMPlocation(epsg=4326):
-    global TMPLOC, SRCGISRC
-    SRCGISRC = grass.tempfile()
-    TMPLOC = f"temp_import_location_{grass.tempname(8)}"
-    f = open(SRCGISRC, "w")
-    f.write("MAPSET: PERMANENT\n")
-    f.write("GISDBASE: %s\n" % GISDBASE)
-    f.write("LOCATION_NAME: %s\n" % TMPLOC)
-    f.write("GUI: text\n")
-    f.close()
-
-    proj_test = grass.parse_command("g.proj", flags="g")
-    if "epsg" in proj_test:
-        epsg_arg = {"epsg": epsg}
-    else:
-        epsg_arg = {"srid": "EPSG:{}".format(epsg)}
-    # create temp location from input without import
-    grass.verbose(_("Creating temporary location with EPSG:%d...") % epsg)
-    grass.run_command(
-        "g.proj", flags="c", location=TMPLOC, quiet=True, **epsg_arg
-    )
-
-    # switch to temp location
-    os.environ["GISRC"] = str(SRCGISRC)
-    proj = grass.parse_command("g.proj", flags="g")
-    if "epsg" in proj:
-        new_epsg = proj["epsg"]
-    else:
-        new_epsg = proj["srid"].split("EPSG:")[1]
-    if new_epsg != str(epsg):
-        grass.fatal(_("Creation of temporary location failed!"))
 
 
 def create_grid(tile_size, grid_prefix, area):
@@ -302,82 +299,6 @@ def get_tindex(tileindex):
     )
     rm_vec.append(vm_import)
     return vm_import
-
-
-def import_and_reproject(url, raster_name, aoi_map=None, epsg=None):
-    """Import DOPs and reprojects them if needed. This is needed for the DOPs
-    of Brandenburg and Berlin because GDAL (at least smaller 3.6.3) does not
-    support the coordinate reference system in the data.
-
-    Args:
-        url (str): The URL of the DOP to import
-        raster_name (str): The prefix name for the output rasters
-        aoi_map (str): Name of AOI vector map
-        epsg (int): EPSG code which has to be set if the reproduction should be
-                    done manually and not by r.import
-    """
-    import_flags = ""
-    if epsg is not None:
-        if not aoi_map:
-            aoi_map = f"region_aoi_{grass.tempname(8)}"
-            grass.run_command("v.in.region", output=aoi_map, quiet=True)
-        # get actual location, mapset, ...
-        tgtloc, tgtmapset = get_actual_location()
-        # create temporary location with epsg:4326
-        createTMPlocation(epsg)
-        import_flags = "o"
-        # reproject aoi
-        if aoi_map:
-            grass.run_command(
-                "v.proj",
-                location=tgtloc,
-                mapset=tgtmapset,
-                input=aoi_map,
-                output=aoi_map,
-                quiet=True,
-            )
-    if aoi_map:
-        grass.run_command(
-            "g.region", vector=aoi_map, res=resolution_to_import, flags="a"
-        )
-
-    # import data
-    kwargs = {
-        "input": url,
-        "output": raster_name,
-        "memory": 1000,
-        "quiet": True,
-        "flags": import_flags,
-        "extent": "region",
-    }
-    grass.run_command("r.import", **kwargs)
-
-    # reproject data
-    res = float(
-        grass.parse_command("r.info", flags="g", map=f"{raster_name}.1")[
-            "nsres"
-        ]
-    )
-    if epsg is not None:
-        # switch location
-        os.environ["GISRC"] = str(TGTGISRC)
-        if aoi_map:
-            grass.run_command("g.region", vector=aoi_map, res=res, flags="a")
-        else:
-            grass.run_command("g.region", res=res, flags="a")
-        for i in range(1, 5):
-            name = f"{raster_name}.{i}"
-            grass.run_command(
-                "r.proj",
-                location=TMPLOC,
-                mapset="PERMANENT",
-                input=name,
-                output=name,
-                resolution=res,
-                flags="n",
-                quiet=True,
-                memory=1000,
-            )
 
 
 def download_and_clip_tindex(federal_state, aoi_map=None):
@@ -510,84 +431,16 @@ def adjust_resolution(raster_name):
             )
 
 
-def rescale_to_1_256(prefix, raster_name, all_raster, extension="num"):
-    """Rescale raster from 0 to 255 to 1 to 256
-    Args:
-        raster_name (str): Name of raster prefix
-        all_raster (dict): Dict with all rasters which should to be merged
-    """
-    if extension == "num":
-        band_dict = {"red": 1, "green": 2, "blue": 3, "nir": 4}
-    else:
-        band_dict = {
-            "red": "red",
-            "green": "green",
-            "blue": "blue",
-            "nir": "nir",
-        }
-    for name, num in band_dict.items():
-        rastername = f"{prefix}_{raster_name}_{name}"
-        grass.run_command(
-            "r.mapcalc",
-            expression=f"{rastername} = {raster_name}.{num} + 1",
-            quiet=True,
-            region="intersect",
-        )
-        rm_rast.append(f"{raster_name}.{num}")
-        all_raster[name].append(rastername)
-
-
-def import_dop_from_he_wms(tile):
-    """Import DOP from HE WMS"""
-    from download_urls import WMS_HE
-
-    grass.run_command("g.region", vector=tile)
-    for name in ["cir", "rgb"]:
-        if name == "cir":
-            out_tmp = f"{name}_{tile}_tmp"
-            bands = ["red"]
-        else:
-            out_tmp = f"{tile}_tmp"
-            bands = ["red", "green", "blue"]
-        rm_group.append(out_tmp)
-        for band in ["red", "green", "blue"]:
-            rm_rast.append(f"{out_tmp}.{band}")
-        grass.run_command(
-            "r.in.wms",
-            url=WMS_HE,
-            layer=f"he_dop20_{name}",
-            output=out_tmp,
-            format="tiff",
-            flags="b",
-            overwrite=True,
-        )
-        for band in bands:
-            if name == "cir":
-                oband = "nir"
-            else:
-                oband = band
-            if not flags["r"]:
-                grass.run_command(
-                    "r.resample",
-                    input=f"{out_tmp}.{band}",
-                    output=f"{tile}.{oband}",
-                    overwrite=True,
-                    quiet=True,
-                )
-            else:
-                grass.run_command(
-                    "g.rename",
-                    raster=f"{out_tmp}.{band},{tile}.{oband}",
-                    overwrite=True,
-                    quiet=True,
-                )
-    # drop rest of CIR DOP
-    grass.run_command(
-        "g.remove", type="raster", pattern="cir_*_tmp", flags="f"
-    )
-
-
 def create_vrt(b_list, out):
+    # copy raster maps to current mapset
+    for el in b_list:
+        el_wo_mapsetname = el.split("@")[0]
+        grass.run_command(
+            "g.copy",
+            raster=f"{el},{el_wo_mapsetname}",
+        )
+    b_list = [val.split("@")[0] for val in b_list]
+    # buildvrt if required + renaming to output name
     if len(b_list) > 1:
         grass.run_command("g.region", raster=b_list)
         grass.run_command("r.buildvrt", input=b_list, output=out, quiet=True)
@@ -596,7 +449,7 @@ def create_vrt(b_list, out):
 
 
 def main():
-    global tmp_dir, temp_region, rm_vec, rm_rast, rm_group, resolution_to_import
+    global tmp_dir, orig_region, rm_vec, rm_rast, rm_group, resolution_to_import, mapset_names
 
     # a vector map, consisting of the DOP-tiles,
     # while each DOP-tile contains its corresponding
@@ -617,6 +470,17 @@ def main():
 
     # parser options
     aoi_map = options["aoi_map"]
+    nprocs = int(options["nprocs"])
+    nprocs = setup_parallel_processing(nprocs)
+
+    # check if required addons installed:
+    addon = "r.dop.import.worker"
+    if not grass.find_program(addon, "--help"):
+        msg = (
+            f"The '{addon}' module was not found, install  it first:\n"
+            f"g.extension {addon}"
+        )
+        grass.fatal(_(msg))
 
     # read federal state(s) from input options
     if options["filepath"]:
@@ -631,10 +495,11 @@ def main():
         del federal_states[BE_idx]
 
     # save current region for setting back later in cleanup
-    temp_region = f"temp_region_{grass.tempname(8)}"
-    grass.run_command("g.region", save=temp_region, overwrite=True, quiet=True)
+    orig_region = f"orig_region_{grass.tempname(8)}"
+    grass.run_command("g.region", save=orig_region, overwrite=True, quiet=True)
     reg = grass.region()
     if flags["r"]:
+        # TODO: event auf None
         resolution_to_import = 0.2
     else:
         if reg["nsres"] == reg["ewres"]:
@@ -654,47 +519,94 @@ def main():
     # loop through federal states and get respective DOPs
     for federal_state in federal_states:
         tileindex, tiles_list = get_tiles(federal_state, aoi_map)
-
-        if tileindex:
-            num_imp = len(tiles_list)
-            num = 0
-            for item in tiles_list:
-                URL_tile = item[1]
-                num += 1
-                b_name = os.path.basename(URL_tile[0])
-                raster_name = (
-                    f"{b_name.split('.')[0].replace('-', '_')}"
-                    f"_{os.getpid()}"
-                )
-                grass.message(
-                    f"Started raster import {num}/{num_imp} from URL: {b_name}"
-                )
-                # Process stuck, when memory is too large (100000)
-                grass.run_command("g.region", region=temp_region)
-                if federal_state in ["Brandenburg", "Berlin"]:
-                    import_and_reproject(
-                        URL_tile[0], raster_name, aoi_map, epsg=25833
+        number_tiles = len(tiles_list)
+        # set number of parallel processes to number of tiles
+        # if multiple federal states given,
+        # they are not calculated in parallel so far
+        if number_tiles < nprocs:
+            nprocs = number_tiles
+        queue = ParallelModuleQueue(nprocs=nprocs)
+        try:
+            grass.message(
+                _(f"Importing {len(tiles_list)} DOPs in parallel...")
+            )
+            for tile_el in tiles_list:
+                if tileindex:
+                    key = tile_el[0]
+                    new_mapset = (
+                        f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
                     )
+                    mapset_names.append(new_mapset)
+                    b_name = os.path.basename(tile_el[1][0])
+                    raster_name = (
+                        f"{b_name.split('.')[0].replace('-', '_')}"
+                        f"_{os.getpid()}"
+                    )
+                    for key_rast in all_raster:
+                        all_raster[key_rast].append(
+                            f"{FS[federal_state]}_{raster_name}_{key_rast}@{new_mapset}"
+                        )
+                    param = {
+                        "flags": "t",
+                        "tile_key": key,
+                        "tile_url": tile_el[1][0],
+                        "federal_state": FS[federal_state],
+                        "raster_name": raster_name,
+                        "orig_region": orig_region,
+                        "memory": 1000,
+                        "new_mapset": new_mapset,
+                    }
                 else:
-                    import_and_reproject(URL_tile[0], raster_name, aoi_map)
+                    key = tile_el
+                    new_mapset = (
+                        f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
+                    )
+                    mapset_names.append(new_mapset)
+                    raster_name = "DOP"
+                    for key_rast in all_raster:
+                        all_raster[key_rast].append(
+                            f"{FS[federal_state]}_{raster_name}_{key_rast}@{new_mapset}"
+                        )
+                    param = {
+                        "flags": "",
+                        "tile_key": key,
+                        "tile_url": WMS_HE,
+                        "federal_state": FS[federal_state],
+                        "raster_name": raster_name,
+                        "orig_region": orig_region,
+                        "memory": 1000,
+                        "new_mapset": new_mapset,
+                    }
+                if aoi_map:
+                    param["aoi_map"] = aoi_map
 
-                # adjust resolution if required
-                if not flags["r"]:
-                    adjust_resolution(raster_name)
-                rm_group.append(raster_name)
-
-                grass.message(f"Finishing raster import for {raster_name} ...")
-                rescale_to_1_256(FS[federal_state], raster_name, all_raster)
-
-        else:
-            # no difference between with or without -r flag (HE WMS is res=0.2)
-            for tile in tiles_list:
-                import_dop_from_he_wms(tile)
-                grass.message(f"Finishing raster import for {tile} ...")
-                rescale_to_1_256(
-                    FS[federal_state], tile, all_raster, extension="str"
+                if flags["r"]:
+                    param["flags"] += "r"
+                else:
+                    param["resolution_to_import"] = resolution_to_import
+                # grass.run_command(
+                r_dop_import_worker = Module(
+                    "r.dop.import.worker",
+                    **param,
+                    run_=False,
                 )
-
+                # catch all GRASS outputs to stdout and stderr
+                r_dop_import_worker.stdout_ = grass.PIPE
+                r_dop_import_worker.stderr_ = grass.PIPE
+                queue.put(r_dop_import_worker)
+            queue.wait()
+        except Exception:
+            for proc_num in range(queue.get_num_run_procs()):
+                proc = queue.get(proc_num)
+                if proc.returncode != 0:
+                    # save all stderr to a variable and pass it to a GRASS
+                    # exception
+                    errmsg = proc.outputs["stderr"].value.strip()
+                    grass.fatal(
+                        _(
+                            f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"
+                        )
+                    )
     raster_out = []
     for band, b_list in all_raster.items():
         out = f"{options['output']}_{band}"
@@ -704,7 +616,7 @@ def main():
     grass.message(_(f"Generated following raster maps: {raster_out}"))
 
     if tileindex or aoi_map:
-        grass.run_command("g.region", region=temp_region)
+        grass.run_command("g.region", region=orig_region)
 
 
 if __name__ == "__main__":

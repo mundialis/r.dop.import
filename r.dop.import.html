@@ -7,27 +7,38 @@ Note, that the value range is modified from [0 255] to [1 256].
 To download the data, the federal_state(s) of the area of interest has to be given.
 Either given in a text file, comma-separated for multiple federal_states (<b>filepath</b> option).
 Or given directly as input, comma-separated for multiple federal_states (<b>federal_state</b> option).
+It is only used to get the corresponding download link and is NOT used as an alternative area of interset.
 By default the data are imported for the current region. With the option <b>aoi_map</b>, some vector map in GRASS, the data are imported only for the given AOI.
 The resolution is set by default to the resolution of the region. With the <b>-r</b> flag the original available resolution of the DOPs is used.
-
+The DOPs are imported in parallel in temp-mapsets. The final computed maps are then copied from the temp-mapset to the current mapset. 
+The number of parallel processes is given by <b>nprocs</b>.
 
 Implemented federal state options are:
 <ul>
-    <li>Nordrhein-Westfalen (if only a part of aoi_map or region is located in Nordrhein-Westfalen, the DOPs of this part are imported). Native resolution: 0.1m </li>
+    <li>Nordrhein-Westfalen. Native resolution: 0.1m </li>
+    <li>Brandenburg. Native resolution: 0.2m </li>
+    <li>Hessen. Native resolution: 0.2m </li>
 </ul>
 
 <h2>EXAMPLE</h2>
 
 <h3>Load DOPs for region with federal state information given by <b>federal_state</b> option</h3>
+
 <div class="code"><pre>
-r.dop.import output=dops federal_state=Nordrhein-Westfalen
+r.dop.import prefix=dops federal_state=Nordrhein-Westfalen
+</pre></div>
+
+<h3>Load DOPs for region with 4 parallel processes</h3>
+
+<div class="code"><pre>
+r.dop.import prefix=dops federal_state=Nordrhein-Westfalen nprocs=4
 </pre></div>
 
 <h3>Load DOPs for region with federal state information given by <b>filepath</b> option</h3>
 
 <div class="code"><pre>
 v.check.bundesland input=polygon_aoi filepath=federal_state.txt
-r.dop.import output=dops filepath=federal_state.txt
+r.dop.import prefix=dops filepath=federal_state.txt
 </pre></div>
 
 With file content of <tt>federal_state.txt</tt>:
@@ -39,19 +50,20 @@ Berlin,Brandenburg
 <h3>Load DOPs for AOI given by <tt>aoi_map_example</tt></h3>
 
 <div class="code"><pre>
-r.dop.import output=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example
+r.dop.import prefix=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example
 </pre></div>
 
 <h3>Load DOPs for AOI given by <tt>aoi_map_example</tt> and with original DOPs resolution</h3>
 
 <div class="code"><pre>
-r.dop.import output=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example -r
+r.dop.import prefix=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example -r
 </pre></div>
 
 <h2>SEE ALSO</h2>
 <em>
+<a href="r.dop.import">r.dop.import.worker</a>,
 <a href="r.buildvrt">r.buildvrt</a>,
-<a href="r.import">r.import</a>,
+<a href="https://grass.osgeo.org/grass-stable/manuals/r.import.html">r.import</a>,
 <a href="v.check.bundesland.html">v.check.bundesland</a>
 </em>
 
