@@ -10,8 +10,8 @@ URLS = {
     "Hamburg": None,
     "Mecklenburg-Vorpommern": None,
     "Niedersachsen": None,
-    "Nordrhein-Westfalen": "https://github.com/mundialis/tile-indices/blob/main/"
-    "DOP/NRW/openNRW_DOP10_tileindex.gpkg.gz",
+    "Nordrhein-Westfalen": "https://github.com/mundialis/tile-indices/blob/"
+    "main/DOP/NRW/openNRW_DOP10_tileindex.gpkg.gz",
     "Rheinland-Pfalz": None,
     "Schleswig-Holstein": None,
     "Saarland": None,
