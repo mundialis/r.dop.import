@@ -1,7 +1,7 @@
 URLS = {
-    "Brandenburg": "https://github.com/mundialis/tile-indices/blob/main/DOP/"
+    "Brandenburg": "https://github.com/mundialis/tile-indices/raw/main/DOP/"
     "BE_BB/DOP20_tileindex_BE_BB.gpkg.gz",
-    "Berlin": "https://github.com/mundialis/tile-indices/blob/main/DOP/"
+    "Berlin": "https://github.com/mundialis/tile-indices/raw/main/DOP/"
     "BE_BB/DOP20_tileindex_BE_BB.gpkg.gz",
     "Baden-Württemberg": None,
     "Bayern": None,
@@ -10,7 +10,7 @@ URLS = {
     "Hamburg": None,
     "Mecklenburg-Vorpommern": None,
     "Niedersachsen": None,
-    "Nordrhein-Westfalen": "https://github.com/mundialis/tile-indices/blob/"
+    "Nordrhein-Westfalen": "https://github.com/mundialis/tile-indices/raw/"
     "main/DOP/NRW/openNRW_DOP10_tileindex.gpkg.gz",
     "Rheinland-Pfalz": None,
     "Schleswig-Holstein": None,
