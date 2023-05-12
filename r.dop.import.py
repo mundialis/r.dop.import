@@ -212,6 +212,7 @@ def create_grid(tile_size, grid_prefix, area):
         # set region
         orig_region = f"grid_region_{grass.tempname(8)}"
         grass.run_command("g.region", save=orig_region, quiet=True)
+        grass.run_command("g.region", vector=area, quiet=True)
         grass.run_command("g.region", res=tile_size, flags="a", quiet=True)
 
         # create grid
@@ -562,7 +563,7 @@ def main():
                         f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
                     )
                     mapset_names.append(new_mapset)
-                    raster_name = "DOP"
+                    raster_name = tile_el
                     for key_rast in all_raster:
                         all_raster[key_rast].append(
                             f"{FS[federal_state]}_{raster_name}_{key_rast}@{new_mapset}"
