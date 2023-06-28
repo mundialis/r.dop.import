@@ -333,22 +333,25 @@ def download_and_clip_tindex(federal_state, aoi_map=None):
                     "overlap with federal state"
                 )
             )
-        if aoi_map:
-            # check which tiles are needed for selected AOI
-            vm_clip = f"vm_clip_{grass.tempname(8)}"
-            grass.run_command(
-                "v.clip",
-                input=vm_import,
-                clip=aoi_map,
-                output=vm_clip,
-                flags="d",
-                overwrite=True,
-                quiet=True,
-            )
-            rm_vec.append(vm_clip)
-        else:
-            # if no aoi given, use complete (current set) region:
-            vm_clip = vm_import
+        if not aoi_map:
+            aoi_map = f"aoi_map_{grass.tempname(8)}"
+            rm_vec.append(aoi_map)
+            grass.run_command("v.in.region", output=aoi_map)
+        # check which tiles are needed for selected AOI
+        vm_clip = f"vm_clip_{grass.tempname(8)}"
+        grass.run_command(
+            "v.clip",
+            input=vm_import,
+            clip=aoi_map,
+            output=vm_clip,
+            flags="d",
+            overwrite=True,
+            quiet=True,
+        )
+        rm_vec.append(vm_clip)
+        # else:
+        #     # if no aoi given, use complete (current set) region:
+        #     vm_clip = vm_import
 
         # import tiles and rename them according to their band
         # and write them in a list
