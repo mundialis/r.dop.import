@@ -201,13 +201,9 @@ def create_grid(tile_size, grid_prefix, area):
     grid = f"tmp_grid_{grass.tempname(8)}"
     # check if region is smaller than tile size
     if dist_ns <= float(tile_size) and dist_ew <= float(tile_size):
-        grass.run_command(
-            "g.region", vector=area, res=resolution_to_import, flags="a"
-        )
+        grass.run_command("g.region", vector=area, res=resolution_to_import, flags="a")
         grass.run_command("v.in.region", output=grid, quiet=True)
-        grass.run_command(
-            "v.db.addtable", map=grid, columns="cat int", quiet=True
-        )
+        grass.run_command("v.db.addtable", map=grid, columns="cat int", quiet=True)
     else:
         # set region
         orig_region = f"grid_region_{grass.tempname(8)}"
@@ -355,9 +351,7 @@ def download_and_clip_tindex(federal_state, aoi_map=None):
 
         # import tiles and rename them according to their band
         # and write them in a list
-        return grass.vector_db_select(vm_clip, columns="location")[
-            "values"
-        ].items()
+        return grass.vector_db_select(vm_clip, columns="location")["values"].items()
 
 
 def get_tiles(federal_state, aoi_map=None):
@@ -389,10 +383,7 @@ def get_tiles(federal_state, aoi_map=None):
     else:
         if options["filepath"]:
             grass.fatal(
-                _(
-                    "Non valid name of federal state,"
-                    " in 'filepath'-option given"
-                )
+                _("Non valid name of federal state," " in 'filepath'-option given")
             )
         elif options["federal_state"]:
             grass.fatal(
@@ -412,9 +403,7 @@ def adjust_resolution(raster_name):
     grass.run_command("g.region", res=res, flags="a", quiet=True)
 
     res_rast = float(
-        grass.parse_command("r.info", map=f"{raster_name}.1", flags="g")[
-            "nsres"
-        ]
+        grass.parse_command("r.info", map=f"{raster_name}.1", flags="g")["nsres"]
     )
     res_region = float(grass.region()["nsres"])
     if res_rast > res_region:
@@ -531,20 +520,15 @@ def main():
             nprocs = number_tiles
         queue = ParallelModuleQueue(nprocs=nprocs)
         try:
-            grass.message(
-                _(f"Importing {len(tiles_list)} DOPs in parallel...")
-            )
+            grass.message(_(f"Importing {len(tiles_list)} DOPs in parallel..."))
             for tile_el in tiles_list:
                 if tileindex:
                     key = tile_el[0]
-                    new_mapset = (
-                        f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
-                    )
+                    new_mapset = f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
                     mapset_names.append(new_mapset)
                     b_name = os.path.basename(tile_el[1][0])
                     raster_name = (
-                        f"{b_name.split('.')[0].replace('-', '_')}"
-                        f"_{os.getpid()}"
+                        f"{b_name.split('.')[0].replace('-', '_')}" f"_{os.getpid()}"
                     )
                     for key_rast in all_raster:
                         all_raster[key_rast].append(
@@ -562,9 +546,7 @@ def main():
                     }
                 else:
                     key = tile_el
-                    new_mapset = (
-                        f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
-                    )
+                    new_mapset = f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
                     mapset_names.append(new_mapset)
                     raster_name = tile_el
                     for key_rast in all_raster:
@@ -588,6 +570,13 @@ def main():
                     param["flags"] += "r"
                 else:
                     param["resolution_to_import"] = resolution_to_import
+                # add downloaded raster bands to rm_rast
+                rm_red = f"{raster_name}_red"
+                rm_green = f"{raster_name}_green"
+                rm_blue = f"{raster_name}_blue"
+                rm_rast.append(rm_red)
+                rm_rast.append(rm_green)
+                rm_rast.append(rm_blue)
                 # grass.run_command(
                 r_dop_import_worker = Module(
                     "r.dop.import.worker",
@@ -607,9 +596,7 @@ def main():
                     # exception
                     errmsg = proc.outputs["stderr"].value.strip()
                     grass.fatal(
-                        _(
-                            f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"
-                        )
+                        _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}")
                     )
     raster_out = []
     for band, b_list in all_raster.items():
