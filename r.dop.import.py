@@ -588,6 +588,13 @@ def main():
                     param["flags"] += "r"
                 else:
                     param["resolution_to_import"] = resolution_to_import
+                # add downloaded raster bands to rm_rast
+                rm_red = f"{raster_name}_red"
+                rm_green = f"{raster_name}_green"
+                rm_blue = f"{raster_name}_blue"
+                rm_rast.append(rm_red)
+                rm_rast.append(rm_green)
+                rm_rast.append(rm_blue)
                 # grass.run_command(
                 r_dop_import_worker = Module(
                     "r.dop.import.worker",

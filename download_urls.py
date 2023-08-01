@@ -15,7 +15,8 @@ URLS = {
     "Rheinland-Pfalz": None,
     "Schleswig-Holstein": None,
     "Saarland": None,
-    "Sachsen": None,
+    "Sachsen": "https://github.com/mundialis/tile-indices/raw/main/DOP/SN/"
+    "DOP20_tileindex_SN.gpkg.gz",
     "Sachsen-Anhalt": None,
 }
 
