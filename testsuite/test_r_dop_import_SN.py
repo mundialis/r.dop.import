@@ -227,7 +227,7 @@ class TestRDopImport(TestCase):
             # test if all four raster maps are created
             self.assertRasterExists(name=el, msg=f"Creation of {el} failed.")
         # check if just aoi data loaded ==>
-        # should have 128928 cells
+        # should have 2021300 cells
         cells_aoi = grass.parse_command(
             "r.info", map=self.test_output_all[0], flags="g"
         )["cells"]
@@ -256,6 +256,7 @@ class TestRDopImport(TestCase):
         )
         for el in self.test_output_all:
             # test if all four raster maps are created
+            # and the resolution = 0.2 after resampling
             self.assertRasterExists(name=el, msg=f"Creation of {el} failed.")
         out_res_ns = round(
             float(
@@ -263,7 +264,7 @@ class TestRDopImport(TestCase):
                     "r.info", map=self.test_output_all[0], flags="g"
                 )["nsres"]
             ),
-            1,
+            2,
         )
         out_res_ew = round(
             float(
@@ -271,7 +272,7 @@ class TestRDopImport(TestCase):
                     "r.info", map=self.test_output_all[0], flags="g"
                 )["ewres"]
             ),
-            1,
+            2,
         )
         # 20 cm auflösung und AOI
         self.assertTrue(
