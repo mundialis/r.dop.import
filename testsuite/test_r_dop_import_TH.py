@@ -40,7 +40,9 @@ class TestRDopImport(TestCase):
     test_output = f"output_{pid}"
     test_output_all = [
         f"{out}_{band}"
-        for band, out in zip(["red", "green", "blue", "nir"], 4 * [test_output])
+        for band, out in zip(
+            ["red", "green", "blue", "nir"], 4 * [test_output]
+        )
     ]
     GISDBASE = None
     TGTGISRC = None
