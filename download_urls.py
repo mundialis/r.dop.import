@@ -18,9 +18,12 @@ URLS = {
     "Sachsen": "https://github.com/mundialis/tile-indices/raw/main/DOP/SN/"
     "DOP20_tileindex_SN.gpkg.gz",
     "Sachsen-Anhalt": None,
+    "Thüringen": None,
 }
 
 WMS_HE = (
     "https://www.gds-srv.hessen.de/cgi-bin/lika-services/ogc-free-"
     "images.ows?language=ger&"
 )
+
+WMS_TH = "https://www.geoproxy.geoportal-th.de/geoproxy/services/DOP"

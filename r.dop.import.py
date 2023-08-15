@@ -51,7 +51,7 @@
 # % multiple: yes
 # % required: no
 # % description: Federal state to load DOPs for (no alternative to aoi_map; parameter is required/used for getting download-URL only)
-# % options: Brandenburg,Berlin,Baden-Württemberg,Bayern,Bremen,Hessen,Hamburg,Mecklenburg-Vorpommern,Niedersachsen,Nordrhein-Westfalen,Rheinland-Pfalz,Schleswig-Holstein,Saarland,Sachsen,Sachsen-Anhalt
+# % options: Brandenburg,Berlin,Baden-Württemberg,Bayern,Bremen,Hessen,Hamburg,Mecklenburg-Vorpommern,Niedersachsen,Nordrhein-Westfalen,Rheinland-Pfalz,Schleswig-Holstein,Saarland,Sachsen,Sachsen-Anhalt,Thüringen
 # %end
 
 # %option
@@ -93,6 +93,7 @@ sys.path.insert(
 )
 from download_urls import URLS
 from download_urls import WMS_HE
+from download_urls import WMS_TH
 from federal_states import FS
 
 tmp_dir = None
@@ -201,13 +202,9 @@ def create_grid(tile_size, grid_prefix, area):
     grid = f"tmp_grid_{grass.tempname(8)}"
     # check if region is smaller than tile size
     if dist_ns <= float(tile_size) and dist_ew <= float(tile_size):
-        grass.run_command(
-            "g.region", vector=area, res=resolution_to_import, flags="a"
-        )
+        grass.run_command("g.region", vector=area, res=resolution_to_import, flags="a")
         grass.run_command("v.in.region", output=grid, quiet=True)
-        grass.run_command(
-            "v.db.addtable", map=grid, columns="cat int", quiet=True
-        )
+        grass.run_command("v.db.addtable", map=grid, columns="cat int", quiet=True)
     else:
         # set region
         orig_region = f"grid_region_{grass.tempname(8)}"
@@ -355,16 +352,14 @@ def download_and_clip_tindex(federal_state, aoi_map=None):
 
         # import tiles and rename them according to their band
         # and write them in a list
-        return grass.vector_db_select(vm_clip, columns="location")[
-            "values"
-        ].items()
+        return grass.vector_db_select(vm_clip, columns="location")["values"].items()
 
 
 def get_tiles(federal_state, aoi_map=None):
     """Get or create tileindex for federal state
     Args:
         federal_state (str): A string with a federal state
-        aoi_mao (str): Name of AOI vector map
+        aoi_map (str): Name of AOI vector map
     Returns:
         tileindex: None if no tileindex exists and one was created
         tiles_list (list): list of tiles (names of the created vector tiles or
@@ -372,9 +367,12 @@ def get_tiles(federal_state, aoi_map=None):
     """
     if federal_state in URLS:
         grass.message(f"Processing {federal_state}...")
-        if federal_state == "Hessen":
+        if federal_state == "Hessen" or federal_state == "Thüringen":
             # create grid for wms import
-            tiles_list = create_grid(1000, "HE_DOP", aoi_map)
+            if federal_state == "Hessen":
+                tiles_list = create_grid(1000, "HE_DOP", aoi_map)
+            elif federal_state == "Thüringen":
+                tiles_list = create_grid(1000, "TH_DOP", aoi_map)
             # no tileindex
             tileindex = None
 
@@ -389,10 +387,7 @@ def get_tiles(federal_state, aoi_map=None):
     else:
         if options["filepath"]:
             grass.fatal(
-                _(
-                    "Non valid name of federal state,"
-                    " in 'filepath'-option given"
-                )
+                _("Non valid name of federal state," " in 'filepath'-option given")
             )
         elif options["federal_state"]:
             grass.fatal(
@@ -412,9 +407,7 @@ def adjust_resolution(raster_name):
     grass.run_command("g.region", res=res, flags="a", quiet=True)
 
     res_rast = float(
-        grass.parse_command("r.info", map=f"{raster_name}.1", flags="g")[
-            "nsres"
-        ]
+        grass.parse_command("r.info", map=f"{raster_name}.1", flags="g")["nsres"]
     )
     res_region = float(grass.region()["nsres"])
     if res_rast > res_region:
@@ -531,20 +524,15 @@ def main():
             nprocs = number_tiles
         queue = ParallelModuleQueue(nprocs=nprocs)
         try:
-            grass.message(
-                _(f"Importing {len(tiles_list)} DOPs in parallel...")
-            )
+            grass.message(_(f"Importing {len(tiles_list)} DOPs in parallel..."))
             for tile_el in tiles_list:
                 if tileindex:
                     key = tile_el[0]
-                    new_mapset = (
-                        f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
-                    )
+                    new_mapset = f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
                     mapset_names.append(new_mapset)
                     b_name = os.path.basename(tile_el[1][0])
                     raster_name = (
-                        f"{b_name.split('.')[0].replace('-', '_')}"
-                        f"_{os.getpid()}"
+                        f"{b_name.split('.')[0].replace('-', '_')}" f"_{os.getpid()}"
                     )
                     for key_rast in all_raster:
                         all_raster[key_rast].append(
@@ -562,25 +550,28 @@ def main():
                     }
                 else:
                     key = tile_el
-                    new_mapset = (
-                        f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
-                    )
+                    new_mapset = f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
                     mapset_names.append(new_mapset)
                     raster_name = tile_el
                     for key_rast in all_raster:
                         all_raster[key_rast].append(
                             f"{FS[federal_state]}_{raster_name}_{key_rast}@{new_mapset}"
                         )
+                    if federal_state == "Hessen":
+                        WMS = WMS_HE
+                    elif federal_state == "Thüringen":
+                        WMS = WMS_TH
                     param = {
                         "flags": "",
                         "tile_key": key,
-                        "tile_url": WMS_HE,
+                        "tile_url": WMS,
                         "federal_state": FS[federal_state],
                         "raster_name": raster_name,
                         "orig_region": orig_region,
                         "memory": 1000,
                         "new_mapset": new_mapset,
                     }
+                grass.message(f"raster_name: {raster_name}")
                 if aoi_map:
                     param["aoi_map"] = aoi_map
 
@@ -614,9 +605,7 @@ def main():
                     # exception
                     errmsg = proc.outputs["stderr"].value.strip()
                     grass.fatal(
-                        _(
-                            f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"
-                        )
+                        _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}")
                     )
     raster_out = []
     for band, b_list in all_raster.items():

@@ -14,4 +14,5 @@ FS = {
     "Saarland": "SL",
     "Sachsen": "SN",
     "Sachsen-Anhalt": "ST",
+    "Thüringen": "TH",
 }
