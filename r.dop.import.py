@@ -373,7 +373,7 @@ def get_tiles(federal_state, aoi_map=None):
     """
     if federal_state in URLS:
         grass.message(f"Processing {federal_state}...")
-        if federal_state == "Hessen" or federal_state == "Thüringen":
+        if federal_state in ["Hessen", "Thüringen"]:
             # create grid for wms import
             if federal_state == "Hessen":
                 tiles_list = create_grid(1000, "HE_DOP", aoi_map)
