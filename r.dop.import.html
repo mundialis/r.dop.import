@@ -1,8 +1,12 @@
 <h2>DESCRIPTION</h2>
 
-<em>r.dop.import</em> downloads digital orthophotos (DOPs) and imports them into GRASS.
-The output will be four raster maps: &ltoutput&gt_red, &ltoutput&gt_green, &ltoutput&gt_blue, &ltoutput&gt_nir,
-while each raster map displays one virtual raster, combining all DOP-tiles, and &ltoutput&gt is given by <b>output</b> option.
+<em>r.dop.import</em> downloads digital orthophotos (DOPs) and imports them
+into GRASS. Alternatively, local data can be imported.
+The output will be four raster maps: &ltoutput&gt_red, &ltoutput&gt_green,
+&ltoutput&gt_blue, &ltoutput&gt_nir, while each raster map displays one virtual
+raster, combining all DOP-tiles, and &ltoutput&gt is given by <b>output</b>
+option.
+
 Note, that the value range is modified from [0 255] to [1 256].
 To download the data, the federal_state(s) of the area of interest has to be given.
 Either given in a text file, comma-separated for multiple federal_states (<b>filepath</b> option).
@@ -15,32 +19,48 @@ The number of parallel processes is given by <b>nprocs</b>.
 
 Implemented federal state options are:
 <ul>
-    <li>Nordrhein-Westfalen. Native resolution: 0.1m </li>
+    <li>Baden-Würrtemberg: only local data</li>
     <li>Brandenburg. Native resolution: 0.2m </li>
     <li>Hessen. Native resolution: 0.2m </li>
+    <li>Nordrhein-Westfalen. Native resolution: 0.1m </li>
     <li>Sachsen. Native resolution: 0.2m (gets imported as 0.18m and is resampled to 0.2m if -r flag is set) </li>
     <li>Thüringen. Native resolution: 0.2m </li>
 </ul>
 
+For local data import the parameter <b>local_data_dir</b> has to be given and
+the folder structure has to be as follows:
+<div class="code"><pre>
+/path/to/DOPs/
+├── BW/*.vrt
+└── NW/*.tif
+└── ...
+</pre></div>
+In the federal state folders the addons searches for a <tt>vrt</tt> file or
+if none is given all <tt>tifs</tt> will be imported.
+If local data does not overlap with AOI, data will be downloaded from Open Data
+portals if federal state supports Open Data.
+
 <h2>EXAMPLE</h2>
 
-<h3>Load DOPs for region with federal state information given by <b>federal_state</b> option</h3>
+<h3>Load DOPs for region with federal state information given by
+<b>federal_state</b> option</h3>
 
 <div class="code"><pre>
-r.dop.import prefix=dops federal_state=Nordrhein-Westfalen
+r.dop.import output=dops federal_state=Nordrhein-Westfalen
 </pre></div>
 
 <h3>Load DOPs for region with 4 parallel processes</h3>
 
 <div class="code"><pre>
-r.dop.import prefix=dops federal_state=Nordrhein-Westfalen nprocs=4
+r.dop.import output=dops federal_state=Nordrhein-Westfalen nprocs=4
 </pre></div>
 
-<h3>Load DOPs for region with federal state information given by <b>filepath</b> option</h3>
+<h3>Load DOPs for region with federal state information given by
+<b>filepath</b> option</h3>
 
 <div class="code"><pre>
 v.check.bundesland input=polygon_aoi filepath=federal_state.txt
-r.dop.import prefix=dops filepath=federal_state.txt
+r.dop.import output=dops filepath=federal_state.txt
 </pre></div>
 
 With file content of <tt>federal_state.txt</tt>:
@@ -52,14 +72,22 @@ Berlin,Brandenburg
 <h3>Load DOPs for AOI given by <tt>aoi_map_example</tt></h3>
 
 <div class="code"><pre>
-r.dop.import prefix=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example
+r.dop.import output=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example
 </pre></div>
 
 <h3>Load DOPs for AOI given by <tt>aoi_map_example</tt> and with original DOPs resolution</h3>
 
 <div class="code"><pre>
-r.dop.import prefix=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example -r
+r.dop.import output=dops federal_state=Nordrhein-Westfalen aoi_map=aoi_map_example -r
 </pre></div>
+
+<h3>Use local DOPs</h3>
+Use local data instead of open data for NRW:
+<div class="code"><pre>
+r.dop.import output=dops federal_state=Nordrhein-Westfalen \
+    aoi_map=aoi_map_example local_data_dir=/path/to/DOPs/
+</pre></div>
+
 
 <h2>SEE ALSO</h2>
 <em>
