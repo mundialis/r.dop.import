@@ -59,7 +59,7 @@ r.dop.import output=dops federal_state=Nordrhein-Westfalen nprocs=4
 <b>filepath</b> option</h3>
 
 <div class="code"><pre>
-v.check.bundesland input=polygon_aoi filepath=federal_state.txt
+v.check.federal_state aoi=polygon_aoi federal_state_file=federal_state.txt
 r.dop.import output=dops filepath=federal_state.txt
 </pre></div>
 
@@ -94,8 +94,10 @@ r.dop.import output=dops federal_state=Nordrhein-Westfalen \
 <a href="r.dop.import">r.dop.import.worker</a>,
 <a href="r.buildvrt">r.buildvrt</a>,
 <a href="https://grass.osgeo.org/grass-stable/manuals/r.import.html">r.import</a>,
-<a href="v.check.bundesland.html">v.check.bundesland</a>
+<a href="https://mundialis.github.io/v.check.federal_state/">v.check.federal_state</a>
 </em>
 
 <h2>AUTHORS</h2>
-Johannes Halbauer, Lina Krisztian and Anika Weinmann <a href="https://www.mundialis.de/">mundialis GmbH & Co. KG</a>
+Johannes Halbauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>
+Lina Krisztian, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>
+Anika Weinmann, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>
