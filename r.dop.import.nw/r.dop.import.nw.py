@@ -47,6 +47,9 @@
 # % description: Name for output raster map
 # %end
 
+# %option G_OPT_MEMORYMB
+# %end
+
 # %flag
 # % key: k
 # % label: Keep downloaded data in the download directory
@@ -66,6 +69,7 @@ import os
 import grass.script as grass
 
 from grass_gis_helpers.cleanup import general_cleanup
+from grass_gis_helpers.general import test_memory
 from grass_gis_helpers.open_geodata_germany.download_data import (
     check_download_dir,
     download_data_using_threadpool,
@@ -79,10 +83,10 @@ from grass_gis_helpers.data_import import (
 # set global varibales
 TINDEX = (
     "https://github.com/mundialis/tile-indices/raw/main/DOP/NW/"
-    "openNRW_DOP10_tileindex.gpkg.gz"
+    "DOP10_tileindex_NW.gpkg.gz"
 )
 DATA_BASE_URL = (
-    "https://www.opengeodata.nrw.de/produkte/geobasis/lusat/dop/"
+    "https://www.opengeodata.nrw.de/produkte/geobasis/lusat/akt/dop/"
     "dop_jp2_f10/"
 )
 
@@ -116,6 +120,9 @@ def main():
     keep_data = flags["k"]
     native_res = flags["r"]
 
+    # set memory to input if possible
+    options["memory"] = test_memory(options["memory"])
+
     # save original region
     orig_region = f"original_region_{ID}"
     grass.run_command("g.region", save=orig_region, quiet=True)
@@ -138,8 +145,8 @@ def main():
     if keep_data:
         download_list = [url.replace("/vsicurl/", "") for url in url_tiles]
 
-        # download with using nprocs=2
-        download_data_using_threadpool(download_list, download_dir, 2)
+        # download with using nprocs=3
+        download_data_using_threadpool(download_list, download_dir, 3)
 
     # import DOPs directly
     grass.message(_("Importing DOPs..."))
@@ -177,7 +184,7 @@ def main():
 
     # create VRT
     vrt_outputs = []
-    for dops, band in zip(all_dops, ["R", "G", "B", "I"]):
+    for dops, band in zip(all_dops, ["red", "green", "blue", "nir"]):
         vrt_output = f"{output}_{band}"
         create_vrt(dops, vrt_output)
         vrt_outputs.append(vrt_output)
