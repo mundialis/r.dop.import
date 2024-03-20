@@ -47,6 +47,9 @@
 # % description: Name for output raster map
 # %end
 
+# %option G_OPT_MEMORYMB
+# %end
+
 # %flag
 # % key: k
 # % label: Keep downloaded data in the download directory
@@ -102,6 +105,18 @@ def cleanup():
         rm_vectors=rm_vectors,
         rm_dirs=rm_dirs,
     )
+
+
+def test_memory():
+    # check memory
+    memory = int(options["memory"])
+    free_ram = freeRAM("MB", 100)
+    if free_ram < memory:
+        grass.warning(
+            "Using %d MB but only %d MB RAM available." % (memory, free_ram)
+        )
+        options["memory"] = free_ram
+        grass.warning("Set used memory to %d MB." % (options["memory"]))
 
 
 def main():
@@ -162,13 +177,14 @@ def main():
                 input = f"/vsicurl/{url}"
             else:
                 input = url
-
+        # TODO: check if alignment is ok
         # import DOPs
         grass.run_command(
             "r.import",
             input=input,
             output=dop_name,
             extent="region",
+            #resolution=0.2,
             overwrite=True,
             quiet=True,
         )
@@ -177,7 +193,7 @@ def main():
         all_dops[1].append(dop_name + ".2")
         all_dops[2].append(dop_name + ".3")
         all_dops[3].append(dop_name + ".4")
-
+    
     # create VRT
     vrt_outputs = []
     for dops, band in zip(all_dops, ["R", "G", "B", "I"]):
