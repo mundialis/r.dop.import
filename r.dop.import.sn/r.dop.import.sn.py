@@ -69,6 +69,7 @@ import os
 import grass.script as grass
 
 from grass_gis_helpers.cleanup import general_cleanup
+from grass_gis_helpers.general import test_memory
 from grass_gis_helpers.open_geodata_germany.download_data import (
     check_download_dir,
     download_data_using_threadpool,
@@ -107,18 +108,6 @@ def cleanup():
     )
 
 
-def test_memory():
-    # check memory
-    memory = int(options["memory"])
-    free_ram = freeRAM("MB", 100)
-    if free_ram < memory:
-        grass.warning(
-            "Using %d MB but only %d MB RAM available." % (memory, free_ram)
-        )
-        options["memory"] = free_ram
-        grass.warning("Set used memory to %d MB." % (options["memory"]))
-
-
 def main():
     global ID, orig_region, rm_rasters, rm_vectors, keep_data, download_dir
 
@@ -127,6 +116,9 @@ def main():
     output = options["output"]
     keep_data = flags["k"]
     native_res = flags["r"]
+
+    # set memory to input if possible
+    options["memory"] = test_memory(options["memory"])
 
     # save original region
     orig_region = f"original_region_{ID}"
@@ -177,14 +169,13 @@ def main():
                 input = f"/vsicurl/{url}"
             else:
                 input = url
-        # TODO: check if alignment is ok
+
         # import DOPs
         grass.run_command(
             "r.import",
             input=input,
             output=dop_name,
             extent="region",
-            #resolution=0.2,
             overwrite=True,
             quiet=True,
         )
@@ -193,10 +184,10 @@ def main():
         all_dops[1].append(dop_name + ".2")
         all_dops[2].append(dop_name + ".3")
         all_dops[3].append(dop_name + ".4")
-    
+
     # create VRT
     vrt_outputs = []
-    for dops, band in zip(all_dops, ["R", "G", "B", "I"]):
+    for dops, band in zip(all_dops, ["red", "green", "blue", "nir"]):
         vrt_output = f"{output}_{band}"
         create_vrt(dops, vrt_output)
         vrt_outputs.append(vrt_output)
