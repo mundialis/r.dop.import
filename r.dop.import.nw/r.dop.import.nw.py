@@ -83,7 +83,7 @@ from grass_gis_helpers.data_import import (
 # set global varibales
 TINDEX = (
     "https://github.com/mundialis/tile-indices/raw/main/DOP/NW/"
-    "DOP10_tileindex_NW.gpkg.gz"
+    "openNRW_DOP10_tileindex.gpkg.gz"
 )
 DATA_BASE_URL = (
     "https://www.opengeodata.nrw.de/produkte/geobasis/lusat/akt/dop/"
