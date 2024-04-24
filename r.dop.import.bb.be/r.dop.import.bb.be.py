@@ -87,7 +87,7 @@ from grass_gis_helpers.data_import import (
     download_and_import_tindex,
     get_list_of_tindex_locations,
 )
-from grass_gis_helpers.general import test_memory
+from grass_gis_helpers.general import test_memory, check_installed_addon
 from grass_gis_helpers.open_geodata_germany.download_data import (
     check_download_dir,
 )
@@ -142,12 +142,8 @@ def main():
 
     # check if required addon is installed
     addon = "r.dop.import.worker.bb.be"
-    if not grass.find_program(addon, "--help"):
-        msg = (
-            f"The '{addon}' module was not found, install  it first:\n"
-            f"g.extension {addon}"
-        )
-        grass.fatal(_(msg))
+    url = "grass-gis-addons/r.dop.import/r.dop.import.worker.bb.be"
+    check_installed_addon(addon, url)
 
     # set memory to input if possible
     options["memory"] = test_memory(options["memory"])
