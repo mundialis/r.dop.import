@@ -44,14 +44,6 @@
 # %end
 
 # %option
-# % key: federal_state
-# % multiple: yes
-# % required: no
-# % description: Federal state to load DOPs for (no alternative to aoi_map; parameter is used for naming only)
-# % options: Brandenburg,Berlin
-# %end
-
-# %option
 # % key: nprocs
 # % type: integer
 # % required: no
@@ -84,21 +76,33 @@
 
 import atexit
 import os
-import multiprocessing as mp
+import sys
+
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
+from grass.pygrass.utils import get_lib_path
 
 from grass_gis_helpers.cleanup import general_cleanup
-from grass_gis_helpers.general import test_memory
-
-from grass_gis_helpers.open_geodata_germany.download_data import (
-    check_download_dir,
-)
-from grass_gis_helpers.raster import create_vrt
 from grass_gis_helpers.data_import import (
     download_and_import_tindex,
     get_list_of_tindex_locations,
 )
+from grass_gis_helpers.general import test_memory
+from grass_gis_helpers.open_geodata_germany.download_data import (
+    check_download_dir,
+)
+from grass_gis_helpers.raster import create_vrt
+
+
+# import module library
+path = get_lib_path(modname="r.dop.import")
+if path is None:
+    grass.fatal("Unable to find the dop library directory.")
+sys.path.append(path)
+try:
+    from r_dop_import_lib import setup_parallel_processing
+except Exception as imp_err:
+    grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
 # set global varibales
 TINDEX = (
@@ -125,38 +129,16 @@ def cleanup():
     )
 
 
-def setup_parallel_processing(nprocs):
-    if nprocs == -2:
-        nprocs = mp.cpu_count() - 1 if mp.cpu_count() > 1 else 1
-    else:
-        # Test nprocs settings
-        nprocs_real = mp.cpu_count()
-        if nprocs > nprocs_real:
-            grass.warning(
-                "Using %d parallel processes but only %d CPUs available."
-                % (nprocs, nprocs_real)
-            )
-
-    # set some common environmental variables, like:
-    os.environ.update(
-        dict(
-            GRASS_COMPRESSOR="LZ4",
-            GRASS_MESSAGE_FORMAT="plain",
-        )
-    )
-    return nprocs
-
-
 def main():
     global ID, orig_region, rm_rasters, rm_vectors
     global temp_loc_path, download_dir, new_mapset
 
     aoi = options["aoi"]
     download_dir = check_download_dir(options["download_dir"])
-    fs = options["federal_state"]
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
     output = options["output"]
+    fs = "BB_BE"
 
     # check if required addon is installed
     addon = "r.dop.import.worker.bb.be"
@@ -177,13 +159,6 @@ def main():
         "blue": [],
         "nir": [],
     }
-    # set abbreviation of federal state
-    if fs == "Brandenburg":
-        fs = "BB"
-    elif fs == "Berlin":
-        fs = "BE"
-    else:
-        fs = "BB_BE"
 
     # save original region
     orig_region = f"original_region_{ID}"
@@ -222,7 +197,7 @@ def main():
         url_tiles[i] = (url_tiles_count, [url_tiles[i]])
     number_tiles = len(url_tiles)
 
-    # set number of parallel processes to numbert of tiles
+    # set number of parallel processes to number of tiles
     if number_tiles < nprocs:
         nprocs = number_tiles
     queue = ParallelModuleQueue(nprocs=nprocs)
@@ -252,7 +227,6 @@ def main():
             param = {
                 "tile_key": key,
                 "tile_url": tile[1][0],
-                "federal_state": fs,
                 "raster_name": raster_name,
                 "orig_region": orig_region,
                 "memory": 1000,
