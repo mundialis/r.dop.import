@@ -284,7 +284,7 @@ def main():
         create_vrt(b_list, out)
         raster_out.append(out)
 
-    grass.message(_(f"Generated following raster maps: {raster_out}"))
+    grass.message(_(f"Generated following raster maps: {raster_out}."))
 
 
 if __name__ == "__main__":

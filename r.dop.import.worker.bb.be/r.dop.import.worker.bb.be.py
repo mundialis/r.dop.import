@@ -218,6 +218,11 @@ def import_and_reproject(
         "flags": "o",
         "extent": "region",
     }
+
+    # TODO: Auslagern dieser Funktion in Lib, jedoch unterscheidet
+    # sich der folgende if-Block bspw. von dem von NW
+    # (außerdem ist noch die o-flag in kwargs unterschiedlich)
+    #
     # download and keep data to download dir if -k flag ist set
     # and change input parameter in kwargs to local path
     if flags["k"]:
@@ -304,7 +309,7 @@ def main():
 
     # import DOP tile with original resolution
     grass.message(
-        _(f"Started DOP import for key: {tile_key} and URL: {tile_url}")
+        _(f"Started DOP import for key: {tile_key} and URL: {tile_url}.")
     )
 
     # import and reproject DOP tiles based on tileindex
