@@ -87,7 +87,7 @@ from grass_gis_helpers.data_import import (
     download_and_import_tindex,
     get_list_of_tindex_locations,
 )
-from grass_gis_helpers.general import test_memory, check_installed_addon
+from grass_gis_helpers.general import test_memory
 from grass_gis_helpers.open_geodata_germany.download_data import (
     check_download_dir,
 )
@@ -139,11 +139,6 @@ def main():
     nprocs = setup_parallel_processing(nprocs)
     output = options["output"]
     fs = "BB_BE"
-
-    # check if required addon is installed
-    addon = "r.dop.import.worker.bb.be"
-    url = "grass-gis-addons/r.dop.import/r.dop.import.worker.bb.be"
-    check_installed_addon(addon, url)
 
     # set memory to input if possible
     options["memory"] = test_memory(options["memory"])
