@@ -145,7 +145,15 @@ def cleanup():
 def import_dop_from_he_wms(
     tile_key, rastername, tile_url, resolution_to_import
 ):
-    """Import DOP from HE WMS"""
+    """Import DOPs from HE WMS.
+
+    Args:
+        tile_key (str): Key of current tile
+        rastername (str): Name of resulting raster
+        tile_url (str): WMS URL to get DOPs from
+        resolution_to_import (float): Resolution to resample imported raster to
+    """
+    # set region and create variable nammes
     grass.run_command("g.region", vector=tile_key)
     tile_key = tile_key.split("@")[0]
     for name in ["cir", "rgb"]:
@@ -158,6 +166,7 @@ def import_dop_from_he_wms(
         rm_group.append(out_tmp)
         for band in ["red", "green", "blue"]:
             rm_rast.append(f"{out_tmp}.{band}")
+
         # import wms data and retry download if wms fails 15 times
         trydownload = True
         count = 0
@@ -186,6 +195,7 @@ def import_dop_from_he_wms(
                 if count > 15:
                     grass.fatal(f"Download of {tile_url} not working.")
                 sleep(10)
+
         # change band name to band number
         for band in bands:
             if name == "cir":

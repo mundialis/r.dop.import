@@ -165,6 +165,7 @@ def main():
     # set region if aoi is given
     if aoi:
         grass.run_command("g.region", vector=aoi, flags="a")
+
     # if no aoi save region as aoi
     else:
         aoi = f"region_aoi_{ID}"
