@@ -66,6 +66,8 @@
 
 import atexit
 import os
+from osgeo import gdal
+from time import sleep
 import grass.script as grass
 
 from grass_gis_helpers.cleanup import general_cleanup
@@ -157,6 +159,7 @@ def main():
     # create list of lists for all DOPs caused by GRASS import structure
     # (one raster map per band)
     all_dops = [[], [], [], []]
+    res = None
     for url in url_tiles:
         # define name for imported DOP
         dop_name = os.path.splitext(os.path.basename(url))[0].replace("-", "")
@@ -170,12 +173,24 @@ def main():
             else:
                 input = url
 
+        if res is None:
+            ds = gdal.Open(url)
+            count = 0
+            while ds is None and count <= 10:
+                count += 1
+                sleep(10)
+                ds = gdal.Open(url)
+            res = ds.GetGeoTransform()[1]
+
         # import DOPs
         grass.run_command(
             "r.import",
             input=input,
             output=dop_name,
             extent="region",
+            resolution="value",
+            resolution_value=res,
+            memory=1000,
             overwrite=True,
             quiet=True,
         )

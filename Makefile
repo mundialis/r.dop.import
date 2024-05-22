@@ -2,9 +2,20 @@ MODULE_TOPDIR = ../..
 
 PGM = r.dop.import
 
-ETCFILES = download_urls federal_state_info
+# note: to deactivate a module, just place a file "DEPRECATED" in the subdir
+ALL_SUBDIRS := ${sort ${dir ${wildcard */.}}}
+DEPRECATED_SUBDIRS := ${sort ${dir ${wildcard */DEPRECATED}}}
+RM_SUBDIRS := bin/ docs/ etc/ scripts/ testsuite/
+SUBDIRS_1 := $(filter-out $(DEPRECATED_SUBDIRS), $(ALL_SUBDIRS))
+SUBDIRS := $(filter-out $(RM_SUBDIRS), $(SUBDIRS_1))
 
-include $(MODULE_TOPDIR)/include/Make/Script.make
-include $(MODULE_TOPDIR)/include/Make/Python.make
+# $(warning ALL_SUBDIRS is $(ALL_SUBDIRS))
+# $(warning DEPRECATED_SUBDIRS is $(DEPRECATED_SUBDIRS))
+# $(warning SUBDIRS is $(SUBDIRS))
 
-default: script
+include $(MODULE_TOPDIR)/include/Make/Dir.make
+
+default: parsubdirs htmldir
+
+install: installsubdirs
+	$(INSTALL_DATA) $(PGM).html $(INST_DIR)/docs/html/

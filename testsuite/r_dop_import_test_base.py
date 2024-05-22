@@ -2,10 +2,10 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import test Hessen
-# AUTHOR(S):   Lina Krisztian, Anika Weinmann
+# MODULE:      r.dop.import test Brandenburg/Berlin
+# AUTHOR(S):   Anika Weinmann
 
-# PURPOSE:     Tests r.dop.import Hessen
+# PURPOSE:     Tests r.dop.import Brandenburg/Berlin
 # COPYRIGHT:   (C) 2023 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team
 #
@@ -25,16 +25,17 @@ import os
 import sys
 
 from grass.gunittest.case import TestCase
-from grass.gunittest.main import test
-
-# from grass.gunittest.gmodules import SimpleModule
+from grass.gunittest.gmodules import SimpleModule
 import grass.script as grass
 
 
-class TestRDopImport(TestCase):
+class RDopImportTestBase(TestCase):
+    fs = ""
+    ref_res = None
+    aoi_cells = None
+
     pid = os.getpid()
     rm_vec = []
-    aoi_map_file = os.path.join("data", "test_aoi_HE.gpkg")
     aoi_map = f"aoi_map_{pid}"
     rm_vec.append(aoi_map)
     # name of output, which r.dop.import creates
@@ -126,9 +127,10 @@ class TestRDopImport(TestCase):
                 "EPSG:32632 and EPSG:25832."
             )
         # import aoi_map for testing
+        fs = cls.fs.replace(",", "_")
         cls.runModule(
             "v.import",
-            input=cls.aoi_map_file,
+            input=os.path.join("data", f"test_aoi_{fs}.gpkg"),
             output=cls.aoi_map,
         )
         # set region
@@ -160,129 +162,126 @@ class TestRDopImport(TestCase):
             flags="f",
         )
 
-    # def test_default_settings(self):
-    #     """
-    #     Tests module with default settings:
-    #     importing data for current set region
-    #     with resolution of current set region
-    #     """
-    #     print("\nTest default settings ...")
-    #     r_check = SimpleModule(
-    #         "r.dop.import",
-    #         output=self.test_output,
-    #         federal_state="Hessen",
-    #     )
-    #     self.assertModule(
-    #         r_check,
-    #         "Importing data for current set region fails.",
-    #     )
-    #     for el in self.test_output_all:
-    #         # test if all four raster maps are created
-    #         self.assertRasterExists(name=el, msg=f"Creation of {el} failed.")
-    #         # test if range of values are correct
-    #         raster_range = grass.parse_command("r.info", map=el, flags="r")
-    #         self.assertTrue(
-    #             (
-    #                 (float(raster_range["min"]) >= 1)
-    #                 and (float(raster_range["max"]) <= 256)
-    #             ),
-    #             f"Incorrect value range of raster map {el}."
-    #             "Should be [1 256]",
-    #         )
-    #     # test resolution
-    #     out_res_ns = round(
-    #         float(
-    #             grass.parse_command(
-    #                 "r.info", map=self.test_output_all[0], flags="g"
-    #             )["nsres"]
-    #         )
-    #     )
-    #     out_res_ew = round(
-    #         float(
-    #             grass.parse_command(
-    #                 "r.info", map=self.test_output_all[0], flags="g"
-    #             )["ewres"]
-    #         )
-    #     )
-    #     self.assertTrue(
-    #         ((out_res_ns == 1.0) and (out_res_ew == 1.0)),
-    #         "Resolution of DOPs is not as expected."
-    #         f"Expected res of 1, but got nsres of {out_res_ns}"
-    #         f"and ewres of {out_res_ew}",
-    #     )
-    #     print("Test default settings successfully finished.\n")
+    def default_settings_test(self):
+        """
+        Tests module with default settings:
+        importing data for current set region
+        with resolution of current set region
+        """
+        print("\nTest default settings ...")
+        r_check = SimpleModule(
+            "r.dop.import",
+            output=self.test_output,
+            federal_state=self.fs,
+        )
+        self.assertModule(
+            r_check,
+            "Importing data for current set region fails.",
+        )
+        for el in self.test_output_all:
+            # test if all four raster maps are created
+            self.assertRasterExists(name=el, msg=f"Creation of {el} failed.")
+            # test if range of values are correct
+            raster_range = grass.parse_command("r.info", map=el, flags="r")
+            self.assertTrue(
+                (
+                    (float(raster_range["min"]) >= 1)
+                    and (float(raster_range["max"]) <= 256)
+                ),
+                f"Incorrect value range of raster map {el}."
+                "Should be [1 256]",
+            )
+        # test resolution
+        out_res_ns = round(
+            float(
+                grass.parse_command(
+                    "r.info", map=self.test_output_all[0], flags="g"
+                )["nsres"]
+            )
+        )
+        out_res_ew = round(
+            float(
+                grass.parse_command(
+                    "r.info", map=self.test_output_all[0], flags="g"
+                )["ewres"]
+            )
+        )
+        self.assertTrue(
+            ((out_res_ns == 1.0) and (out_res_ew == 1.0)),
+            "Resolution of DOPs is not as expected."
+            f"Expected res of 1, but got nsres of {out_res_ns} "
+            f"and ewres of {out_res_ew}",
+        )
+        print("Test default settings successfully finished.\n")
 
-    # def test_extent_aoi_map(self):
-    #     """
-    #     Tests importing data only for AOI given by aoi_map
-    #     """
-    #     print("\nTest AOI (HE) ...")
-    #     r_check = SimpleModule(
-    #         "r.dop.import",
-    #         output=self.test_output,
-    #         federal_state="Hessen",
-    #         aoi=self.aoi_map,
-    #     )
-    #     self.assertModule(r_check, "Importing data for AOI fails.")
-    #     for el in self.test_output_all:
-    #         # test if all four raster maps are created
-    #         self.assertRasterExists(name=el, msg=f"Creation of {el} failed.")
-    #     # check if just aoi data loaded ==>
-    #     # should have 769032 cells
-    #     cells_aoi = grass.parse_command(
-    #         "r.info", map=self.test_output_all[0], flags="g"
-    #     )["cells"]
-    #     self.assertTrue(
-    #         int(cells_aoi) == 769032, "Data loaded for larger region than AOI"
-    #     )
-    #     print("Test AOI (HE) successfully finished.\n")
+    def extent_aoi_map_test(self):
+        """
+        Tests importing data only for AOI given by aoi_map
+        """
+        print(f"\nTest AOI ({self.fs}) ...")
+        r_check = SimpleModule(
+            "r.dop.import",
+            output=self.test_output,
+            federal_state=self.fs,
+            aoi=self.aoi_map,
+        )
+        self.assertModule(r_check, "Importing data for AOI fails.")
+        for el in self.test_output_all:
+            # test if all four raster maps are created
+            self.assertRasterExists(name=el, msg=f"Creation of {el} failed.")
+        # check if just aoi data loaded ==>
+        # should have aoi_cells cells
+        cells_aoi = grass.parse_command(
+            "r.info", map=self.test_output_all[0], flags="g"
+        )["cells"]
+        self.assertTrue(
+            int(cells_aoi) == self.aoi_cells,
+            "Data loaded for larger region than AOI",
+        )
+        print(f"Test AOI ({self.fs}) successfully finished.\n")
 
-    # def test_dop_resolution(self):
-    #     """
-    #     Tests importing data with original resolution of DOPs
-    #     """
-    #     print("\nTest resolution (HE) ...")
-    #     r_check = SimpleModule(
-    #         "r.dop.import",
-    #         output=self.test_output,
-    #         aoi=self.aoi_map,
-    #         federal_state="Hessen",
-    #         flags="r",
-    #     )
-    #     self.assertModule(
-    #         r_check,
-    #         "Importing data with original DOP resolution fails."
-    #         "Note: could also be a fail of aoi_map import "
-    #         "(test_extent_aoi_map). Check this test first.",
-    #     )
-    #     for el in self.test_output_all:
-    #         # test if all four raster maps are created
-    #         self.assertRasterExists(name=el, msg=f"Creation of {el} failed.")
-    #     out_res_ns = round(
-    #         float(
-    #             grass.parse_command(
-    #                 "r.info", map=self.test_output_all[0], flags="g"
-    #             )["nsres"]
-    #         ),
-    #         2,
-    #     )
-    #     out_res_ew = round(
-    #         float(
-    #             grass.parse_command(
-    #                 "r.info", map=self.test_output_all[0], flags="g"
-    #             )["ewres"]
-    #         ),
-    #         2,
-    #     )
-    #     # 20 cm auflösung und AOI
-    #     self.assertTrue(
-    #         ((out_res_ns == 0.2) and (out_res_ew == 0.2)),
-    #         "Resolution of DOPs is not as expected."
-    #         f"Expected res of 0.2, but got nsres of {out_res_ns}"
-    #         f" and ewres of {out_res_ew}",
-    #     )
-    #     print("Test resolution (HE) successfully finished.\n")
-
-
-if __name__ == "__main__":
-    test()
+    def dop_resolution_test(self):
+        """
+        Tests importing data with original resolution of DOPs
+        """
+        print(f"\nTest resolution ({self.fs}) ...")
+        r_check = SimpleModule(
+            "r.dop.import",
+            output=self.test_output,
+            aoi=self.aoi_map,
+            federal_state=self.fs,
+            flags="r",
+        )
+        self.assertModule(
+            r_check,
+            "Importing data with original DOP resolution fails."
+            "Note: could also be a fail of aoi_map import "
+            "(test_extent_aoi_map). Check this test first.",
+        )
+        for el in self.test_output_all:
+            # test if all four raster maps are created
+            self.assertRasterExists(name=el, msg=f"Creation of {el} failed.")
+        out_res_ns = round(
+            float(
+                grass.parse_command(
+                    "r.info", map=self.test_output_all[0], flags="g"
+                )["nsres"]
+            ),
+            2,
+        )
+        out_res_ew = round(
+            float(
+                grass.parse_command(
+                    "r.info", map=self.test_output_all[0], flags="g"
+                )["ewres"]
+            ),
+            2,
+        )
+        # ref_res Auflösung und AOI
+        self.assertTrue(
+            ((out_res_ns == self.ref_res) and (out_res_ew == self.ref_res)),
+            "Resolution of DOPs is not as expected."
+            f"Expected res of {self.ref_res}, but got nsres of {out_res_ns}"
+            f" and ewres of {out_res_ew}",
+        )
+        print(f"Test resolution ({self.fs}) successfully finished.\n")
