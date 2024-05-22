@@ -1,2 +1,2 @@
 psutil
-grass-gis-helpers
+grass-gis-helpers>=1.1.0

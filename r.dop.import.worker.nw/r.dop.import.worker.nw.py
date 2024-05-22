@@ -2,10 +2,10 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import.worker.bb.be
+# MODULE:      r.dop.import.worker.nw
 # AUTHOR(S):   Johannes Halbauer & Lina Krisztian
 #
-# PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area in Brandenburg
+# PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area in Nordrhein-Westfalen
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development Team
 #
 # This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #############################################################################
 
 # %Module
-# % description: Downloads and imports single Digital Orthophotos (DOPs) in Brandenburg
+# % description: Downloads and imports single Digital Orthophotos (DOPs) in Nordrhein-Westfalen
 # % keyword: imagery
 # % keyword: download
 # % keyword: DOP
@@ -71,7 +71,7 @@
 # %option
 # % key: resolution_to_import
 # % required: yes
-# % description: Resolution of region, for which DOP will be imported (only if flag r not set)
+# % description: Resolution of region, for which DOP will be imported
 # %end
 
 # %option G_OPT_R_OUTPUT
@@ -81,6 +81,11 @@
 
 # %option G_OPT_MEMORYMB
 # % description: Memory which is used by all processes (it is divided by nprocs for each single parallel process)
+# %end
+
+# %flag
+# % key: r
+# % description: Use native DOP resolution
 # %end
 
 # %flag
@@ -111,7 +116,6 @@ from grass_gis_helpers.location import (
 from grass_gis_helpers.mapset import switch_to_new_mapset
 from grass_gis_helpers.open_geodata_germany.download_data import (
     download_data_using_threadpool,
-    extract_compressed_files,
 )
 from grass_gis_helpers.raster import adjust_raster_resolution
 
@@ -154,9 +158,7 @@ def import_and_reproject(
     download_dir=None,
     epsg=None,
 ):
-    """Import DOPs and reproject them if needed. This is needed for the DOPs
-    of Brandenburg and Berlin because GDAL (at least smaller 3.6.3) does not
-    support the coordinate reference system in the data.
+    """Import DOPs and reproject them if needed.
 
     Args:
         url (str): The URL of the DOP to import
@@ -181,7 +183,7 @@ def import_and_reproject(
         if len(aoi_map_mapset) == 2:
             mapset = aoi_map_mapset[1]
 
-    # create temporary location with EPSG:25833
+    # create temporary location with EPSG:25832
     tmp_loc, tmp_gisrc = create_tmp_location(epsg)
 
     # reproject aoi
@@ -210,24 +212,19 @@ def import_and_reproject(
         "output": raster_name,
         "memory": 1000,
         "quiet": True,
-        "flags": "o",
+        # "flags": "o",
         "extent": "region",
     }
-
     # TODO: Auslagern dieser Funktion in Lib, jedoch unterscheidet
-    # sich der folgende if-Block bspw. von dem von NW
+    # sich der folgende if-Block bspw. von dem von BB/BE
     # (außerdem ist noch die o-flag in kwargs unterschiedlich)
     #
     # download and keep data to download dir if -k flag ist set
     # and change input parameter in kwargs to local path
     if flags["k"]:
-        url = url.replace("/vsizip/vsicurl/", "")
+        url = url.replace("/vsicurl/", "")
         basename = os.path.basename(url)
-        url = url.replace(basename, "")[:-1]
         download_data_using_threadpool([url], download_dir, 1)
-        extract_compressed_files(
-            [basename.replace(".tif", ".zip")], download_dir
-        )
         kwargs["input"] = os.path.join(download_dir, basename)
 
     import_sucess = False
@@ -250,14 +247,11 @@ def import_and_reproject(
         grass.run_command("g.region", raster=f"{raster_name}.1")
 
     # reproject data
-    if resolution_to_import:
-        res = resolution_to_import
-    else:
-        res = float(
-            grass.parse_command("r.info", flags="g", map=f"{raster_name}.1")[
-                "nsres"
-            ]
-        )
+    res = float(
+        grass.parse_command("r.info", flags="g", map=f"{raster_name}.1")[
+            "nsres"
+        ]
+    )
     # switch location
     os.environ["GISRC"] = str(gisrc)
     if aoi_map:
@@ -307,7 +301,7 @@ def main():
 
     # import DOP tile with original resolution
     grass.message(
-        _(f"Started DOP import for key: {tile_key} and URL: {tile_url}.")
+        _(f"Started DOP import for key: {tile_key} and URL: {tile_url}")
     )
 
     # import and reproject DOP tiles based on tileindex
@@ -317,12 +311,17 @@ def main():
         resolution_to_import,
         aoi_map,
         download_dir,
-        epsg=25833,
+        epsg=25832,
     )
-
     # adjust resolution if required
     for band in [1, 2, 3, 4]:
         raster_name_band = f"{raster_name}.{band}"
+        grass.run_command(
+            "g.region",
+            raster=raster_name_band,
+            res=resolution_to_import,
+            flags="a",
+        )
         adjust_raster_resolution(
             raster_name_band, raster_name_band, resolution_to_import
         )
@@ -330,7 +329,7 @@ def main():
     grass.message(_(f"Finishing raster import for {raster_name}..."))
 
     # rescale imported DOPs
-    new_rm_rast = rescale_to_1_256("BB_BE", raster_name)
+    new_rm_rast = rescale_to_1_256("NW", raster_name)
     rm_rast.extend(new_rm_rast)
 
     # switch back to original location
