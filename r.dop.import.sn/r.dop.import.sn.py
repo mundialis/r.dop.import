@@ -90,6 +90,7 @@ TINDEX = (
 )
 
 ID = grass.tempname(12)
+RETRIES = 10
 orig_region = None
 keep_data = False
 rm_rasters = []
@@ -176,24 +177,32 @@ def main():
         if res is None:
             ds = gdal.Open(url)
             count = 0
-            while ds is None and count <= 10:
+            while ds is None and count <= RETRIES:
                 count += 1
                 sleep(10)
                 ds = gdal.Open(url)
             res = ds.GetGeoTransform()[1]
 
         # import DOPs
-        grass.run_command(
-            "r.import",
-            input=input,
-            output=dop_name,
-            extent="region",
-            resolution="value",
-            resolution_value=res,
-            memory=1000,
-            overwrite=True,
-            quiet=True,
-        )
+        count = 0
+        imported = False
+        while not imported and count <= RETRIES:
+            count += 1
+            try:
+                grass.run_command(
+                    "r.import",
+                    input=input,
+                    output=dop_name,
+                    extent="region",
+                    resolution="value",
+                    resolution_value=res,
+                    memory=1000,
+                    overwrite=True,
+                    quiet=True,
+                )
+                imported = True
+            except Exception:
+                sleep(10)
         # append DOP name with band suffix
         all_dops[0].append(dop_name + ".1")
         all_dops[1].append(dop_name + ".2")

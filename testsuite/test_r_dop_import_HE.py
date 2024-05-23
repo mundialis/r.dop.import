@@ -6,8 +6,8 @@
 # AUTHOR(S):   Lina Krisztian, Anika Weinmann
 
 # PURPOSE:     Tests r.dop.import Hessen
-# COPYRIGHT:   (C) 2023 by mundialis GmbH & Co. KG and the GRASS Development
-#              Team
+# COPYRIGHT:   (C) 2023-2024 by mundialis GmbH & Co. KG and the GRASS
+#              Development Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
