@@ -241,7 +241,7 @@ def main():
         # import data when local import was not used
         if not imported_local_data:
             # implement data download and import from open data
-            out_fs = f"dop_{fs}"
+            out_fs = f"dop_{fs}_{ID}"
             # run old addons
             # TODO: modify list in if condition when adding a new refactored addon
             if fs in NOT_YET_SUPPORTED and fs in ["SN", "TH", "HE"]:

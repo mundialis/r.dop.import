@@ -2,11 +2,11 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import test Brandenburg/Berlin
+# MODULE:      r.dop.import test base
 # AUTHOR(S):   Anika Weinmann
 
-# PURPOSE:     Tests r.dop.import Brandenburg/Berlin
-# COPYRIGHT:   (C) 2023 by mundialis GmbH & Co. KG and the GRASS Development
+# PURPOSE:     Test base for r.dop.import
+# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team
 #
 # This program is free software; you can redistribute it and/or modify
@@ -172,7 +172,7 @@ class RDopImportTestBase(TestCase):
         r_check = SimpleModule(
             "r.dop.import",
             output=self.test_output,
-            federal_state=self.fs,
+            federal_state=self.fs.split(","),
         )
         self.assertModule(
             r_check,
@@ -222,7 +222,7 @@ class RDopImportTestBase(TestCase):
         r_check = SimpleModule(
             "r.dop.import",
             output=self.test_output,
-            federal_state=self.fs,
+            federal_state=self.fs.split(","),
             aoi=self.aoi_map,
         )
         self.assertModule(r_check, "Importing data for AOI fails.")
@@ -249,7 +249,7 @@ class RDopImportTestBase(TestCase):
             "r.dop.import",
             output=self.test_output,
             aoi=self.aoi_map,
-            federal_state=self.fs,
+            federal_state=self.fs.split(","),
             flags="r",
         )
         self.assertModule(

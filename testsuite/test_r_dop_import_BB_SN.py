@@ -2,12 +2,12 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import test Brandenburg/Berlin
+# MODULE:      r.dop.import test Brandenburg and Sachsen
 # AUTHOR(S):   Anika Weinmann
 
-# PURPOSE:     Tests r.dop.import Brandenburg/Berlin
-# COPYRIGHT:   (C) 2023-2024 by mundialis GmbH & Co. KG and the GRASS
-#              Development Team
+# PURPOSE:     Tests r.dop.import Brandenburg and Sachsen
+# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
+#              Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,13 +22,14 @@
 #############################################################################
 
 from grass.gunittest.main import test
+import grass.script as grass
 from r_dop_import_test_base import RDopImportTestBase
 
 
-class TestRDopImportBB(RDopImportTestBase):
-    fs = "BB"
+class TestRDopImportBBSN(RDopImportTestBase):
+    fs = "BB,SN"
     ref_res = 0.2
-    aoi_cells = 128928
+    aoi_cells = 312018
 
     def test_default_settings(self):
         """
@@ -36,6 +37,12 @@ class TestRDopImportBB(RDopImportTestBase):
         importing data for current set region
         with resolution of current set region
         """
+        grass.run_command(
+            "g.region",
+            vector=self.aoi_map,
+            res=1,
+            flags="a",
+        )
         self.default_settings_test()
 
     def test_extent_aoi_map(self):
