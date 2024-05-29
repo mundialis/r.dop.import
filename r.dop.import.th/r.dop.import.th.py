@@ -131,7 +131,11 @@ def main():
     # print warning that memory will be irgnored
     # (no memmory parameter in worker module)
     if options["memory"]:
-        grass.warning(_("<memory> parameter will be ignored, because the worker module for TH do not accept a <memory> parameter."))
+        grass.warning(
+            _(
+                "<memory> parameter will be ignored, because the worker module for TH do not accept a <memory> parameter."
+            )
+        )
 
     # if -k flag is set print warning that it will be ignored because
     # the data will be directly imported into GRASS from WMS
