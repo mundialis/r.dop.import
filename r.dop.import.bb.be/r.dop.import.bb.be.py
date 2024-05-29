@@ -77,10 +77,10 @@
 import atexit
 import os
 import sys
-
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
+from osgeo import gdal
 
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.data_import import (
@@ -182,6 +182,7 @@ def main():
     # get download urls which overlap with AOI
     # or current region if no AOI is given
     url_tiles = get_list_of_tindex_locations(tindex_vect, aoi)
+
     url_tiles_count = 0
     for i in range(len(url_tiles)):
         url_tiles_count += 1
@@ -222,6 +223,7 @@ def main():
                 "orig_region": orig_region,
                 "memory": 1000,
                 "new_mapset": new_mapset,
+                "flags": "",
             }
             grass.message(_(f"raster name: {raster_name}"))
 
@@ -231,12 +233,12 @@ def main():
             if options["download_dir"]:
                 param["download_dir"] = download_dir
             if flags["k"]:
-                param["flags"] = "k"
+                param["flags"] += "k"
             if flags["r"]:
-                if "flags" in param:
-                    param["flags"] += "r"
-                else:
-                    param["flags"] = "r"
+                dop_src = gdal.Open(param["tile_url"])
+                param["resolution_to_import"] = abs(
+                    dop_src.GetGeoTransform()[1]
+                )
             else:
                 param["resolution_to_import"] = ns_res
 

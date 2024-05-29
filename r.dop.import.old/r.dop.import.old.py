@@ -2,7 +2,7 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import
+# MODULE:      r.dop.import.old
 # AUTHOR(S):   Johannes Halbauer, Lina Krisztian, Anika Weinmann, Julia Haas
 #
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
@@ -97,7 +97,7 @@ sys.path.insert(
     os.path.join(
         os.path.dirname(sys.path[0]),
         "etc",
-        "r.dop.import",
+        "r.dop.import.old",
     ),
 )
 from download_urls import URLS
