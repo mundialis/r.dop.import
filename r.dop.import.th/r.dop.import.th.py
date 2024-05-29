@@ -2,7 +2,7 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import.nw
+# MODULE:      r.dop.import.th
 # AUTHOR(S):   Johannes Halbauer, Anika Weinmann
 #
 # PURPOSE:     Downloads DOPs for Thüringen and AOI
@@ -37,7 +37,7 @@
 
 # %option
 # % key: download_dir
-# % label: Path of output folder
+# % label: Path to output folder
 # % description: Path of download folder
 # % required: no
 # % multiple: no
@@ -83,7 +83,6 @@ from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
 
 from grass_gis_helpers.cleanup import general_cleanup
-from grass_gis_helpers.general import test_memory
 from grass_gis_helpers.open_geodata_germany.download_data import (
     check_download_dir,
 )
@@ -129,6 +128,11 @@ def main():
     output = options["output"]
     fs = "TH"
 
+    # print warning that memory will be irgnored
+    # (no memmory parameter in worker module)
+    if options["memory"]:
+        grass.warning(_("<memory> parameter will be ignored, because the worker module for TH do not accept a <memory> parameter."))
+
     # if -k flag is set print warning that it will be ignored because
     # the data will be directly imported into GRASS from WMS
     if flags["k"]:
@@ -138,9 +142,6 @@ def main():
                 "Use r.out.gdal module to export DOPs into download directory!"
             )
         )
-
-    # set memory to input if possible
-    options["memory"] = test_memory(options["memory"])
 
     # create list for each raster band for building entire raster
     all_raster = {
@@ -276,7 +277,6 @@ def main():
                 "tile_url": WMS,
                 "raster_name": raster_name,
                 "orig_region": orig_region,
-                "memory": 1000,
                 "new_mapset": new_mapset,
             }
             grass.message(f"raster_name: {raster_name}")

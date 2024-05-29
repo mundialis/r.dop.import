@@ -79,18 +79,9 @@
 # % description: Name of raster output
 # %end
 
-# %option G_OPT_MEMORYMB
-# % description: Memory which is used by all processes (it is divided by nprocs for each single parallel process)
-# %end
-
 # %flag
 # % key: r
 # % description: Use native DOP resolution
-# %end
-
-# %flag
-# % key: k
-# % label: Keep downloaded data in the download directory
 # %end
 
 # %rules
@@ -106,7 +97,6 @@ import grass.script as grass
 from grass.pygrass.utils import get_lib_path
 
 from grass_gis_helpers.cleanup import general_cleanup, cleaning_tmp_location
-from grass_gis_helpers.general import test_memory
 from grass_gis_helpers.location import switch_back_original_location
 from grass_gis_helpers.mapset import switch_to_new_mapset
 from grass_gis_helpers.raster import adjust_raster_resolution, rename_raster
@@ -145,7 +135,15 @@ def cleanup():
 def import_dop_from_th_wms(
     tile_key, rastername, tile_url, resolution_to_import
 ):
-    """Import DOP from TH WMS"""
+    """Import DOP from TH WMS
+
+    Args:
+        tile_key (str): Key of current tile
+        rastername (str): Name of resulting raster
+        tile_url (str): WMS URL to get DOPs from
+        resolution_to_import (float): Resolution to resample imported raster to
+    """
+    # set region and create variable names
     grass.run_command("g.region", vector=tile_key)
     tile_key = tile_key.split("@")[0]
     for name in ["20cir", ""]:
@@ -158,6 +156,7 @@ def import_dop_from_th_wms(
         rm_group.append(out_tmp)
         for band in ["red", "green", "blue"]:
             rm_rast.append(f"{out_tmp}.{band}")
+
         # import wms data and retry download if wms fails 15 times
         trydownload = True
         count = 0
@@ -186,6 +185,7 @@ def import_dop_from_th_wms(
                 if count > 15:
                     grass.fatal(f"Download of {tile_url} not working.")
                 sleep(10)
+
         # change band name to band number
         for band in bands:
             if name == "20cir":
@@ -229,9 +229,6 @@ def main():
         resolution_to_import = float(options["resolution_to_import"])
     else:
         resolution_to_import = None
-
-    # set memory to input if possible
-    options["memory"] = test_memory(options["memory"])
 
     # switch to new mapset for parallel processing
     gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
