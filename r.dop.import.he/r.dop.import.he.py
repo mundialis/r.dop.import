@@ -107,6 +107,7 @@ download_dir = None
 rm_dirs = []
 
 WMS = "https://www.gds-srv.hessen.de/cgi-bin/lika-services/ogc-free-images.ows?language=ger&"
+NATIVE_DOP_RES = 0.2
 
 
 def cleanup():
@@ -281,7 +282,7 @@ def main():
             if flags["k"]:
                 param["flags"] += "k"
             if flags["r"]:
-                param["flags"] += "r"
+                param["resolution_to_import"] = NATIVE_DOP_RES
             else:
                 param["resolution_to_import"] = ns_res
 
