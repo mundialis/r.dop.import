@@ -84,10 +84,6 @@
 # % description: Use native DOP resolution
 # %end
 
-# %rules
-# % requires_all: -k,download_dir
-# %end
-
 
 import atexit
 import sys
@@ -234,7 +230,11 @@ def main():
     gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
 
     # set region
-    grass.run_command("g.region", region=f"{orig_region}@{old_mapset}")
+    grass.run_command(
+        "g.region",
+        region=f"{orig_region}@{old_mapset}",
+        res=resolution_to_import,
+    )
 
     # import DOP tile with original resolution
     grass.message(

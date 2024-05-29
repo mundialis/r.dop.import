@@ -29,8 +29,8 @@ from grass_gis_helpers.general import set_nprocs
 
 OPEN_DATA_AVAILABILITY = {
     "NO_OPEN_DATA": ["BW", "BY", "HB", "HH", "MV", "RP", "SL", "ST", "SH"],
-    "NOT_YET_SUPPORTED": ["TH", "HE", "NI"],
-    "SUPPORTED": ["BE", "BB", "NW", "SN"],
+    "NOT_YET_SUPPORTED": ["HE", "NI"],
+    "SUPPORTED": ["BE", "BB", "NW", "SN", "TH"],
 }
 
 

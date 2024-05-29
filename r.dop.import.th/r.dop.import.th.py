@@ -244,13 +244,6 @@ def main():
         tiles_list.append(tile_area)
         rm_vectors.append(tile_area)
 
-    # # add key to each tile in tile list
-    # tiles_count = 0
-    # for i in range(len(tiles_list)):
-    #     tiles_count += 1
-    #     tiles_list[i] = (   tiles_count, [tiles_list[i]])
-    # number_tiles = len(tiles_list)
-
     # set number of parallel processes to number of tiles
     if number_tiles < nprocs:
         nprocs = number_tiles
@@ -291,7 +284,7 @@ def main():
             if flags["k"]:
                 param["flags"] += "k"
             if flags["r"]:
-                param["flags"] += "r"
+                param["resolution_to_import"] = 0.2
             else:
                 param["resolution_to_import"] = ns_res
 
