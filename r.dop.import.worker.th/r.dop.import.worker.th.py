@@ -87,7 +87,6 @@
 
 import atexit
 import sys
-from time import sleep
 
 import grass.script as grass
 from grass.pygrass.utils import get_lib_path
@@ -95,7 +94,6 @@ from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup, cleaning_tmp_location
 from grass_gis_helpers.location import switch_back_original_location
 from grass_gis_helpers.mapset import switch_to_new_mapset
-from grass_gis_helpers.raster import adjust_raster_resolution, rename_raster
 
 # import module library
 path = get_lib_path(modname="r.dop.import")
@@ -103,7 +101,7 @@ if path is None:
     grass.fatal("Unable to find the dop library directory.")
 sys.path.append(path)
 try:
-    from r_dop_import_lib import rescale_to_1_256
+    from r_dop_import_lib import rescale_to_1_256, import_dop_from_wms
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
@@ -128,93 +126,9 @@ def cleanup():
     )
 
 
-def import_dop_from_th_wms(
-    tile_key, rastername, tile_url, resolution_to_import
-):
-    """Import DOP from TH WMS
-
-    Args:
-        tile_key (str): Key of current tile
-        rastername (str): Name of resulting raster
-        tile_url (str): WMS URL to get DOPs from
-        resolution_to_import (float): Resolution to resample imported raster to
-    """
-    # set region and create variable names
-    grass.run_command("g.region", vector=tile_key)
-    tile_key = tile_key.split("@")[0]
-    for name in ["20cir", ""]:
-        if name == "20cir":
-            out_tmp = f"{name}_{tile_key}_tmp"
-            bands = ["red"]
-        else:
-            out_tmp = f"{tile_key}_tmp"
-            bands = ["red", "green", "blue"]
-        rm_group.append(out_tmp)
-        for band in ["red", "green", "blue"]:
-            rm_rast.append(f"{out_tmp}.{band}")
-
-        # import wms data and retry download if wms fails 15 times
-        trydownload = True
-        count = 0
-        while trydownload:
-            try:
-                count += 1
-                grass.run_command(
-                    "r.in.wms",
-                    url=tile_url,
-                    layer=f"th_dop{name}",
-                    output=out_tmp,
-                    format="tiff",
-                    flags="b",
-                    overwrite=True,
-                )
-                trydownload = False
-            except Exception:
-                # remove maps where wms download failed
-                grass.run_command(
-                    "g.remove",
-                    type="raster",
-                    pattern=f"{out_tmp}.*",
-                    flags="f",
-                )
-                grass.message(_("Retry download..."))
-                if count > 15:
-                    grass.fatal(f"Download of {tile_url} not working.")
-                sleep(10)
-
-        # change band name to band number
-        for band in bands:
-            if name == "20cir":
-                oband = "4"
-            else:
-                oband = band
-                if band == "red":
-                    oband = "1"
-                elif band == "green":
-                    oband = "2"
-                elif band == "blue":
-                    oband = "3"
-
-            # create old and new name for adjusting resolution/renaming
-            old_name = f"{out_tmp}.{band}"
-            new_name = f"{rastername}.{oband}"
-
-            # adjust resolution/rename raster maps
-            if not flags["r"]:
-                adjust_raster_resolution(
-                    old_name, new_name, resolution_to_import
-                )
-            else:
-                rename_raster(old_name, new_name)
-            rm_rast.append(old_name)
-
-    # drop rest of CIR DOP
-    grass.run_command(
-        "g.remove", type="raster", pattern="cir_*_tmp*", flags="f"
-    )
-
-
 def main():
+    global rm_group, rm_rast
+
     # parser options
     tile_key = options["tile_key"]
     tile_url = options["tile_url"]
@@ -240,12 +154,19 @@ def main():
     grass.message(
         _(f"Started DOP import for key: {tile_key} and URL: {tile_url}")
     )
+
     # import DOPs from WMS
-    import_dop_from_th_wms(
+    import_dop_from_wms(
         f"{tile_key }@{old_mapset}",
         raster_name,
         tile_url,
         resolution_to_import,
+        ["20cir", ""],
+        "20cir",
+        "th_dop",
+        rm_group,
+        rm_rast,
+        flags["r"],
     )
 
     grass.message(_(f"Finishing raster import for {raster_name}..."))

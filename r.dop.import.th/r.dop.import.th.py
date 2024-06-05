@@ -94,7 +94,10 @@ if path is None:
     grass.fatal("Unable to find the dop library directory.")
 sys.path.append(path)
 try:
-    from r_dop_import_lib import setup_parallel_processing
+    from r_dop_import_lib import (
+        setup_parallel_processing,
+        create_grid_and_tiles_list,
+    )
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
@@ -134,7 +137,8 @@ def main():
     if options["memory"]:
         grass.warning(
             _(
-                "<memory> parameter will be ignored, because the worker module for TH do not accept a <memory> parameter."
+                "<memory> parameter will be ignored, because the worker "
+                "module for TH do not accept a <memory> parameter."
             )
         )
 
@@ -143,8 +147,9 @@ def main():
     if flags["k"]:
         grass.warning(
             _(
-                "-k flag will be ignored, beacuse TH DOPs will be imported directly from WMS into GRASS. "
-                "Use r.out.gdal module to export DOPs into download directory!"
+                "-k flag will be ignored, beacuse TH DOPs will be imported "
+                "directly from WMS into GRASS. Use r.out.gdal module to "
+                "export DOPs into download directory!"
             )
         )
 
@@ -189,61 +194,10 @@ def main():
     # set grid name
     grid = f"tmp_grid_TH_{ID}"
 
-    # check if aoi is smaller than tile size
-    if ns_res <= float(tile_size) and ew_res <= float(tile_size):
-        grass.run_command("v.in.region", output=grid, quiet=True)
-        rm_vectors.append(grid)
-        grass.run_command(
-            "v.db.addtable", map=grid, columns="cat int", quiet=True
-        )
-    else:
-        grass.run_command("g.region", res=tile_size, flags="a", quiet=True)
-
-        # create grid
-        grass.run_command(
-            "v.mkgrid",
-            map=grid,
-            box=f"{tile_size},{tile_size}",
-            quiet=True,
-        )
-        # reset region
-        grass.run_command("g.region", vector=aoi)
-
-    # set grid name
-    grid_name = f"tmp_grid_area_{ID}"
-
-    # choose tiles overlapping with aoi
-    grass.run_command(
-        "v.select",
-        ainput=grid,
-        binput=aoi,
-        output=grid_name,
-        operator="overlap",
-        quiet=True,
+    # create grid with lib function
+    rm_vectors, number_tiles, tiles_list = create_grid_and_tiles_list(
+        ns_res, ew_res, tile_size, grid, rm_vectors, aoi, ID, fs
     )
-    rm_vectors.append(grid_name)
-
-    # create list of tiles
-    tiles_num_list = list(
-        grass.parse_command(
-            "v.db.select", map=grid_name, columns="cat", flags="c", quiet=True
-        ).keys()
-    )
-    number_tiles = len(tiles_num_list)
-
-    grass.message(_(f"Number of tiles: {number_tiles}"))
-    tiles_list = []
-    for tile in tiles_num_list:
-        tile_area = f"TH_DOP_{tile}"
-        grass.run_command(
-            "v.extract",
-            input=grid_name,
-            where=f"cat == {tile}",
-            output=tile_area,
-            quiet=True,
-        )
-        tiles_list.append(tile_area)
-        rm_vectors.append(tile_area)
 
     # set number of parallel processes to number of tiles
     if number_tiles < nprocs:
