@@ -2,10 +2,10 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import.he
+# MODULE:      r.dop.import.th
 # AUTHOR(S):   Johannes Halbauer, Anika Weinmann
 #
-# PURPOSE:     Downloads DOPs for Hessen and AOI
+# PURPOSE:     Downloads DOPs for Thüringen and AOI
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team
 #
@@ -22,7 +22,7 @@
 ############################################################################
 
 # %module
-# % description: Downloads DOPs for Hessen and aoi.
+# % description: Downloads DOPs for Thüringen and AOI.
 # % keyword: raster
 # % keyword: import
 # % keyword: DOP
@@ -38,7 +38,7 @@
 # %option
 # % key: download_dir
 # % label: Path to output folder
-# % description: Path to download folder
+# % description: Path of download folder
 # % required: no
 # % multiple: no
 # %end
@@ -108,7 +108,7 @@ rm_vectors = []
 download_dir = None
 rm_dirs = []
 
-WMS = "https://www.gds-srv.hessen.de/cgi-bin/lika-services/ogc-free-images.ows?language=ger&"
+WMS = "https://www.geoproxy.geoportal-th.de/geoproxy/services/DOP"
 NATIVE_DOP_RES = 0.2
 
 
@@ -130,10 +130,10 @@ def main():
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
     output = options["output"]
-    fs = "HE"
+    fs = "TH"
 
     # print warning that memory will be irgnored
-    # (no memory parameter in worker module)
+    # (no memmory parameter in worker module)
     if options["memory"]:
         grass.warning(
             _(
@@ -176,7 +176,6 @@ def main():
     # set region if aoi is given
     if aoi:
         grass.run_command("g.region", vector=aoi, flags="a")
-
     # if no aoi save region as aoi
     else:
         aoi = f"region_aoi_{ID}"
@@ -187,13 +186,13 @@ def main():
         )
 
     # create grid for downloading
-    grass.message(_("Creating DOP tiles for HE..."))
+    grass.message(_("Creating DOP tiles for TH..."))
 
     # set tile size in map units (meter)
     tile_size = 1000
 
     # set grid name
-    grid = f"tmp_grid_HE_{ID}"
+    grid = f"tmp_grid_TH_{ID}"
 
     # create grid with lib function
     rm_vectors, number_tiles, tiles_list = create_grid_and_tiles_list(
@@ -213,7 +212,7 @@ def main():
     # set queue and variables for worker addon
     try:
         grass.message(
-            _(f"Importing {number_tiles} DOPs for HE in parallel...")
+            _(f"Importing {number_tiles} DOPs for TH in parallel...")
         )
         for tile in tiles_list:
             key = tile
@@ -255,15 +254,15 @@ def main():
             rm_rasters.append(rm_nir)
 
             # run worker addon in parallel
-            r_dop_import_worker_HE = Module(
-                "r.dop.import.worker.he",
+            r_dop_import_worker_TH = Module(
+                "r.dop.import.worker.th",
                 **param,
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_HE.stdout = grass.PIPE
-            r_dop_import_worker_HE.stderr = grass.PIPE
-            queue.put(r_dop_import_worker_HE)
+            r_dop_import_worker_TH.stdout = grass.PIPE
+            r_dop_import_worker_TH.stderr = grass.PIPE
+            queue.put(r_dop_import_worker_TH)
         queue.wait()
     except Exception:
         for proc_num in range(queue.get_num_run_procs()):

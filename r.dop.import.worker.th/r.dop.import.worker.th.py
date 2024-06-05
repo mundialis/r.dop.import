@@ -2,10 +2,10 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import.worker.he
+# MODULE:      r.dop.import.worker.th
 # AUTHOR(S):   Johannes Halbauer & Lina Krisztian
 #
-# PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area in Hessen
+# PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area in Thüringen
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development Team
 #
 # This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #############################################################################
 
 # %Module
-# % description: Downloads and imports single Digital Orthophotos (DOPs) in Hessen
+# % description: Downloads and imports single Digital Orthophotos (DOPs) in Thüringen
 # % keyword: imagery
 # % keyword: download
 # % keyword: DOP
@@ -154,15 +154,16 @@ def main():
     grass.message(
         _(f"Started DOP import for key: {tile_key} and URL: {tile_url}")
     )
+
     # import DOPs from WMS
     import_dop_from_wms(
         f"{tile_key }@{old_mapset}",
         raster_name,
         tile_url,
         resolution_to_import,
-        ["cir", "rgb"],
-        "cir",
-        "he_dop20_",
+        ["20cir", ""],
+        "20cir",
+        "th_dop",
         rm_group,
         rm_rast,
         flags["r"],
@@ -171,7 +172,7 @@ def main():
     grass.message(_(f"Finishing raster import for {raster_name}..."))
 
     # rescale imported DOPs
-    new_rm_rast = rescale_to_1_256("HE", raster_name, extension="num")
+    new_rm_rast = rescale_to_1_256("TH", raster_name, extension="num")
     rm_rast.extend(new_rm_rast)
 
     # switch back to original location
