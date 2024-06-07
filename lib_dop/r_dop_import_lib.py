@@ -5,7 +5,7 @@
 # MODULE:      r_dop_import_lib
 # AUTHOR(S):   Johannes Halbauer
 #
-# PURPOSE:     Library for r.dem.import
+# PURPOSE:     Library for r.dop.import
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team
 #
