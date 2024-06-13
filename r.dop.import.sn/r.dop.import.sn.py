@@ -5,7 +5,7 @@
 # MODULE:      r.dop.import.sn
 # AUTHOR(S):   Johannes Halbauer, Anika Weinmann
 #
-# PURPOSE:     Downloads DOPs for Sachsen and AOI
+# PURPOSE:     Downloads DOPs for Sachsen and aoi
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team
 #
@@ -22,7 +22,7 @@
 ############################################################################
 
 # %module
-# % description: Downloads DOPs for Sachsen and AOI.
+# % description: Downloads DOPs for Sachsen and aoi.
 # % keyword: raster
 # % keyword: import
 # % keyword: DOP
@@ -37,14 +37,24 @@
 
 # %option
 # % key: download_dir
-# % label: Path of output folder
-# % description: Path of download folder
+# % label: Path to output folder
+# % description: Path to download folder
 # % required: no
 # % multiple: no
 # %end
 
 # %option G_OPT_R_OUTPUT
 # % description: Name for output raster map
+# %end
+
+# %option
+# % key: nprocs
+# % type: integer
+# % required: no
+# % multiple: no
+# % label: Number of parallel processes
+# % description: Number of cores for multiprocessing, -2 is the number of available cores - 1
+# % answer: -2
 # %end
 
 # %option G_OPT_MEMORYMB
@@ -66,43 +76,49 @@
 
 import atexit
 import os
-from osgeo import gdal
-from time import sleep
+import sys
+
 import grass.script as grass
+from grass.pygrass.modules import Module, ParallelModuleQueue
+from grass.pygrass.utils import get_lib_path
+from osgeo import gdal
 
 from grass_gis_helpers.cleanup import general_cleanup
-from grass_gis_helpers.general import test_memory
-from grass_gis_helpers.open_geodata_germany.download_data import (
-    check_download_dir,
-    download_data_using_threadpool,
-    extract_compressed_files,
-)
-from grass_gis_helpers.raster import adjust_raster_resolution, create_vrt
 from grass_gis_helpers.data_import import (
     download_and_import_tindex,
     get_list_of_tindex_locations,
 )
+from grass_gis_helpers.general import test_memory
+from grass_gis_helpers.open_geodata_germany.download_data import (
+    check_download_dir,
+)
+from grass_gis_helpers.raster import create_vrt
 
-# set global varibales
+# import module library
+path = get_lib_path(modname="r.dop.import")
+if path is None:
+    grass.fatal("Unable to find the dop library directory.")
+sys.path.append(path)
+try:
+    from r_dop_import_lib import setup_parallel_processing
+except Exception as imp_err:
+    grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
+
+# set global variables
 TINDEX = (
     "https://github.com/mundialis/tile-indices/raw/main/DOP/SN/"
     "DOP20_tileindex_SN.gpkg.gz"
 )
 
 ID = grass.tempname(12)
-RETRIES = 10
 orig_region = None
-keep_data = False
 rm_rasters = []
 rm_vectors = []
 download_dir = None
+rm_dirs = []
 
 
 def cleanup():
-    rm_dirs = []
-    if not keep_data:
-        if download_dir:
-            rm_dirs.append(download_dir)
     general_cleanup(
         orig_region=orig_region,
         rm_rasters=rm_rasters,
@@ -112,121 +128,158 @@ def cleanup():
 
 
 def main():
-    global ID, orig_region, rm_rasters, rm_vectors, keep_data, download_dir
+    global ID, orig_region, rm_rasters, rm_vectors
+    global temp_loc_path, download_dir, new_mapset
 
     aoi = options["aoi"]
     download_dir = check_download_dir(options["download_dir"])
+    nprocs = int(options["nprocs"])
+    nprocs = setup_parallel_processing(nprocs)
     output = options["output"]
-    keep_data = flags["k"]
-    native_res = flags["r"]
+    fs = "SN"
 
     # set memory to input if possible
     options["memory"] = test_memory(options["memory"])
 
+    # create list for each raster band for building entire raster
+    all_raster = {
+        "red": [],
+        "green": [],
+        "blue": [],
+        "nir": [],
+    }
+
     # save original region
     orig_region = f"original_region_{ID}"
     grass.run_command("g.region", save=orig_region, quiet=True)
-    ns_res = grass.region()["nsres"]
+
+    # get region resolution and check if resolution consistent
+    reg = grass.region()
+    if reg["nsres"] == reg["ewres"]:
+        ns_res = reg["nsres"]
+    else:
+        grass.fatal("N/S resolution is not the same as E/W resolution!")
 
     # set region if aoi is given
     if aoi:
         grass.run_command("g.region", vector=aoi, flags="a")
+    # if no aoi save region as aoi
+    else:
+        aoi = f"region_aoi_{ID}"
+        grass.run_command(
+            "v.in.region",
+            output=aoi,
+            quiet=True,
+        )
 
     # get tile index
     tindex_vect = f"dop_tindex_{ID}"
     rm_vectors.append(tindex_vect)
     download_and_import_tindex(TINDEX, tindex_vect, download_dir)
 
-    # get download urls which overlap with AOI
-    # or current region if no AOI is given
+    # get download urls which overlap with aoi
+    # or current region if no aoi is given
     url_tiles = get_list_of_tindex_locations(tindex_vect, aoi)
 
-    # if k flag is set download DOPs to download_dir
-    if keep_data:
-        download_list = [
-            os.path.dirname(url.replace("/vsizip/vsicurl/", ""))
-            for url in url_tiles
-        ]
+    url_tiles_count = 0
+    for i in range(len(url_tiles)):
+        url_tiles_count += 1
+        url_tiles[i] = (url_tiles_count, [url_tiles[i]])
+    number_tiles = len(url_tiles)
 
-        # download with using nprocs=3
-        download_data_using_threadpool(download_list, download_dir, 3)
-        # extract downloaded files
-        file_names = [os.path.basename(url) for url in download_list]
-        extract_compressed_files(file_names, download_dir)
+    # set number of parallel processes to number of tiles
+    if number_tiles < nprocs:
+        nprocs = number_tiles
+    queue = ParallelModuleQueue(nprocs=nprocs)
 
-    # import DOPs directly
-    grass.message(_("Importing DOPs..."))
+    # get GISDBASE and Location
+    gisenv = grass.gisenv()
+    gisdbase = gisenv["GISDBASE"]
+    location = gisenv["LOCATION_NAME"]
 
-    # create list of lists for all DOPs caused by GRASS import structure
-    # (one raster map per band)
-    all_dops = [[], [], [], []]
-    res = None
-    for url in url_tiles:
-        # define name for imported DOP
-        dop_name = os.path.splitext(os.path.basename(url))[0].replace("-", "")
-
-        # define input parameter for import
-        if keep_data:
-            input = os.path.join(download_dir, os.path.basename(url))
-        else:
-            if "/vsicurl/" not in url:
-                input = f"/vsicurl/{url}"
-            else:
-                input = url
-
-        if res is None:
-            ds = gdal.Open(url)
-            count = 0
-            while ds is None and count <= RETRIES:
-                count += 1
-                sleep(10)
-                ds = gdal.Open(url)
-            res = ds.GetGeoTransform()[1]
-
-        # import DOPs
-        count = 0
-        imported = False
-        while not imported and count <= RETRIES:
-            count += 1
-            try:
-                grass.run_command(
-                    "r.import",
-                    input=input,
-                    output=dop_name,
-                    extent="region",
-                    resolution="value",
-                    resolution_value=res,
-                    memory=1000,
-                    overwrite=True,
-                    quiet=True,
+    # set queue and variables for worker adddon
+    try:
+        grass.message(
+            _(f"Importing {number_tiles} DOPs for SN in parallel...")
+        )
+        for tile in url_tiles:
+            key = tile[0]
+            new_mapset = f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
+            rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
+            b_name = os.path.basename(tile[1][0])
+            raster_name = (
+                f"{b_name.split('.')[0].replace('-', '_')}" f"_{os.getpid()}"
+            )
+            for key_rast in all_raster:
+                all_raster[key_rast].append(
+                    f"{fs}_{raster_name}_{key_rast}@{new_mapset}"
                 )
-                imported = True
-            except Exception:
-                sleep(10)
-        # append DOP name with band suffix
-        all_dops[0].append(dop_name + ".1")
-        all_dops[1].append(dop_name + ".2")
-        all_dops[2].append(dop_name + ".3")
-        all_dops[3].append(dop_name + ".4")
+            param = {
+                "tile_key": key,
+                "tile_url": tile[1][0],
+                "raster_name": raster_name,
+                "orig_region": orig_region,
+                "memory": 1000,
+                "new_mapset": new_mapset,
+                "flags": "",
+            }
+            grass.message(_(f"raster name: {raster_name}"))
 
-    # create VRT
-    vrt_outputs = []
-    for dops, band in zip(all_dops, ["red", "green", "blue", "nir"]):
-        vrt_output = f"{output}_{band}"
-        create_vrt(dops, vrt_output)
-        vrt_outputs.append(vrt_output)
+            # modify params
+            if aoi:
+                param["aoi"] = aoi
+            if options["download_dir"]:
+                param["download_dir"] = download_dir
+            if flags["k"]:
+                param["flags"] += "k"
+            if flags["r"]:
+                dop_src = gdal.Open(param["tile_url"])
+                param["resolution_to_import"] = abs(
+                    dop_src.GetGeoTransform()[1]
+                )
+            else:
+                param["resolution_to_import"] = ns_res
 
-    # resample / interpolate whole VRT (because interpolating single files leads
-    # to empty rows and columns)
-    # check resolution and resample / interpolate data if needed
-    if not native_res:
-        grass.message(_("Resampling / interpolating data..."))
-        grass.run_command("g.region", raster=vrt_output, res=ns_res, flags="a")
-        for vrt_out in vrt_outputs:
-            adjust_raster_resolution(vrt_out, vrt_out, ns_res)
+            # append raster bands to download to remove list
+            rm_red = f"{raster_name}_red"
+            rm_green = f"{raster_name}_green"
+            rm_blue = f"{raster_name}_blue"
+            rm_nir = f"{raster_name}_nir"
+            rm_rasters.append(rm_red)
+            rm_rasters.append(rm_green)
+            rm_rasters.append(rm_blue)
+            rm_rasters.append(rm_nir)
 
-    for result in vrt_outputs:
-        grass.message(_(f"DOP raster map <{result}> is created."))
+            # run worker addon in parallel
+            r_dop_import_worker_SN = Module(
+                "r.dop.import.worker.sn",
+                **param,
+                run_=False,
+            )
+            # catch all GRASS output to stdout and stderr
+            r_dop_import_worker_SN.stdout = grass.PIPE
+            r_dop_import_worker_SN.stderr = grass.PIPE
+            queue.put(r_dop_import_worker_SN)
+        queue.wait()
+    except Exception:
+        for proc_num in range(queue.get_num_run_procs()):
+            proc = queue.get(proc_num)
+            if proc.returncode != 0:
+                # save all stderr to a variable and pass it to a GRASS
+                # exception
+                errmsg = proc.outputs["stderr"].value.strip()
+                grass.fatal(
+                    _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}")
+                )
+
+    # create one vrt per band of all imported DOPs
+    raster_out = []
+    for band, b_list in all_raster.items():
+        out = f"{output}_{band}"
+        create_vrt(b_list, out)
+        raster_out.append(out)
+
+    grass.message(_(f"Generated following raster maps: {raster_out}"))
 
 
 if __name__ == "__main__":

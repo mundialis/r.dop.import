@@ -28,7 +28,7 @@ from r_dop_import_test_base import RDopImportTestBase
 class TestRDopImportSN(RDopImportTestBase):
     fs = "SN"
     ref_res = 0.2
-    aoi_cells = 2021300
+    aoi_cells = 2027082
 
     def test_default_settings(self):
         """
