@@ -26,6 +26,14 @@ from time import sleep
 import grass.script as grass
 
 from grass_gis_helpers.general import set_nprocs
+from grass_gis_helpers.location import (
+    get_current_location,
+    create_tmp_location,
+)
+from grass_gis_helpers.open_geodata_germany.download_data import (
+    download_data_using_threadpool,
+    extract_compressed_files,
+)
 from grass_gis_helpers.raster import adjust_raster_resolution, rename_raster
 
 OPEN_DATA_AVAILABILITY = {
@@ -33,6 +41,9 @@ OPEN_DATA_AVAILABILITY = {
     "NOT_YET_SUPPORTED": ["NI"],
     "SUPPORTED": ["BE", "BB", "NW", "SN", "TH", "HE"],
 }
+
+RETRIES = 30
+WAITING_TIME = 10
 
 
 def setup_parallel_processing(nprocs):
@@ -78,7 +89,7 @@ def rescale_to_1_256(prefix, raster_name, extension="num"):
 def create_grid_and_tiles_list(
     ns_res, ew_res, tile_size, grid, rm_vectors, aoi, ID, fs
 ):
-    """Check if aoi is smaller than grid tile size and creates grid if not.
+    """Check if aoi is smaller than grid tile size and create grid if not.
     Also create a list containing tiles which overlap with the aoi.
     Args:
         ns_res (float): Vertical resolution
@@ -257,3 +268,204 @@ def import_dop_from_wms(
     grass.run_command(
         "g.remove", type="raster", pattern=f"{cir_band}_*_tmp*", flags="f"
     )
+
+
+def keep_data_NW(url, download_dir):
+    """Download and keep DOPs for NW from url using threadpool
+
+    Args:
+        url (string): Url to download data from
+        download_dir (str): Path to directory to download data to
+
+    Returns:
+        (str): Path to download data
+    """
+    url = url.replace("/vsicurl/", "")
+    basename = os.path.basename(url)
+    download_data_using_threadpool([url], download_dir, None)
+
+    return os.path.join(download_dir, basename)
+
+
+def keep_data_BB_BE(url, download_dir):
+    """Download and keep DOPs for BB/BE from url using threadpool
+
+    Args:
+        url (string): Url to download data from
+        download_dir (str): Path to directory to download data to
+
+    Returns:
+        (str): Path to download data
+    """
+    url = url.replace("/vsizip/vsicurl/", "")
+    basename = os.path.basename(url)
+    url = url.replace(basename, "")[:-1]
+    download_data_using_threadpool([url], download_dir, None)
+    extract_compressed_files([basename.replace(".tif", ".zip")], download_dir)
+    return os.path.join(download_dir, basename)
+
+
+def keep_data_SN(url, download_dir):
+    """Download and keep DOPs for BB/BE from url using threadpool
+
+    Args:
+        url (string): Url to download data from
+        download_dir (str): Path to directory to download data to
+
+    Returns:
+        (str): Path to download data
+    """
+    basename = os.path.basename(url)
+    print(basename)
+    url = os.path.dirname(url.replace("/vsizip/vsicurl/", ""))
+    download_data_using_threadpool([url], download_dir, None)
+    extract_compressed_files([os.path.basename(url)], download_dir)
+
+    return os.path.join(download_dir, basename)
+
+
+def import_and_reproject(
+    url,
+    raster_name,
+    resolution_to_import,
+    fs,
+    aoi_map=None,
+    download_dir=None,
+    epsg=None,
+    keep_data=None,
+):
+    """Import DOPs and reproject them if needed.
+
+    Args:
+        url (str): The URL of the DOP to import
+        raster_name (str): The prefix name for the output rasters
+        resolution_to_import (float): Resolution to use for region and raster import
+        fs (str): Abbreviation of the current federal state
+        aoi_map (str): Name of AOI vector map
+        download_dir (str): Path to local directory to downlaod DOPs to
+        epsg (int): EPSG code which has to be set if the reproduction should be
+                    done manually and not by r.import
+        keep_data (bool): Download raster data to local directory and keep it
+
+    Returns:
+        gisdbase (str): Path to GISDBASE
+        tmp_loc (str): Name of temporary location
+        tmp_gisrc (str): Path to GISRC file
+    """
+    aoi_map_to_set_region1 = aoi_map
+
+    # get actual location, mapset, ...
+    loc, mapset, gisdbase, gisrc = get_current_location()
+    if not aoi_map:
+        aoi_map = f"region_aoi_{grass.tempname(8)}"
+        aoi_map_to_set_region1 = aoi_map
+        grass.run_command("v.in.region", output=aoi_map, quiet=True)
+    else:
+        aoi_map_mapset = aoi_map.split("@")
+        aoi_map_to_set_region1 = aoi_map_mapset[0]
+        if len(aoi_map_mapset) == 2:
+            mapset = aoi_map_mapset[1]
+
+    # create temporary location with EPSG:25832
+    tmp_loc, tmp_gisrc = create_tmp_location(epsg)
+
+    # reproject aoi
+    if aoi_map:
+        grass.run_command(
+            "v.proj",
+            location=loc,
+            mapset=mapset,
+            input=aoi_map_to_set_region1,
+            output=aoi_map_to_set_region1,
+            quiet=True,
+        )
+        grass.run_command(
+            "g.region",
+            vector=aoi_map_to_set_region1,
+            res=resolution_to_import,
+            flags="a",
+        )
+
+    # define import parameters
+    # set memory manually to 1000
+    # Process stuck, when memory is too large (100000)
+    # GDAL_CACHEMAX will be interpreted as MB only
+    kwargs = {
+        "input": url,
+        "output": raster_name,
+        "memory": 1000,
+        "quiet": True,
+        "extent": "region",
+    }
+    if fs == "BB_BE":
+        kwargs["flags"] = "o"
+
+    # download and keep data to download dir if -k flag is set
+    # and change input parameter in kwargs to local path
+    if keep_data:
+        # call download and keep data function for respective federal state
+        function_name = f"keep_data_{fs}"
+        if function_name in globals():
+            func = globals()[function_name]
+            kwargs["input"] = func(url, download_dir)
+        else:
+            grass.fatal(
+                _(
+                    f"Function to download and keep data for {fs} not found in lib."
+                )
+            )
+
+    # import data
+    import_sucess = False
+    tries = 0
+    while not import_sucess:
+        tries += 1
+        if tries > RETRIES:
+            grass.fatal(
+                _(
+                    f"Importing {kwargs['input']} failed after {RETRIES} "
+                    "retries."
+                )
+            )
+        try:
+            grass.run_command("r.import", **kwargs)
+            import_sucess = True
+        except Exception:
+            sleep(WAITING_TIME)
+    if not aoi_map:
+        grass.run_command("g.region", raster=f"{raster_name}.1")
+
+    # reproject data
+    if resolution_to_import:
+        res = resolution_to_import
+    else:
+        res = float(
+            grass.parse_command("r.info", flags="g", map=f"{raster_name}.1")[
+                "nsres"
+            ]
+        )
+    # switch location
+    os.environ["GISRC"] = str(gisrc)
+    if aoi_map:
+        grass.run_command("g.region", vector=aoi_map, res=res, flags="a")
+    else:
+        grass.run_command("g.region", res=res, flags="a")
+    for i in range(1, 5):
+        name = f"{raster_name}.{i}"
+        # set memory manually to 1000
+        # Process stuck, when memory is too large (100000)
+        # GDAL_CACHEMAX is only interpreted as MB, if value is <100000
+        grass.run_command(
+            "r.proj",
+            location=tmp_loc,
+            mapset="PERMANENT",
+            input=name,
+            output=name,
+            resolution=res,
+            flags="n",
+            quiet=True,
+            memory=1000,
+        )
+
+    # return temp location parameters to remove it in cleanup
+    return gisdbase, tmp_loc, tmp_gisrc

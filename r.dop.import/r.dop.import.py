@@ -142,24 +142,6 @@ def cleanup():
     )
 
 
-def run_old_addon(aoi, output, nativ_res):
-    """Run old, not refactored addon"""
-    r_dop_old_flags = ""
-    if nativ_res:
-        r_dop_old_flags += "r"
-    grass.run_command(
-        "r.dop.import.old",
-        aoi_map=aoi,
-        federal_state=options["federal_state"],
-        filepath=options["federal_state_file"],
-        local_data_dir=options["local_data_dir"],
-        nprocs=options["nprocs"],
-        flags=r_dop_old_flags,
-        output=output,
-        quiet=True,
-    )
-
-
 def import_local_data(aoi, out, local_data_dir, fs, all_dops, native_res_flag):
     """Import local DOP data
 
@@ -242,13 +224,9 @@ def main():
         if not imported_local_data:
             # implement data download and import from open data
             out_fs = f"dop_{fs}_{ID}"
-            # run old addons
-            # TODO: modify list in if condition when adding a new refactored addon
-            if fs in NOT_YET_SUPPORTED and fs in ["SN", "TH", "HE"]:
-                grass.message(_("Using r.dop.import.old addon..."))
-                run_old_addon(aoi, out_fs, native_res)
+
             # not yet supported
-            elif fs in NOT_YET_SUPPORTED:
+            if fs in NOT_YET_SUPPORTED:
                 grass.fatal(
                     _(
                         "The import of the open data is not yet supported for "

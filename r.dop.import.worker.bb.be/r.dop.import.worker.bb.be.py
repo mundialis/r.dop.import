@@ -5,8 +5,10 @@
 # MODULE:      r.dop.import.worker.bb.be
 # AUTHOR(S):   Johannes Halbauer & Lina Krisztian
 #
-# PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area in Brandenburg
-# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development Team
+# PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
+#              in Brandenburg
+# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
+#              Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,25 +96,15 @@
 
 
 import atexit
-import os
 import sys
-from time import sleep
 
 import grass.script as grass
 from grass.pygrass.utils import get_lib_path
 
 from grass_gis_helpers.cleanup import general_cleanup, cleaning_tmp_location
 from grass_gis_helpers.general import test_memory
-from grass_gis_helpers.location import (
-    get_current_location,
-    create_tmp_location,
-    switch_back_original_location,
-)
+from grass_gis_helpers.location import switch_back_original_location
 from grass_gis_helpers.mapset import switch_to_new_mapset
-from grass_gis_helpers.open_geodata_germany.download_data import (
-    download_data_using_threadpool,
-    extract_compressed_files,
-)
 from grass_gis_helpers.raster import adjust_raster_resolution
 
 # import module library
@@ -121,7 +113,7 @@ if path is None:
     grass.fatal("Unable to find the dop library directory.")
 sys.path.append(path)
 try:
-    from r_dop_import_lib import rescale_to_1_256
+    from r_dop_import_lib import rescale_to_1_256, import_and_reproject
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
@@ -131,9 +123,6 @@ rm_group = []
 gisdbase = None
 tmp_loc = None
 tmp_gisrc = None
-
-RETRIES = 30
-WAITING_TIME = 10
 
 
 def cleanup():
@@ -146,143 +135,9 @@ def cleanup():
     )
 
 
-def import_and_reproject(
-    url,
-    raster_name,
-    resolution_to_import,
-    aoi_map=None,
-    download_dir=None,
-    epsg=None,
-):
-    """Import DOPs and reproject them if needed. This is needed for the DOPs
-    of Brandenburg and Berlin because GDAL (at least smaller 3.6.3) does not
-    support the coordinate reference system in the data.
-
-    Args:
-        url (str): The URL of the DOP to import
-        raster_name (str): The prefix name for the output rasters
-        aoi_map (str): Name of AOI vector map
-        download_dir (str): Path to local directory to downlaod DOPs to
-        epsg (int): EPSG code which has to be set if the reproduction should be
-                    done manually and not by r.import
-    """
-    global gisdbase, tmp_loc, tmp_gisrc
-    aoi_map_to_set_region1 = aoi_map
-
-    # get actual location, mapset, ...
-    loc, mapset, gisdbase, gisrc = get_current_location()
-    if not aoi_map:
-        aoi_map = f"region_aoi_{grass.tempname(8)}"
-        aoi_map_to_set_region1 = aoi_map
-        grass.run_command("v.in.region", output=aoi_map, quiet=True)
-    else:
-        aoi_map_mapset = aoi_map.split("@")
-        aoi_map_to_set_region1 = aoi_map_mapset[0]
-        if len(aoi_map_mapset) == 2:
-            mapset = aoi_map_mapset[1]
-
-    # create temporary location with EPSG:25833
-    tmp_loc, tmp_gisrc = create_tmp_location(epsg)
-
-    # reproject aoi
-    if aoi_map:
-        grass.run_command(
-            "v.proj",
-            location=loc,
-            mapset=mapset,
-            input=aoi_map_to_set_region1,
-            output=aoi_map_to_set_region1,
-            quiet=True,
-        )
-        grass.run_command(
-            "g.region",
-            vector=aoi_map_to_set_region1,
-            res=resolution_to_import,
-            flags="a",
-        )
-
-    # import data
-    # set memory manually to 1000
-    # Process stuck, when memory is too large (100000)
-    # GDAL_CACHEMAX wird nur als MB interpretiert
-    kwargs = {
-        "input": url,
-        "output": raster_name,
-        "memory": 1000,
-        "quiet": True,
-        "flags": "o",
-        "extent": "region",
-    }
-
-    # TODO: Auslagern dieser Funktion in Lib, jedoch unterscheidet
-    # sich der folgende if-Block bspw. von dem von NW
-    # (außerdem ist noch die o-flag in kwargs unterschiedlich)
-    #
-    # download and keep data to download dir if -k flag ist set
-    # and change input parameter in kwargs to local path
-    if flags["k"]:
-        url = url.replace("/vsizip/vsicurl/", "")
-        basename = os.path.basename(url)
-        url = url.replace(basename, "")[:-1]
-        download_data_using_threadpool([url], download_dir, 1)
-        extract_compressed_files(
-            [basename.replace(".tif", ".zip")], download_dir
-        )
-        kwargs["input"] = os.path.join(download_dir, basename)
-
-    import_sucess = False
-    tries = 0
-    while not import_sucess:
-        tries += 1
-        if tries > RETRIES:
-            grass.fatal(
-                _(
-                    f"Importing {kwargs['input']} failed after {RETRIES} "
-                    "retries."
-                )
-            )
-        try:
-            grass.run_command("r.import", **kwargs)
-            import_sucess = True
-        except Exception:
-            sleep(WAITING_TIME)
-    if not aoi_map:
-        grass.run_command("g.region", raster=f"{raster_name}.1")
-
-    # reproject data
-    if resolution_to_import:
-        res = resolution_to_import
-    else:
-        res = float(
-            grass.parse_command("r.info", flags="g", map=f"{raster_name}.1")[
-                "nsres"
-            ]
-        )
-    # switch location
-    os.environ["GISRC"] = str(gisrc)
-    if aoi_map:
-        grass.run_command("g.region", vector=aoi_map, res=res, flags="a")
-    else:
-        grass.run_command("g.region", res=res, flags="a")
-    for i in range(1, 5):
-        name = f"{raster_name}.{i}"
-        # set memory manually to 1000
-        # Process stuck, when memory is too large (100000)
-        # GDAL_CACHEMAX is only interpreted as MB, if value is <100000
-        grass.run_command(
-            "r.proj",
-            location=tmp_loc,
-            mapset="PERMANENT",
-            input=name,
-            output=name,
-            resolution=res,
-            flags="n",
-            quiet=True,
-            memory=1000,
-        )
-
-
 def main():
+    global gisdbase, tmp_loc, tmp_gisrc
+
     # parser options
     tile_key = options["tile_key"]
     tile_url = options["tile_url"]
@@ -291,6 +146,7 @@ def main():
     orig_region = options["orig_region"]
     new_mapset = options["new_mapset"]
     download_dir = options["download_dir"]
+    keep_data = flags["k"]
 
     # set memory to input if possible
     options["memory"] = test_memory(options["memory"])
@@ -311,13 +167,15 @@ def main():
     )
 
     # import and reproject DOP tiles based on tileindex
-    import_and_reproject(
+    gisdbase, tmp_loc, tmp_gisrc = import_and_reproject(
         tile_url,
         raster_name,
         resolution_to_import,
+        "BB_BE",
         aoi_map,
         download_dir,
         epsg=25833,
+        keep_data=keep_data,
     )
 
     # adjust resolution if required
