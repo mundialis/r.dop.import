@@ -5,8 +5,10 @@
 # MODULE:      r.dop.import.worker.he
 # AUTHOR(S):   Johannes Halbauer & Lina Krisztian
 #
-# PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area in Hessen
-# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development Team
+# PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
+#              in Hessen
+# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
+#              Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
