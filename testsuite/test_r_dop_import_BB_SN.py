@@ -4,7 +4,7 @@
 #
 # MODULE:      r.dop.import test Brandenburg and Sachsen
 # AUTHOR(S):   Anika Weinmann
-
+#
 # PURPOSE:     Tests r.dop.import Brandenburg and Sachsen
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team

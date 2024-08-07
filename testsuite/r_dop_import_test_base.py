@@ -4,7 +4,7 @@
 #
 # MODULE:      r.dop.import test base
 # AUTHOR(S):   Anika Weinmann
-
+#
 # PURPOSE:     Test base for r.dop.import
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team

@@ -4,7 +4,7 @@
 #
 # MODULE:      r.dop.import test Nordrhein-Westfalen
 # AUTHOR(S):   Lina Krisztian
-
+#
 # PURPOSE:     Tests r.dop.import Nordrhein-Westfalen
 # COPYRIGHT:   (C) 2022-2024 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team

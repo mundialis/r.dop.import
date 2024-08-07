@@ -4,7 +4,7 @@
 #
 # MODULE:      r.dop.import test Brandenburg/Berlin
 # AUTHOR(S):   Anika Weinmann
-
+#
 # PURPOSE:     Tests r.dop.import Brandenburg/Berlin
 # COPYRIGHT:   (C) 2023-2024 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team

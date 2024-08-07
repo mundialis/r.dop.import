@@ -4,7 +4,7 @@
 #
 # MODULE:      r.dop.import test Thüringen
 # AUTHOR(S):   Lina Krisztian, Anika Weinmann
-
+#
 # PURPOSE:     Tests r.dop.import Thüringen
 # COPYRIGHT:   (C) 2023 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team

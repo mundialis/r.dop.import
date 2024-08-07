@@ -4,7 +4,7 @@
 #
 # MODULE:      r.dop.import test Hessen
 # AUTHOR(S):   Lina Krisztian, Anika Weinmann
-
+#
 # PURPOSE:     Tests r.dop.import Hessen
 # COPYRIGHT:   (C) 2023-2024 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team

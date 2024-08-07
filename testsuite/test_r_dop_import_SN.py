@@ -4,7 +4,7 @@
 #
 # MODULE:      r.dop.import test Sachsen
 # AUTHOR(S):   Anika Weinmann, Johannes Halbauer
-
+#
 # PURPOSE:     Tests r.dop.import Sachsen
 # COPYRIGHT:   (C) 2023 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team
