@@ -1,0 +1,43 @@
+[flake8]
+
+# Permitted exceptions:
+# E402 module level import not at top of file
+# E501 line too long (161 > 150 characters)
+# F821 undefined name '_'
+
+per-file-ignores =
+  ./r.dop.import.he/r.dop.import.he.py: E501,F821
+  ./r.dop.import.worker.he/r.dop.import.worker.he.py: E501,F821
+  ./r.dop.import.sn/r.dop.import.sn.py: E501,F821
+  ./r.dop.import.worker.sn/r.dop.import.worker.sn.py: E501,F821
+  ./r.dop.import.th/r.dop.import.th.py: E501,F821
+  ./r.dop.import.worker.th/r.dop.import.worker.th.py: E501,F821
+  ./r.dop.import.nw/r.dop.import.nw.py: E501,F821
+  ./r.dop.import.old/r.dop.import.old.py: E402,E501,F821
+  ./r.dop.import/r.dop.import.py: E501,F821
+  ./r.dop.import.bb.be/r.dop.import.bb.be.py: E501,F821
+  ./r.dop.import.worker.bb.be/r.dop.import.worker.bb.be.py: E501,F821
+  ./r.dop.import.worker.nw/r.dop.import.worker.nw.py: E501,F821
+  ./lib_dop/r_dop_import_lib.py: E501,F821
+  ./testsuite/r_dop_import_test_base.py: F821
+  ./testsuite/test_r_dop_import_NW.py: F821
+  ./testsuite/test_r_dop_import_HE.py: F821
+  ./testsuite/test_r_dop_import_BB_BE.py: F821
+  ./testsuite/test_r_dop_import_SN.py: F821
+  ./testsuite/test_r_dop_import_TH.py: F821
+
+
+
+max-line-length = 80
+exclude =
+    .git,
+    __pycache__,
+    .env,
+    .venv,
+    env,
+    venv,
+    ENV,
+    env.bak,
+    venv.bak,
+    ctypes,
+    pydispatch,
