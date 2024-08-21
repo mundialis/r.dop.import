@@ -28,86 +28,49 @@ from grass.gunittest.case import TestCase
 from grass.gunittest.gmodules import SimpleModule
 import grass.script as grass
 
+from grass_gis_helpers.cleanup import cleaning_tmp_location
+from grass_gis_helpers.location import (
+    create_tmp_location,
+    get_current_location,
+)
+
 
 class RDopImportTestBase(TestCase):
+    """Base test class for r.dop.import"""
+
     fs = ""
     ref_res = None
     aoi_cells = None
-
     pid = os.getpid()
-    rm_vec = []
     aoi_map = f"aoi_map_{pid}"
-    rm_vec.append(aoi_map)
+    orig_region = f"orig_region_{pid}"
+
     # name of output, which r.dop.import creates
     test_output = f"output_{pid}"
     test_output_all = [
         f"{out}_{band}"
         for band, out in zip(
-            ["red", "green", "blue", "nir"], 4 * [test_output]
+            ["red", "green", "blue", "nir"],
+            4 * [test_output],
         )
     ]
+    rm_vec = []
+    rm_vec.append(aoi_map)
+
+    ORIG_GISRC = None
+    TMP_LOC = None
     GISDBASE = None
-    TGTGISRC = None
-    TMPLOC = None
-    SRCGISRC = None
+    TMP_GISRC = None
 
     @classmethod
-    def delete_tmp_location(cls):
-        # remove temp location
-        if cls.TMPLOC:
-            grass.try_rmdir(os.path.join(cls.GISDBASE, cls.TMPLOC))
-        if cls.SRCGISRC:
-            grass.try_remove(cls.SRCGISRC)
-
-    @classmethod
-    def get_actual_location(cls):
-        # get actual location, mapset, ...
-        grassenv = grass.gisenv()
-        tgtloc = grassenv["LOCATION_NAME"]
-        tgtmapset = grassenv["MAPSET"]
-        cls.GISDBASE = grassenv["GISDBASE"]
-        cls.TGTGISRC = os.environ["GISRC"]
-        return tgtloc, tgtmapset
-
-    @classmethod
-    def createTMPlocation(cls, epsg=4326):
-        """Switch location"""
-        SRCGISRC = grass.tempfile()
-        cls.TMPLOC = f"temp_import_location_{grass.tempname(8)}"
-        f = open(SRCGISRC, "w")
-        f.write("MAPSET: PERMANENT\n")
-        f.write("GISDBASE: %s\n" % cls.GISDBASE)
-        f.write("LOCATION_NAME: %s\n" % cls.TMPLOC)
-        f.write("GUI: text\n")
-        f.close()
-
-        proj_test = grass.parse_command("g.proj", flags="g")
-        if "epsg" in proj_test:
-            epsg_arg = {"epsg": epsg}
-        else:
-            epsg_arg = {"srid": "EPSG:{}".format(epsg)}
-        # create temp location from input without import
-        grass.verbose(_("Creating temporary location with EPSG:%d...") % epsg)
-        grass.run_command(
-            "g.proj", flags="c", location=cls.TMPLOC, quiet=True, **epsg_arg
-        )
-
-        # switch to temp location
-        os.environ["GISRC"] = str(SRCGISRC)
-        proj = grass.parse_command("g.proj", flags="g")
-        if "epsg" in proj:
-            new_epsg = proj["epsg"]
-        else:
-            new_epsg = proj["srid"].split("EPSG:")[1]
-        if new_epsg != str(epsg):
-            grass.fatal(_("Creation of temporary location failed!"))
-
-    @classmethod
+    # pylint: disable=invalid-name
     def setUpClass(cls):
         """Ensures expected computational region and generated data"""
-        # switch location
-        cls.get_actual_location()
-        cls.createTMPlocation(25832)
+        if cls.fs != "":
+            # switch to location with EPSG code 25832
+            loc, mapset, cls.GISDBASE, cls.ORIG_GISRC = get_current_location()
+            if cls.TMP_LOC is None:
+                cls.TMP_LOC, cls.TMP_GISRC = create_tmp_location(epsg=25832)
 
         # perform test in location with meter
         # needed e.g. for res-check within tests
@@ -115,16 +78,16 @@ class RDopImportTestBase(TestCase):
         if proj_unit != "meter":
             sys.exit(
                 "WARNING: Tests were skipped. Please perform the test "
-                "in a location with units of meter."
+                "in a location with units of meter.",
             )
         proj_epsg = grass.parse_command("g.proj", flags="g")["srid"]
-        if proj_epsg != "EPSG:32632" and proj_epsg != "EPSG:25832":
+        if proj_epsg not in ("EPSG:32632", "EPSG:25832"):
             print(
                 "WARNING: tests might fail, due to rounding problems "
                 "when importing/reprojecting test data in certain locations"
                 "(e.g. import 701 instead of 700 rows)."
                 "Tests should run successfully (at least) in location: "
-                "EPSG:32632 and EPSG:25832."
+                "EPSG:32632 and EPSG:25832.",
             )
         # import aoi_map for testing
         fs = cls.fs.replace(",", "_")
@@ -134,10 +97,12 @@ class RDopImportTestBase(TestCase):
             output=cls.aoi_map,
         )
         # set region
+        grass.run_command("g.region", save=cls.orig_region)
         grass.run_command("g.region", vector=cls.aoi_map, res=1, flags="a")
         grass.run_command("g.region", n="n+200", s="n-100", w="e-100")
 
     @classmethod
+    # pylint: disable=invalid-name
     def tearDownClass(cls):
         """Remove the temporary region and generated data"""
         for vec in cls.rm_vec:
@@ -147,10 +112,23 @@ class RDopImportTestBase(TestCase):
                 name=vec,
                 flags="f",
             )
-        # switch location
-        if cls.TGTGISRC:
-            os.environ["GISRC"] = str(cls.TGTGISRC)
+        if cls.fs != "":
+            grass.run_command("g.region", region=cls.orig_region)
+            grass.run_command(
+                "g.remove",
+                type="region",
+                name=cls.orig_region,
+                flags="f",
+            )
+            # switch location and remove temp location
+            cleaning_tmp_location(
+                cls.ORIG_GISRC,
+                cls.TMP_LOC,
+                cls.GISDBASE,
+                cls.TMP_GISRC,
+            )
 
+    # pylint: disable=invalid-name
     def tearDown(self):
         """Remove the outputs created
         This is executed after each test run.
@@ -195,16 +173,20 @@ class RDopImportTestBase(TestCase):
         out_res_ns = round(
             float(
                 grass.parse_command(
-                    "r.info", map=self.test_output_all[0], flags="g"
-                )["nsres"]
-            )
+                    "r.info",
+                    map=self.test_output_all[0],
+                    flags="g",
+                )["nsres"],
+            ),
         )
         out_res_ew = round(
             float(
                 grass.parse_command(
-                    "r.info", map=self.test_output_all[0], flags="g"
-                )["ewres"]
-            )
+                    "r.info",
+                    map=self.test_output_all[0],
+                    flags="g",
+                )["ewres"],
+            ),
         )
         self.assertTrue(
             ((out_res_ns == 1.0) and (out_res_ew == 1.0)),
@@ -232,7 +214,9 @@ class RDopImportTestBase(TestCase):
         # check if just aoi data loaded ==>
         # should have aoi_cells cells
         cells_aoi = grass.parse_command(
-            "r.info", map=self.test_output_all[0], flags="g"
+            "r.info",
+            map=self.test_output_all[0],
+            flags="g",
         )["cells"]
         self.assertTrue(
             int(cells_aoi) == self.aoi_cells,
@@ -264,16 +248,20 @@ class RDopImportTestBase(TestCase):
         out_res_ns = round(
             float(
                 grass.parse_command(
-                    "r.info", map=self.test_output_all[0], flags="g"
-                )["nsres"]
+                    "r.info",
+                    map=self.test_output_all[0],
+                    flags="g",
+                )["nsres"],
             ),
             2,
         )
         out_res_ew = round(
             float(
                 grass.parse_command(
-                    "r.info", map=self.test_output_all[0], flags="g"
-                )["ewres"]
+                    "r.info",
+                    map=self.test_output_all[0],
+                    flags="g",
+                )["ewres"],
             ),
             2,
         )

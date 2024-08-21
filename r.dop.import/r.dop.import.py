@@ -128,7 +128,7 @@ except Exception as imp_err:
 
 # set global varibales
 ID = grass.tempname(12)
-orig_region = None
+ORIG_REGION = f"original_region_{ID}"
 rm_rasters = []
 SUPPORTED = OPEN_DATA_AVAILABILITY["SUPPORTED"]
 NO_OPEN_DATA = OPEN_DATA_AVAILABILITY["NO_OPEN_DATA"]
@@ -136,8 +136,9 @@ NOT_YET_SUPPORTED = OPEN_DATA_AVAILABILITY["NOT_YET_SUPPORTED"]
 
 
 def cleanup():
+    """Remove all not needed files at the end"""
     general_cleanup(
-        orig_region=orig_region,
+        orig_region=ORIG_REGION,
         rm_rasters=rm_rasters,
     )
 
@@ -172,18 +173,18 @@ def import_local_data(aoi, out, local_data_dir, fs, all_dops, native_res_flag):
         grass.message(
             _(
                 "Local data does not overlap with AOI. Data will be downloaded"
-                " from Open Data portal."
-            )
+                " from Open Data portal.",
+            ),
         )
     return imported_local_data
 
 
 def main():
-    global ID, orig_region, rm_rasters
-
+    """Main function of r.dop.import"""
     aoi = options["aoi"]
     federal_states = get_federal_states(
-        options["federal_state"], options["federal_state_file"]
+        options["federal_state"],
+        options["federal_state_file"],
     )
     local_data_dir = options["local_data_dir"]
     download_dir = check_download_dir(options["download_dir"])
@@ -194,8 +195,7 @@ def main():
     native_res = flags["r"]
 
     # save original region
-    orig_region = f"original_region_{ID}"
-    grass.run_command("g.region", save=orig_region, quiet=True)
+    grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
     # local DOP files
     local_fs_list = []
@@ -210,14 +210,19 @@ def main():
         imported_local_data = False
         if fs in local_fs_list:
             imported_local_data = import_local_data(
-                aoi, output, local_data_dir, fs, all_dops, native_res
+                aoi,
+                output,
+                local_data_dir,
+                fs,
+                all_dops,
+                native_res,
             )
         elif fs in NO_OPEN_DATA:
             grass.fatal(
                 _(
                     f"No local data for {fs} available. For the federal state "
-                    "there are no open data available. Is the path correct?"
-                )
+                    "there are no open data available. Is the path correct?",
+                ),
             )
 
         # import data when local import was not used
@@ -230,16 +235,16 @@ def main():
                 grass.fatal(
                     _(
                         "The import of the open data is not yet supported for "
-                        f"{fs}."
-                    )
+                        f"{fs}.",
+                    ),
                 )
             # no open data available
             elif fs in NO_OPEN_DATA:
                 grass.fatal(
                     _(
                         f"For the federal state {fs} there are no open data "
-                        "available. Please use local data <local_data_dir>."
-                    )
+                        "available. Please use local data <local_data_dir>.",
+                    ),
                 )
             else:
                 r_dop_import_fs_flags = ""

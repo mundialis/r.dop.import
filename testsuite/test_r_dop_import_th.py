@@ -2,12 +2,12 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import test Brandenburg/Berlin
-# AUTHOR(S):   Anika Weinmann
+# MODULE:      r.dop.import test Thüringen
+# AUTHOR(S):   Lina Krisztian, Anika Weinmann
 #
-# PURPOSE:     Tests r.dop.import Brandenburg/Berlin
-# COPYRIGHT:   (C) 2023-2024 by mundialis GmbH & Co. KG and the GRASS
-#              Development Team
+# PURPOSE:     Tests r.dop.import Thüringen
+# COPYRIGHT:   (C) 2023 by mundialis GmbH & Co. KG and the GRASS Development
+#              Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,10 +25,12 @@ from grass.gunittest.main import test
 from r_dop_import_test_base import RDopImportTestBase
 
 
-class TestRDopImportBB(RDopImportTestBase):
-    fs = "BB"
+class TestRDopImportSN(RDopImportTestBase):
+    """Test class for r.dop.import for TH"""
+
+    fs = "TH"
     ref_res = 0.2
-    aoi_cells = 128928
+    aoi_cells = 389351
 
     def test_default_settings(self):
         """

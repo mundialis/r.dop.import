@@ -27,6 +27,8 @@ from r_dop_import_test_base import RDopImportTestBase
 
 
 class TestRDopImportBBSN(RDopImportTestBase):
+    """Test class for r.dop.import for BB and SN"""
+
     fs = "BB,SN"
     ref_res = 0.2
     aoi_cells = 312018

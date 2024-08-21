@@ -47,13 +47,19 @@ WAITING_TIME = 10
 
 
 def setup_parallel_processing(nprocs):
+    """Get possible number of workers and modify environment variables
+    Args:
+        nprocs (int): Number of workers to use
+    Returns:
+        nprocs (int): Possible number of workers to use
+    """
     nprocs = set_nprocs(nprocs)
     # set some common environmental variables, like:
     os.environ.update(
-        dict(
-            GRASS_COMPRESSOR="LZ4",
-            GRASS_MESSAGE_FORMAT="plain",
-        )
+        {
+            "GRASS_COMPRESSOR": "LZ4",
+            "GRASS_MESSAGE_FORMAT": "plain",
+        },
     )
     return nprocs
 
@@ -87,7 +93,14 @@ def rescale_to_1_256(prefix, raster_name, extension="num"):
 
 
 def create_grid_and_tiles_list(
-    ns_res, ew_res, tile_size, grid, rm_vectors, aoi, ID, fs
+    ns_res,
+    ew_res,
+    tile_size,
+    grid,
+    rm_vectors,
+    aoi,
+    id,
+    fs,
 ):
     """Check if aoi is smaller than grid tile size and create grid if not.
     Also create a list containing tiles which overlap with the aoi.
@@ -98,7 +111,7 @@ def create_grid_and_tiles_list(
         grid (str): Name of grid to create
         rm_vectors (list): List of vectors to remove in cleanup
         aoi (str): Name of aoi
-        ID (str): ID used in GRASS session
+        id (str): id used in GRASS session
         fs (str): Abbreviation of federal state
 
     Returns:
@@ -111,7 +124,10 @@ def create_grid_and_tiles_list(
         grass.run_command("v.in.region", output=grid, quiet=True)
         rm_vectors.append(grid)
         grass.run_command(
-            "v.db.addtable", map=grid, columns="cat int", quiet=True
+            "v.db.addtable",
+            map=grid,
+            columns="cat int",
+            quiet=True,
         )
     else:
         grass.run_command("g.region", res=tile_size, flags="a", quiet=True)
@@ -127,7 +143,7 @@ def create_grid_and_tiles_list(
         grass.run_command("g.region", vector=aoi)
 
     # set grid name
-    grid_name = f"tmp_grid_area_{ID}"
+    grid_name = f"tmp_grid_area_{id}"
 
     # choose tiles overlapping with aoi
     grass.run_command(
@@ -143,8 +159,12 @@ def create_grid_and_tiles_list(
     # create list of tiles
     tiles_num_list = list(
         grass.parse_command(
-            "v.db.select", map=grid_name, columns="cat", flags="c", quiet=True
-        ).keys()
+            "v.db.select",
+            map=grid_name,
+            columns="cat",
+            flags="c",
+            quiet=True,
+        ).keys(),
     )
     number_tiles = len(tiles_num_list)
 
@@ -234,22 +254,18 @@ def import_dop_from_wms(
                     flags="f",
                 )
                 grass.message(_("Retry download..."))
-                if count > 15:
+                if count > (RETRIES / 2):
                     grass.fatal(f"Download of {tile_url} not working.")
                 sleep(10)
 
         # change band name to band number
+        band_nums = {
+            "red": 1,
+            "green": 2,
+            "blue": 3,
+        }
         for band in bands:
-            if name == cir_band:
-                oband = "4"
-            else:
-                oband = band
-                if band == "red":
-                    oband = "1"
-                elif band == "green":
-                    oband = "2"
-                elif band == "blue":
-                    oband = "3"
+            oband = "4" if name == cir_band else band_nums[band]
 
             # create old and new name for adjusting resolution/renaming
             old_name = f"{out_tmp}.{band}"
@@ -258,7 +274,9 @@ def import_dop_from_wms(
             # adjust resolution/rename raster maps
             if not native_res:
                 adjust_raster_resolution(
-                    old_name, new_name, resolution_to_import
+                    old_name,
+                    new_name,
+                    resolution_to_import,
                 )
             else:
                 rename_raster(old_name, new_name)
@@ -266,11 +284,14 @@ def import_dop_from_wms(
 
     # drop rest of CIR DOP
     grass.run_command(
-        "g.remove", type="raster", pattern=f"{cir_band}_*_tmp*", flags="f"
+        "g.remove",
+        type="raster",
+        pattern=f"{cir_band}_*_tmp*",
+        flags="f",
     )
 
 
-def keep_data_NW(url, download_dir):
+def keep_data_nw(url, download_dir):
     """Download and keep DOPs for NW from url using threadpool
 
     Args:
@@ -287,7 +308,7 @@ def keep_data_NW(url, download_dir):
     return os.path.join(download_dir, basename)
 
 
-def keep_data_BB_BE(url, download_dir):
+def keep_data_bb_be(url, download_dir):
     """Download and keep DOPs for BB/BE from url using threadpool
 
     Args:
@@ -305,7 +326,7 @@ def keep_data_BB_BE(url, download_dir):
     return os.path.join(download_dir, basename)
 
 
-def keep_data_SN(url, download_dir):
+def keep_data_sn(url, download_dir):
     """Download and keep DOPs for BB/BE from url using threadpool
 
     Args:
@@ -339,7 +360,7 @@ def import_and_reproject(
     Args:
         url (str): The URL of the DOP to import
         raster_name (str): The prefix name for the output rasters
-        resolution_to_import (float): Resolution to use for region and raster import
+        resolution_to_import (float): Resolution for region and raster import
         fs (str): Abbreviation of the current federal state
         aoi_map (str): Name of AOI vector map
         download_dir (str): Path to local directory to downlaod DOPs to
@@ -404,15 +425,16 @@ def import_and_reproject(
     # and change input parameter in kwargs to local path
     if keep_data:
         # call download and keep data function for respective federal state
-        function_name = f"keep_data_{fs}"
+        function_name = f"keep_data_{fs.lower()}"
         if function_name in globals():
             func = globals()[function_name]
             kwargs["input"] = func(url, download_dir)
         else:
             grass.fatal(
                 _(
-                    f"Function to download and keep data for {fs} not found in lib."
-                )
+                    f"Function to download and keep data for {fs} ",
+                    "not found in lib.",
+                ),
             )
 
     # import data
@@ -424,8 +446,8 @@ def import_and_reproject(
             grass.fatal(
                 _(
                     f"Importing {kwargs['input']} failed after {RETRIES} "
-                    "retries."
-                )
+                    "retries.",
+                ),
             )
         try:
             grass.run_command("r.import", **kwargs)
@@ -442,7 +464,7 @@ def import_and_reproject(
         res = float(
             grass.parse_command("r.info", flags="g", map=f"{raster_name}.1")[
                 "nsres"
-            ]
+            ],
         )
     # switch location
     os.environ["GISRC"] = str(gisrc)

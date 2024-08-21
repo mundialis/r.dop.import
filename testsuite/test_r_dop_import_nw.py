@@ -21,15 +21,17 @@
 #
 #############################################################################
 
+import os
 from grass.gunittest.main import test
 from grass.gunittest.gmodules import SimpleModule
 import grass.script as grass
-import os
 
 from r_dop_import_test_base import RDopImportTestBase
 
 
 class TestRDopImportNW(RDopImportTestBase):
+    """Test class for r.dop.import for NW"""
+
     fs = "NW"
     ref_res = 0.1
     aoi_cells = 424526
@@ -58,6 +60,7 @@ class TestRDopImportNW(RDopImportTestBase):
         """
         Tests importing data, containing only single DOP tile
         """
+        cells = 560700
         print("\nTest import of singel tile (NRW) ...")
         aoi_map_single_tile = "aoi_map_single_tile"
         self.rm_vec.append(aoi_map_single_tile)
@@ -75,10 +78,12 @@ class TestRDopImportNW(RDopImportTestBase):
         self.assertModule(r_check, "Importing single DOP tile fails.")
         # import should have rows=700 & cols=801 ==> cells=560700
         cells_aoi = grass.parse_command(
-            "r.info", map=self.test_output_all[0], flags="g"
+            "r.info",
+            map=self.test_output_all[0],
+            flags="g",
         )["cells"]
         self.assertTrue(
-            int(cells_aoi) == 560700,
+            int(cells_aoi) == cells,
             "Data loaded for larger region than AOI (single DOP)",
         )
         print("Test import of singel tile (NRW) successfully finished.\n")

@@ -102,7 +102,7 @@ except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
 ID = grass.tempname(12)
-orig_region = None
+ORIG_REGION = f"original_region_{ID}"
 rm_rasters = []
 rm_vectors = []
 download_dir = None
@@ -113,8 +113,9 @@ NATIVE_DOP_RES = 0.2
 
 
 def cleanup():
+    """Remove all not needed files at the end"""
     general_cleanup(
-        orig_region=orig_region,
+        orig_region=ORIG_REGION,
         rm_rasters=rm_rasters,
         rm_vectors=rm_vectors,
         rm_dirs=rm_dirs,
@@ -122,9 +123,8 @@ def cleanup():
 
 
 def main():
-    global ID, orig_region, rm_rasters, rm_vectors
-    global temp_loc_path, download_dir, new_mapset
-
+    """Main function of r.dop.import.he"""
+    global rm_vectors
     aoi = options["aoi"]
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
@@ -138,8 +138,8 @@ def main():
         grass.warning(
             _(
                 "<memory> parameter will be ignored, because the worker "
-                "module for TH do not accept a <memory> parameter."
-            )
+                "module for TH do not accept a <memory> parameter.",
+            ),
         )
 
     # if -k flag is set print warning that it will be ignored because
@@ -149,8 +149,8 @@ def main():
             _(
                 "-k flag will be ignored, beacuse TH DOPs will be imported "
                 "directly from WMS into GRASS. Use r.out.gdal module to "
-                "export DOPs into download directory!"
-            )
+                "export DOPs into download directory!",
+            ),
         )
 
     # create list for each raster band for building entire raster
@@ -162,8 +162,7 @@ def main():
     }
 
     # save original region
-    orig_region = f"original_region_{ID}"
-    grass.run_command("g.region", save=orig_region, quiet=True)
+    grass.run_command("g.region", save=ORIG_REGION, quiet=True)
 
     # get region resolution and check if resolution consistent
     reg = grass.region()
@@ -197,7 +196,14 @@ def main():
 
     # create grid with lib function
     rm_vectors, number_tiles, tiles_list = create_grid_and_tiles_list(
-        ns_res, ew_res, tile_size, grid, rm_vectors, aoi, ID, fs
+        ns_res,
+        ew_res,
+        tile_size,
+        grid,
+        rm_vectors,
+        aoi,
+        ID,
+        fs,
     )
 
     # set number of parallel processes to number of tiles
@@ -213,23 +219,23 @@ def main():
     # set queue and variables for worker addon
     try:
         grass.message(
-            _(f"Importing {number_tiles} DOPs for HE in parallel...")
+            _(f"Importing {number_tiles} DOPs for HE in parallel..."),
         )
         for tile in tiles_list:
             key = tile
             new_mapset = f"tmp_mapset_rdop_import_tile_{key}_{os.getpid()}"
             rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
             raster_name = tile
-            for key_rast in all_raster:
-                all_raster[key_rast].append(
-                    f"{fs}_{raster_name}_{key_rast}@{new_mapset}"
+            for item in all_raster.items():
+                item[1].append(
+                    f"{fs}_{raster_name}_{item[0]}@{new_mapset}",
                 )
             param = {
                 "flags": "",
                 "tile_key": key,
                 "tile_url": WMS,
                 "raster_name": raster_name,
-                "orig_region": orig_region,
+                "orig_region": ORIG_REGION,
                 "new_mapset": new_mapset,
             }
             grass.message(f"raster_name: {raster_name}")
@@ -255,15 +261,15 @@ def main():
             rm_rasters.append(rm_nir)
 
             # run worker addon in parallel
-            r_dop_import_worker_HE = Module(
+            r_dop_import_worker_he = Module(
                 "r.dop.import.worker.he",
                 **param,
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_HE.stdout = grass.PIPE
-            r_dop_import_worker_HE.stderr = grass.PIPE
-            queue.put(r_dop_import_worker_HE)
+            r_dop_import_worker_he.stdout = grass.PIPE
+            r_dop_import_worker_he.stderr = grass.PIPE
+            queue.put(r_dop_import_worker_he)
         queue.wait()
     except Exception:
         for proc_num in range(queue.get_num_run_procs()):
@@ -273,7 +279,7 @@ def main():
                 # exception
                 errmsg = proc.outputs["stderr"].value.strip()
                 grass.fatal(
-                    _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}")
+                    _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"),
                 )
 
     # create one vrt per band of all imported DOPs

@@ -121,13 +121,17 @@ rm_rast = []
 rm_group = []
 
 gisdbase = None
-tmp_loc = None
-tmp_gisrc = None
+TMP_LOC = None
+TMP_GISRC = None
 
 
 def cleanup():
+    """Remove all not needed files at the end"""
     cleaning_tmp_location(
-        None, tmp_loc=tmp_loc, tmp_gisrc=tmp_gisrc, gisdbase=gisdbase
+        None,
+        tmp_loc=TMP_LOC,
+        tmp_gisrc=TMP_GISRC,
+        gisdbase=gisdbase,
     )
     general_cleanup(
         rm_rasters=rm_rast,
@@ -136,8 +140,8 @@ def cleanup():
 
 
 def main():
-    global gisdbase, tmp_loc, tmp_gisrc
-
+    """Main function of r.dop.import.he"""
+    global gisdbase, TMP_LOC, TMP_GISRC
     # parser options
     tile_key = options["tile_key"]
     tile_url = options["tile_url"]
@@ -156,18 +160,15 @@ def main():
 
     # set region
     grass.run_command("g.region", region=f"{orig_region}@{old_mapset}")
-    if options["aoi"]:
-        aoi_map = f"{options['aoi']}@{old_mapset}"
-    else:
-        aoi_map = None
+    aoi_map = f"{options['aoi']}@{old_mapset}" if options["aoi"] else None
 
     # import DOP tile with original resolution
     grass.message(
-        _(f"Started DOP import for key: {tile_key} and URL: {tile_url}.")
+        _(f"Started DOP import for key: {tile_key} and URL: {tile_url}."),
     )
 
     # import and reproject DOP tiles based on tileindex
-    gisdbase, tmp_loc, tmp_gisrc = import_and_reproject(
+    gisdbase, TMP_LOC, TMP_GISRC = import_and_reproject(
         tile_url,
         raster_name,
         resolution_to_import,
@@ -182,7 +183,9 @@ def main():
     for band in [1, 2, 3, 4]:
         raster_name_band = f"{raster_name}.{band}"
         adjust_raster_resolution(
-            raster_name_band, raster_name_band, resolution_to_import
+            raster_name_band,
+            raster_name_band,
+            resolution_to_import,
         )
     rm_group.append(raster_name)
     grass.message(_(f"Finishing raster import for {raster_name}..."))
@@ -195,7 +198,7 @@ def main():
     switch_back_original_location(gisrc)
     grass.utils.try_remove(newgisrc)
     grass.message(
-        _(f"DOP import for key: {tile_key} and URL: {tile_url} done!")
+        _(f"DOP import for key: {tile_key} and URL: {tile_url} done!"),
     )
 
 

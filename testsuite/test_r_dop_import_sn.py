@@ -2,10 +2,10 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import test Thüringen
-# AUTHOR(S):   Lina Krisztian, Anika Weinmann
+# MODULE:      r.dop.import test Sachsen
+# AUTHOR(S):   Anika Weinmann, Johannes Halbauer
 #
-# PURPOSE:     Tests r.dop.import Thüringen
+# PURPOSE:     Tests r.dop.import Sachsen
 # COPYRIGHT:   (C) 2023 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team
 #
@@ -26,9 +26,11 @@ from r_dop_import_test_base import RDopImportTestBase
 
 
 class TestRDopImportSN(RDopImportTestBase):
-    fs = "TH"
+    """Test class for r.dop.import for SN"""
+
+    fs = "SN"
     ref_res = 0.2
-    aoi_cells = 389351
+    aoi_cells = 2021300
 
     def test_default_settings(self):
         """
