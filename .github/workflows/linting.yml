@@ -21,4 +21,4 @@ jobs:
         ruff --version
     - name: Lint with ruff
       run: |
-        ruff check . --config ./pyproject.toml
+        ruff check . --config ../../pyproject.toml
