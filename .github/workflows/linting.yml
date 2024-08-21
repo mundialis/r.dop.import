@@ -7,7 +7,7 @@ jobs:
     uses: mundialis/github-workflows/.github/workflows/linting.yml@main
     with:
       VALIDATE_HTML: false
-  lint / ruff:
+  ruff:
     name: ruff
     runs-on: ubuntu-latest
     steps:
