@@ -11,6 +11,7 @@ jobs:
     name: ruff
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v4
     - name: Install apt dependencies
       run: |
         sudo apt-get install -y -qq python3 python3-pip
@@ -21,4 +22,4 @@ jobs:
         ruff --version
     - name: Lint with ruff
       run: |
-        ruff check . --config ../../pyproject.toml
+        ruff check --config pyproject.toml .
