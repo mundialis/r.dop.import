@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>r.dop.import - GRASS GIS manual</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="content-language" content="en-us">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="grassdocs.css" type="text/css">
+</head>
+<body bgcolor="white">
+<div id="container">
+
+<a href="https://grass.osgeo.org/grass-stable/manuals/index.html"><img src="grass_logo.png" alt="GRASS logo"></a>
+<hr class="header">
+
+<h2>NAME</h2>
+
+<em><b>r.dop.import</b></em> - Toolset for the import of digital orthophotos 
+(DOPs). It includes import addons for the open geodata digital
+orthophotos for Germany.
+
+<h2>KEYWORDS</h2>
+
+<a href="raster.html">raster</a>,
+<a href="topic_import.html">import</a>,
+<a href="keywords.html#orthophoto.html">orthophoto</a>
+
+<!-- meta page description: Toolset for download of orthophotos in multiple federal states of Germany -->
+
+<h2>DESCRIPTION</h2>
+
+The <em>r.dop.import</em> toolset downloads digital orthophotos for a specified AOI and multiple
+federal states of Germany.
+
+Overview of the available digital orthophotos (at least 20 cm spatial resolution):
+<table>
+  <thead>
+  <tr>
+  <th>Federal state</th>
+  <th>DOP</th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr>
+  <td>Baden-Württemberg (BW)</td>
+  <td>Not available</td>
+  </tr>
+  <tr>
+  <td>Bayern (BY)</td>
+  <td>Not available</td>
+  </tr>
+  <tr>
+  <td>Berlin (BE)</td>
+  <td>r.dop.import fs=BE</td>
+  </tr>
+  <tr>
+  <td>Brandenburg (BB)</td>
+  <td>r.dop.import fs=BB</td>
+  </tr>
+  <tr>
+  <td>Bremen (HB)</td>
+  <td>Not available</td>
+  </tr>
+  <tr>
+  <td>Hamburg (HH)</td>
+  <td>Not available</td>
+  </tr>
+  <tr>
+  <td>Hessen (HE)</td>
+  <td>TODO</td>
+  </tr>
+  <tr>
+  <td>Mecklenburg-Vorpommern (MV)</td>
+  <td>Not available</td>
+  </tr>
+  <tr>
+  <td>Niedersachsen (NI)</td>
+  <td>TODO</td>
+  </tr>
+  <tr>
+  <td>Nordrhein-Westfalen (NW)</td>
+  <td>r.dop.import fs=NW</td>
+  </tr>
+  <tr>
+  <td>Rheinland-Pfalz (RP)</td>
+  <td>Not available</td>
+  </tr>
+  <tr>
+  <td>Saarland (SL)</td>
+  <td>Not available</td>
+  </tr>
+  <tr>
+  <td>Sachsen (SN)</td>
+  <td>r.dop.import fs=SN</td>
+  </tr>
+  <tr>
+  <td>Sachsen-Anhalt (ST)</td>
+  <td>Not available</td>
+  </tr>
+  <tr>
+  <td>Schleswig-Holstein (SH)</td>
+  <td>Not available</td>
+  </tr>
+  <tr>
+  <td>Thüringen (TH)</td>
+  <td>r.dop.import fs=TH</td>
+  </tr>
+  </tbody>
+</table>
+
+
+<h2>REQUIREMENTS</h2>
+
+<ul>
+  <li><a href="https://pypi.org/project/grass-gis-helpers/">grass-gis-helpers>=1.1.0</a></li>
+</ul>
+
+
+<h2>AUTHORS</h2>
+
+Johannes Halbauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Anika Weinmann, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Julia Haas, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Lina Krisztian, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>

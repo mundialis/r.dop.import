@@ -1,0 +1,91 @@
+[project]
+name = "r.dop.import"
+requires-python = ">=3.9"
+
+[tool.black]
+required-version = '24'
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.ruff]
+required-version = ">=0.5.0"
+
+# In addition to the standard set of exclusions, omit the following files or folders.
+extend-exclude = [
+    ".git",
+    "__pycache__",
+    ".env",
+    ".venv",
+    "env",
+    "venv",
+    "ENV",
+    "env.bak",
+    "venv.bak",
+    "ctypes",
+    "pydispatch",
+]
+
+[tool.ruff.lint]
+# See https://docs.astral.sh/ruff/rules/
+select = [
+    "AIR",      # Airflow (AIR)
+    "YTT",      # flake8-2020
+    "ANN",      # flake8-annotations (ANN)
+    "ASYNC",    # flake8-async
+    "S",        # flake8-bandit
+    "FBT",      # flake8-boolean-trap
+    "B",        # flake8-bugbear
+    "A",        # flake8-builtins (A)
+    "COM",      # flake8-commas
+    "C4",       # flake8-comprehension
+    "DTZ",      # flake8-datetimez
+    "T10",      # flake8-debugger
+    "DJ",       # flake8-django
+    "EM",       # flake8-errmsg
+    "EXE",      # flake8-executable
+    "FA",       # flake8-future-annotations
+    "ISC",      # flake8-implicit-str-concat
+    "ICN",      # flake8-import-conventions
+    "LOG",      # flake8-logging
+    "G",        # flake8-logging-format
+    "INP",      # flake8-no-pep420
+    "PIE",      # flake8-pie
+    "PYI",      # flake8-pyi
+    "PT",       # flake8-pytest-style
+    "Q",        # flake8-quotes
+    "RSE",      # flake8-raise
+    "RET",      # flake8-return
+    "SLF",      # flake8-self
+    "SLOT",     # flake8-slots
+    "SIM",      # flake8-simplify
+    "TID",      # flake8-tidy-imports
+    "TCH",      # flake8-type-checking
+    "ARG",      # flake8-unused-arguments
+    "TD",       # flake8-todos
+    "FIX",      # flake8-fixme
+    "ERA",      # eradicate
+    "PL",       # Pylint
+]
+
+ignore = [
+    # See https://docs.astral.sh/ruff/rules/
+    "E402",     # module-import-not-at-top-of-file
+    "E501",     # line-too-long
+    "F821",     # undefined-name
+    "ANN201",   # missing-return-type-undocumented-public-function
+    "ANN101",   # missing-type-self
+    "ANN102",   # missing-type-cls
+    "ANN206",   # missing-return-type-class-method
+    "ANN001",   # missing-type-function-argument
+    "EXE001",   # shebang-not-executable
+    "PT009",    # pytest-unittest-assertion
+    "PLR0913",  # too-many-arguments
+    "PLR0915",  # too-many-statements
+    "PLR0912",  # too-many-branches
+    "A002",     # builtin-argument-shadowing
+]
+
+[tool.ruff.lint.per-file-ignores]
+# See https://docs.astral.sh/ruff/settings/#lint_per-file-ignores
+"lib_dop/r_dop_import_lib.py" = ["ERA001", "PLR2004"]
+"testsuite/r_dop_import_test_base.py" = ["PLR2004"]

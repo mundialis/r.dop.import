@@ -1,0 +1,30 @@
+<h2>DESCRIPTION</h2>
+
+<em>r.dop.import.sn</em> downloads and imports <a href="https://www.geodaten.sachsen.de/batch-download-4719.html">digital orthophotos (DOP)</a>
+for Sachsen (SN) and area of interest.
+
+The data "Digitale Orthophotos" is downloaded from
+<a href="https://www.geodaten.sachsen.de/batch-download-4719.html">Geoportal Sachsen</a>
+and can be used under the specification of the license and referencing the source:
+
+<br>source: <a href="https://www.landesvermessung.sachsen.de/benutzungshinweise-5557.html">GeoSN </a>
+
+<br>license: <a href="https://www.govdata.de/dl-de/zero-2-0">Datenlizenz Deutschland Namensnennung 2.0</a>,
+
+<br><a href="https://www.geodaten.sachsen.de/luftbild-produkte-3995.html">DOP</a>
+
+
+<h2>EXAMPLES</h2>
+
+<h3>Import DOPs</h3>
+
+Import DOPs with native resolution:
+<div class="code"><pre>
+r.dop.import.nw aoi=aoi_SN output=dop_SN -r
+</pre></div>
+
+
+<h2>AUTHORS</h2>
+
+Johannes Halbauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Anika Weinmann, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>

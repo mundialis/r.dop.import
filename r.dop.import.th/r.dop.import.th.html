@@ -1,0 +1,29 @@
+<h2>DESCRIPTION</h2>
+
+<em>r.dop.import.th</em> downloads and imports <a href="https://geoportal.thueringen.de/gdi-th/download-offene-geodaten/download-luftbilder-und-orthophotos">digital orthophotos (DOP)</a>
+for Thüringen (TH) and area of interest using the respective <a href="https://geoportal.thueringen.de/gdi-th/download-offene-geodaten/darstellungs-und-downloaddienste">WMS</a>.
+<br>The data can be used when referencing the source: 
+
+<br>id: dl-by-de/2.0,
+
+<br>name: Datenlizenz Deutschland Namensnennung 2.0,
+
+<br>url: https://www.govdata.de/dl-de/by-2-0,
+
+<br>source: (c) GDI-Th, Freistaat Thueringen (<a href="https://geoportal.thueringen.de/gdi-th">GDI-Th</a>)
+
+
+<h2>EXAMPLES</h2>
+
+<h3>Import DOPs</h3>
+
+Import DOPs with native resolution:
+<div class="code"><pre>
+r.dop.import.th aoi=aoi_TH output=dop_TH -r
+</pre></div>
+
+
+<h2>AUTHORS</h2>
+
+Johannes Halbauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Anika Weinmann, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>
