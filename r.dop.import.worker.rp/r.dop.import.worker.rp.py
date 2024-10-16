@@ -180,7 +180,7 @@ def main():
     # get around security certificate of geoportal-rlp
 
     ssl._create_default_https_context = ssl._create_unverified_context
-    tile_path = os.path.join(dir_tmp, raster_name + ".jp2")
+    tile_path = os.path.join(dir_tmp, f"{raster_name}.jp2")
     urllib.request.urlretrieve(tile_url, tile_path)
     grass.message(
         (f"DOP download to DIR: {dir_tmp} and Raster: {raster_name}"),
