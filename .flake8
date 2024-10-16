@@ -6,6 +6,8 @@
 # F821 undefined name '_'
 
 per-file-ignores =
+  ./r.dop.import.rp/r.dop.import.rp.py: E501,F821
+  ./r.dop.import.worker.rp/r.dop.import.worker.rp.py: E501,F821
   ./r.dop.import.he/r.dop.import.he.py: E501,F821
   ./r.dop.import.worker.he/r.dop.import.worker.he.py: E501,F821
   ./r.dop.import.sn/r.dop.import.sn.py: E501,F821
