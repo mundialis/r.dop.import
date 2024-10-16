@@ -106,7 +106,7 @@ except Exception as imp_err:
 
 # set global variables
 TINDEX = (
-    "https://github.com/vbrunn/tile-indices/raw/main/DOP/RP/"
+    "https://github.com/mundialis/tile-indices/raw/main/DOP/RP/"
     "RLP_DOP20_tileindex.gpkg.gz"
 )
 
