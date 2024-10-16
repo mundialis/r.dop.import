@@ -23,7 +23,7 @@
 ############################################################################
 
 # %Module
-# % description: Downloads and imports DOPs for specified federal state and aoi
+# % description: Downloads and imports DOPs for specified federal state and AOI
 # % keyword: raster
 # % keyword: import
 # % keyword: imagery
