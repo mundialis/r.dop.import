@@ -43,7 +43,7 @@
 # % multiple: yes
 # % required: no
 # % description: Federal state(s) related to the area of interest, e.g.: "Nordrhein-Westfalen"
-# % options: Berlin,BE,Brandenburg,BB,Nordrhein-Westfalen,NW,Sachsen,SN,Thüringen,TH
+# % options: Berlin,BE,Brandenburg,BB,Nordrhein-Westfalen,NW,Sachsen,SN,Thüringen,TH,Rheinland-Pfalz,RP
 # %end
 
 # %option G_OPT_F_INPUT
