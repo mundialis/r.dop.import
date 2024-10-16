@@ -383,7 +383,8 @@ def import_and_reproject(
         loc_proj = "location"
         grass.warning(
             _(
-                "You are using an old GRASS GIS version. Please, consider updating.",
+                "You are using an old GRASS GIS version.",
+                "Please, consider updating.",
             ),
         )
 

@@ -77,7 +77,6 @@
 import atexit
 import os
 import sys
-import ssl
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
