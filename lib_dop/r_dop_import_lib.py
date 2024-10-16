@@ -381,6 +381,9 @@ def import_and_reproject(
         loc_proj = "project"
     else:
         loc_proj = "location"
+        grass.warning(
+            _(f"You are using an old GRASS GIS version. Please, consider updating."),
+            )
 
 
     aoi_map_to_set_region1 = aoi_map

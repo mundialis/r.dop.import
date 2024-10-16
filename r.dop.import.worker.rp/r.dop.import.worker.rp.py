@@ -3,10 +3,10 @@
 ############################################################################
 #
 # MODULE:      r.dop.import.worker.rp
-# AUTHOR(S):   Victoria-Leandra Brunn, Johannes Halbauer, Lina Krisztian
+# AUTHOR(S):   Victoria-Leandra Brunn
 #
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
-#              in Rhineland-Palatine
+#              in Rheinland-Pfalz
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team
 #
