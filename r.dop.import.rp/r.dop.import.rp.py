@@ -248,7 +248,7 @@ def main():
             rm_rasters.append(rm_nir)
 
             # run worker addon in parallel
-            r_dop_import_worker_rp= Module(
+            r_dop_import_worker_rp = Module(
                 "r.dop.import.worker.rp",
                 **param,
                 run_=False,

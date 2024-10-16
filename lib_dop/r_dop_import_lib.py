@@ -376,15 +376,16 @@ def import_and_reproject(
 
     # since 8.4.0 use project variable instead of location
     grass_version_info = grass.core.version()["version"]
-    grass_version = [int(item) for item in grass_version_info.split('.')[:2]]
+    grass_version = [int(item) for item in grass_version_info.split(".")[:2]]
     if grass_version >= [8, 4]:
         loc_proj = "project"
     else:
         loc_proj = "location"
         grass.warning(
-            _(f"You are using an old GRASS GIS version. Please, consider updating."),
-            )
-
+            _(
+                f"You are using an old GRASS GIS version. Please, consider updating."
+            ),
+        )
 
     aoi_map_to_set_region1 = aoi_map
 
@@ -404,17 +405,15 @@ def import_and_reproject(
     tmp_loc, tmp_gisrc = create_tmp_location(epsg)
 
     # reproject aoi
-    v_kwargs = {"mapset": mapset,
-            "input": aoi_map_to_set_region1,
-            "output": aoi_map_to_set_region1,
-            "quiet": True,
-            loc_proj: loc,
-            }
+    v_kwargs = {
+        "mapset": mapset,
+        "input": aoi_map_to_set_region1,
+        "output": aoi_map_to_set_region1,
+        "quiet": True,
+        loc_proj: loc,
+    }
     if aoi_map:
-        grass.run_command(
-            "v.proj",
-            **v_kwargs
-        )
+        grass.run_command("v.proj", **v_kwargs)
         grass.run_command(
             "g.region",
             vector=aoi_map_to_set_region1,
@@ -489,26 +488,22 @@ def import_and_reproject(
     else:
         grass.run_command("g.region", res=res, flags="a")
 
-
-
     for i in range(1, 5):
         name = f"{raster_name}.{i}"
         # set memory manually to 1000
         # Process stuck, when memory is too large (100000)
         # GDAL_CACHEMAX is only interpreted as MB, if value is <100000
-        r_kwargs = {"mapset": "PERMANENT",
-                  "input": name,
-                  "output": name,
-                  "resolution": res,
-                  "flags": "n",
-                  "quiet": True,
-                  "memory": 1000,
-                  loc_proj: tmp_loc,
-                  }
-        grass.run_command(
-            "r.proj",
-            **r_kwargs
-        )
+        r_kwargs = {
+            "mapset": "PERMANENT",
+            "input": name,
+            "output": name,
+            "resolution": res,
+            "flags": "n",
+            "quiet": True,
+            "memory": 1000,
+            loc_proj: tmp_loc,
+        }
+        grass.run_command("r.proj", **r_kwargs)
 
     # return temp location parameters to remove it in cleanup
     return gisdbase, tmp_loc, tmp_gisrc

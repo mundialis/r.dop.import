@@ -178,17 +178,17 @@ def main():
     # sth has to happen here as import from website is not possible with r.import used in import_and_reproject
     dir_tmp = grass.tempdir()
     # get around security certificate of geoportal-rlp
-    
+
     ssl._create_default_https_context = ssl._create_unverified_context
     tile_path = os.path.join(dir_tmp, raster_name + ".jp2")
     urllib.request.urlretrieve(tile_url, tile_path)
     grass.message(
         (f"DOP download to DIR: {dir_tmp} and Raster: {raster_name}"),
-        )
-    
+    )
+
     # import and reproject DOP tiles based on tileindex
     gisdbase, TMP_LOC, TMP_GISRC = import_and_reproject(
-        tile_path, #tile_url,
+        tile_path,  # tile_url,
         raster_name,
         resolution_to_import,
         "RP",
