@@ -37,9 +37,9 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
 from grass_gis_helpers.raster import adjust_raster_resolution, rename_raster
 
 OPEN_DATA_AVAILABILITY = {
-    "NO_OPEN_DATA": ["BW", "BY", "HB", "HH", "MV", "RP", "SL", "ST", "SH"],
+    "NO_OPEN_DATA": ["BW", "BY", "HB", "HH", "MV", "SL", "ST", "SH"],
     "NOT_YET_SUPPORTED": ["NI"],
-    "SUPPORTED": ["BE", "BB", "NW", "SN", "TH", "HE"],
+    "SUPPORTED": ["BE", "BB", "NW", "SN", "TH", "HE", "RP"],
 }
 
 RETRIES = 30
@@ -373,6 +373,21 @@ def import_and_reproject(
         tmp_loc (str): Name of temporary location
         tmp_gisrc (str): Path to GISRC file
     """
+
+    # since 8.4.0 use project variable instead of location
+    grass_version_info = grass.core.version()["version"]
+    grass_version = [int(item) for item in grass_version_info.split(".")[:2]]
+    if grass_version >= [8, 4]:
+        loc_proj = "project"
+    else:
+        loc_proj = "location"
+        grass.warning(
+            _(
+                "You are using an old GRASS GIS version.",
+                "Please, consider updating.",
+            ),
+        )
+
     aoi_map_to_set_region1 = aoi_map
 
     # get actual location, mapset, ...
@@ -391,15 +406,15 @@ def import_and_reproject(
     tmp_loc, tmp_gisrc = create_tmp_location(epsg)
 
     # reproject aoi
+    v_kwargs = {
+        "mapset": mapset,
+        "input": aoi_map_to_set_region1,
+        "output": aoi_map_to_set_region1,
+        "quiet": True,
+        loc_proj: loc,
+    }
     if aoi_map:
-        grass.run_command(
-            "v.proj",
-            location=loc,
-            mapset=mapset,
-            input=aoi_map_to_set_region1,
-            output=aoi_map_to_set_region1,
-            quiet=True,
-        )
+        grass.run_command("v.proj", **v_kwargs)
         grass.run_command(
             "g.region",
             vector=aoi_map_to_set_region1,
@@ -418,6 +433,7 @@ def import_and_reproject(
         "quiet": True,
         "extent": "region",
     }
+
     if fs == "BB_BE":
         kwargs["flags"] = "o"
 
@@ -472,22 +488,23 @@ def import_and_reproject(
         grass.run_command("g.region", vector=aoi_map, res=res, flags="a")
     else:
         grass.run_command("g.region", res=res, flags="a")
+
     for i in range(1, 5):
         name = f"{raster_name}.{i}"
         # set memory manually to 1000
         # Process stuck, when memory is too large (100000)
         # GDAL_CACHEMAX is only interpreted as MB, if value is <100000
-        grass.run_command(
-            "r.proj",
-            location=tmp_loc,
-            mapset="PERMANENT",
-            input=name,
-            output=name,
-            resolution=res,
-            flags="n",
-            quiet=True,
-            memory=1000,
-        )
+        r_kwargs = {
+            "mapset": "PERMANENT",
+            "input": name,
+            "output": name,
+            "resolution": res,
+            "flags": "n",
+            "quiet": True,
+            "memory": 1000,
+            loc_proj: tmp_loc,
+        }
+        grass.run_command("r.proj", **r_kwargs)
 
     # return temp location parameters to remove it in cleanup
     return gisdbase, tmp_loc, tmp_gisrc
