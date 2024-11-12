@@ -1,4 +1,5 @@
 # from https://github.com/OSGeo/grass/blob/main/.github/workflows/post-pr-reviews.yml and slightly modified
+# test post PR review
 ---
 name: Post PR code suggestions
 
