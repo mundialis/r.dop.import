@@ -1,4 +1,4 @@
-name: Python Flake8, black and pylint code quality check
+name: Python flake8, black and pylint code quality check and post PR code suggestions
 
 on: [push]
 
@@ -23,3 +23,6 @@ jobs:
   #   - name: Lint with ruff
   #     run: |
   #       ruff check --config pyproject.toml .
+
+  post-pr-reviews:
+    uses: mundialis/github-workflows/.github/workflows/post-pr-reviews.yml@add_post_pr_reviews
