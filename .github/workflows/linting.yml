@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   lint:
-    uses: mundialis/github-workflows/.github/workflows/linting.yml@main
+    uses: mundialis/github-workflows/.github/workflows/linting.yml@add_post_pr_reviews
     with:
       VALIDATE_HTML: false
   ruff:

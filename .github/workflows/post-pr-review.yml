@@ -1,0 +1,5 @@
+name: Post PR code suggestions
+
+jobs:
+  lint:
+    uses: mundialis/github-workflows/.github/workflows/post-pr-review.yml@add_post_pr_reviews
