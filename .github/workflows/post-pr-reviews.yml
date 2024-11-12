@@ -1,9 +1,7 @@
-name: Post PR code suggestions
+# name: Post PR code suggestions
 
-on: [push]
+# on: [push]
 
-jobs:
-  lint:
-    uses: mundialis/github-workflows/.github/workflows/post-pr-reviews.yml@add_post_pr_reviews
-
-# test post PR reviews
+# jobs:
+#   lint:
+#     uses: mundialis/github-workflows/.github/workflows/post-pr-reviews.yml@add_post_pr_reviews
