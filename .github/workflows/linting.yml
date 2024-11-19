@@ -1,4 +1,4 @@
-name: Python flake8, black and pylint code quality check and post PR code suggestions
+name: Python flake8, black, pylint and ruff code quality check and post PR code suggestions
 
 on: [push]
 
@@ -7,22 +7,7 @@ jobs:
     uses: mundialis/github-workflows/.github/workflows/linting.yml@add_post_pr_reviews
     with:
       VALIDATE_HTML: false
-  # ruff:
-  #   name: ruff
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - name: Install apt dependencies
-  #     run: |
-  #       sudo apt-get install -y -qq python3 python3-pip
-  #   - name: Install pip dependencies
-  #     run: |
-  #       python -m pip install --upgrade pip
-  #       pip3 install ruff==0.5.7
-  #       ruff --version
-  #   - name: Lint with ruff
-  #     run: |
-  #       ruff check --config pyproject.toml .
 
   post-pr-reviews:
+    needs: lint
     uses: mundialis/github-workflows/.github/workflows/post-pr-reviews.yml@add_post_pr_reviews
