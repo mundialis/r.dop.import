@@ -1,6 +1,6 @@
 name: Python flake8, black, pylint and ruff code quality check and post PR code suggestions
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   lint:
@@ -11,4 +11,5 @@ jobs:
 
   post-pr-reviews:
     needs: lint
+    if: ${{ needs.lint.result == 'failure' }}
     uses: mundialis/github-workflows/.github/workflows/post-pr-reviews.yml@add_post_pr_reviews
