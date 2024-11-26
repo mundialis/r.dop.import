@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   lint:
+    # TODO: change branch of workflow repo (2x)
     uses: mundialis/github-workflows/.github/workflows/linting.yml@add_post_pr_reviews
     with:
       VALIDATE_HTML: false
