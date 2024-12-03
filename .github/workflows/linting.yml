@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   lint:
     # TODO: change branch of workflow repo (2x)
-    uses: mundialis/github-workflows/.github/workflows/linting.yml@main
+    uses: mundialis/github-workflows/.github/workflows/linting.yml@test_post_pr_reviews
     with:
       VALIDATE_HTML: false
 
@@ -13,4 +13,4 @@ jobs:
     needs: lint
     # if: ${{ needs.lint.result == 'failure' }}
     if: failure()
-    uses: mundialis/github-workflows/.github/workflows/post-pr-reviews.yml@main
+    uses: mundialis/github-workflows/.github/workflows/post-pr-reviews.yml@test_post_pr_reviews
