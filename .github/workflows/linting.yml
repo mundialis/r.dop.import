@@ -11,5 +11,6 @@ jobs:
 
   post-pr-reviews:
     needs: lint
-    if: ${{ needs.lint.result == 'failure' }}
+    # if: ${{ needs.lint.result == 'failure' }}
+    if: failure()
     uses: mundialis/github-workflows/.github/workflows/post-pr-reviews.yml@main
