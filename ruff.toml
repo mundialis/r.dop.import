@@ -74,7 +74,7 @@ ignore = [
     "PT009",    # pytest-unittest-assertion
     "SLF001",   # private-member-access
     "PLC1901",  # compare-to-empty-string
-    "PLR0913",  # too-many-arguments
+#    "PLR0913",  # too-many-arguments
     "PLR0915",  # too-many-statements
     "PLR0912",  # too-many-branches
     "PLR0914",  # too-many-local-variables
