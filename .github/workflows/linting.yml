@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   lint:
-    # LINE FOR TEST
+    # LINE FOR TEST CHANGE
     # TODO: change branch of workflow repo (2x)
     uses: mundialis/github-workflows/.github/workflows/linting.yml@test_post_pr_reviews
     with:
