@@ -46,6 +46,17 @@ lint.ignore = [
     "PTH120",   # os-path-dirname
     "D401",     # non-imperative-mood
     "RUF012",   # mutable-class-default
+    "I001",     # unsorted-imports
+    "D400",     # ends-in-period
+    "D415",     # ends-in-punctuation
+    "D411",     # no-blank-line-before-section
+    "D413",     # blank-line-after-last-section
+    "D202",     # no-blank-line-after-function
+    "FURB171",  # single-item-membership-test
+    "F841",     # unuseed-variable
+    "D212",     # multi-line-summary-first-line
+    "D200",     # fits-on-one-line
+    "D213",     # multi-line-summary-second-line
 ]
 
 [lint.per-file-ignores]
