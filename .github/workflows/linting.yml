@@ -2,6 +2,8 @@ name: Linting and code quality check
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 jobs:
