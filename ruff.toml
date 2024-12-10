@@ -10,9 +10,10 @@ exclude = [
     "venv.bak",
     "ctypes",
     "pydispatch",
+    "__init__.py",
 ]
 
-ignore = [
+lint.ignore = [
     "E402",     # module-import-not-at-top-of-file
     "E501",     # line-too-long
     "F821",     # undefined-name
@@ -35,6 +36,16 @@ ignore = [
     "PLR0917",  # too-many-positional-arguments
     "PLR1730",  # if-stmt-min-max
     "PLR6201",  # literal-membership
+    "D100",     # undocumented-public-module
+    "D205",     # blank-line-after-summary
+    "INT001",   # f-string-in-get-text-func-call
+    "PERF203",  # try-except-in-loop
+    "BLE001",   # blind-except
+    "PTH119",   # os-path-basename
+    "PTH118",   # os-path-join
+    "PTH120",   # os-path-dirname
+    "D401",     # non-imperative-mood
+    "RUF012",   # mutable-class-default
 ]
 
 [lint.per-file-ignores]
