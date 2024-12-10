@@ -1,15 +1,11 @@
-name: Python flake8, black, pylint and ruff code quality check and post PR code suggestions
+name: Linting and code quality check
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
 
 jobs:
   lint:
-    # TODO: change branch of workflow repo (2x)
     uses: mundialis/github-workflows/.github/workflows/linting.yml@main
     with:
       VALIDATE_HTML: false
-
-  post-pr-reviews:
-    needs: lint
-    if: ${{ needs.lint.result == 'failure' }}
-    uses: mundialis/github-workflows/.github/workflows/post-pr-reviews.yml@main
