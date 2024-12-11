@@ -206,7 +206,7 @@ def main():
         fs,
     )
 
-    # set number of parallel processes to number of tiles
+    # set number of parallel processes equal to number of tiles
     if number_tiles < nprocs:
         nprocs = number_tiles
     queue = ParallelModuleQueue(nprocs=nprocs)
