@@ -34,7 +34,7 @@ lint.ignore = [
     "PLR0912",  # too-many-branches
     "PLR0914",  # too-many-local-variables
     "PLR0917",  # too-many-positional-arguments
-    "PLR1730",  # if-stmt-min-max
+#    "PLR1730",  # if-stmt-min-max
     "PLR6201",  # literal-membership
     "D100",     # undocumented-public-module
     "D205",     # blank-line-after-summary
