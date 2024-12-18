@@ -18,8 +18,6 @@ lint.ignore = [
     "E501",     # line-too-long
     "F821",     # undefined-name
     "ANN201",   # missing-return-type-undocumented-public-function
-    "ANN101",   # missing-type-self
-    "ANN102",   # missing-type-cls
     "ANN206",   # missing-return-type-class-method
     "ANN001",   # missing-type-function-argument
     "S310",     # suspicious-url-open-usage
@@ -57,6 +55,7 @@ lint.ignore = [
     "D212",     # multi-line-summary-first-line
     "D200",     # fits-on-one-line
     "D213",     # multi-line-summary-second-line
+    "PTH208",   # Use `pathlib.Path.iterdir()` instead
 ]
 
 [lint.per-file-ignores]
