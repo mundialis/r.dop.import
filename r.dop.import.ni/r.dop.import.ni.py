@@ -77,10 +77,10 @@
 import atexit
 import os
 import sys
-import wget
 from collections import defaultdict
 from datetime import datetime
 
+import wget
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
@@ -165,8 +165,7 @@ def get_list_of_tindex_locations(tindex, aoi=None):
         tindex (str): Name of the tindex vector map
         aoi (str): Name of the AOI vector map
     Returns:
-        tiles (list): List with latest locations which overlap with the AOI or the current
-                region
+        tiles (list): Latest locations overlapping with AOI/current region
     """
     tindex_clipped = f"clipped_tindex_vect_{grass.tempname(8)}"
 
@@ -187,12 +186,12 @@ def get_list_of_tindex_locations(tindex, aoi=None):
 
     # add centroid coordinates as attribute
     grass.run_command(
-        "v.to.db", map=tindex_clipped, option="coor", columns="x,y", quiet=True
+        "v.to.db", map=tindex_clipped, option="coor", columns="x,y", quiet=True,
     )
 
     # extract feature values
     feature_rows = grass.vector_db_select(
-        tindex_clipped, columns="location,Aktualitaet,x,y"
+        tindex_clipped, columns="location,Aktualitaet,x,y",
     )["values"]
 
     # group by area centroid and extract latest date

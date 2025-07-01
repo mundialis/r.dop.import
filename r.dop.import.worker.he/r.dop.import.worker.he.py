@@ -151,7 +151,7 @@ def main():
     )
     # import DOPs from WMS
     import_dop_from_wms(
-        f"{tile_key }@{old_mapset}",
+        f"{tile_key}@{old_mapset}",
         raster_name,
         tile_url,
         resolution_to_import,
