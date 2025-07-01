@@ -345,6 +345,22 @@ def keep_data_sn(url, download_dir):
     return os.path.join(download_dir, basename)
 
 
+def keep_data_ni(url, download_dir):
+    """Download and keep DOPs for NI from url using threadpool
+
+    Args:
+        url (string): Url to download data from
+        download_dir (str): Path to directory to download data to
+
+    Returns:
+        (str): Path to download data
+    """
+    basename = os.path.basename(url)
+    download_data_using_threadpool([url], download_dir, None)
+
+    return os.path.join(download_dir, basename)
+
+
 def import_and_reproject(
     url,
     raster_name,
