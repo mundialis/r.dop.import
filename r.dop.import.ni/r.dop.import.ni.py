@@ -186,12 +186,17 @@ def get_list_of_tindex_locations(tindex, aoi=None):
 
     # add centroid coordinates as attribute
     grass.run_command(
-        "v.to.db", map=tindex_clipped, option="coor", columns="x,y", quiet=True,
+        "v.to.db",
+        map=tindex_clipped,
+        option="coor",
+        columns="x,y",
+        quiet=True,
     )
 
     # extract feature values
     feature_rows = grass.vector_db_select(
-        tindex_clipped, columns="location,Aktualitaet,x,y",
+        tindex_clipped,
+        columns="location,Aktualitaet,x,y",
     )["values"]
 
     # group by area centroid and extract latest date
