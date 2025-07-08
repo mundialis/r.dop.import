@@ -77,16 +77,17 @@
 import atexit
 import os
 import sys
-from collections import defaultdict
-from datetime import datetime
 
-import wget
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
 from osgeo import gdal
 
 from grass_gis_helpers.cleanup import general_cleanup
+from grass_gis_helpers.data_import import (
+    download_and_import_tindex,
+    get_list_of_tindex_locations,
+)
 from grass_gis_helpers.general import test_memory
 from grass_gis_helpers.open_geodata_germany.download_data import (
     check_download_dir,
@@ -105,8 +106,8 @@ except Exception as imp_err:
 
 # set global variables
 TINDEX = (
-    "https://arcgis-geojson.s3.eu-de.cloud-object-storage.appdomain.cloud/"
-    "dop20/lgln-opengeodata-dop20.geojson"
+    "https://github.com/mundialis/tile-indices/raw/main/DOP/NI/"
+    "NI_DOP_tindex_proj.gpkg.gz"
 )
 
 ID = grass.tempname(12)
@@ -125,100 +126,6 @@ def cleanup():
         rm_vectors=rm_vectors,
         rm_dirs=rm_dirs,
     )
-
-
-def download_and_import_tindex(tindex_url, output, download_dir):
-    """Download and import tile index from url.
-
-    Args:
-        tindex_url (str): URL of tile index
-        output (str): The output name for the tile index
-        download_dir (str): The directory where the data should be downloaded
-    """
-    cur_dir = os.getcwd()
-    tindex_geojson = os.path.basename(tindex_url)
-    try:
-        os.chdir(download_dir)
-        # download data
-        wget.download(tindex_url, tindex_geojson, bar=None)
-
-        # import data
-        grass.run_command(
-            "v.import",
-            input=tindex_geojson,
-            output=output,
-            extent="region",
-            overwrite=True,
-            quiet=True,
-        )
-    finally:
-        if os.path.isfile(tindex_geojson):
-            os.remove(tindex_geojson)
-        os.chdir(cur_dir)
-
-
-def get_list_of_tindex_locations(tindex, aoi=None):
-    """Select the locations of the tindex which overlap with the AOI or the
-    current region and keep only most recent per overlapping tile.
-
-    Args:
-        tindex (str): Name of the tindex vector map
-        aoi (str): Name of the AOI vector map
-    Returns:
-        tiles (list): Latest locations overlapping with AOI/current region
-    """
-    tindex_clipped = f"clipped_tindex_vect_{grass.tempname(8)}"
-
-    # clip tileindex
-    v_clip_kwargs = {
-        "input": tindex,
-        "output": tindex_clipped,
-        "flags": "",
-        "quiet": True,
-    }
-    if aoi:
-        v_clip_kwargs["clip"] = aoi
-        v_clip_kwargs["flags"] += "d"
-    else:
-        v_clip_kwargs["flags"] += "r"
-    grass.run_command("v.clip", **v_clip_kwargs)
-    rm_vectors.append(tindex_clipped)
-
-    # add centroid coordinates as attribute
-    grass.run_command(
-        "v.to.db",
-        map=tindex_clipped,
-        option="coor",
-        columns="x,y",
-        quiet=True,
-    )
-
-    # extract feature values
-    feature_rows = grass.vector_db_select(
-        tindex_clipped,
-        columns="location,Aktualitaet,x,y",
-    )["values"]
-
-    # group by area centroid and extract latest date
-    grouped = defaultdict(list)
-    for row in feature_rows.values():
-        # set variables
-        loc, date_str, x, y = row
-
-        # parse date format to datetime
-        dt = datetime.strptime(date_str.split(" ")[0], "%Y-%m-%d")
-
-        # identify area using centroid
-        key = (x, y)
-        grouped[key].append((dt, loc))
-
-    # use location of latest tile
-    tiles = []
-    for entries in grouped.values():
-        entries.sort(reverse=True)
-        tiles.append(entries[0][1])
-
-    return tiles
 
 
 def main():
@@ -267,14 +174,6 @@ def main():
     tindex_vect = f"dop_tindex_{ID}"
     rm_vectors.append(tindex_vect)
     download_and_import_tindex(TINDEX, tindex_vect, download_dir)
-
-    # rename tile index column to be able to get list of locations
-    grass.run_command(
-        "v.db.renamecolumn",
-        map=tindex_vect,
-        column="rgbi,location",
-        quiet=True,
-    )
 
     # get download urls which overlap with AOI
     # or current region if no AOI is given
