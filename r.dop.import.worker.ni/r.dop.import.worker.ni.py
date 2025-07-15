@@ -6,7 +6,7 @@
 # AUTHOR(S):   Johannes Halbauer & Lina Krisztian
 #
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
-#              in NIedersachsen
+#              in Niedersachsen
 # COPYRIGHT:   (C) 2025 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team
 #
