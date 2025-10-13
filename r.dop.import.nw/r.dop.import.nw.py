@@ -82,8 +82,8 @@
 
 import atexit
 import os
-import requests
 import sys
+import requests
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
@@ -189,7 +189,8 @@ def main():
         resp = requests.get(used_tindex)
         if resp.status_code != 200:
             grass.fatal(
-                f"Got error code {resp.status_code} when trying to receive {used_tindex}."
+                f"Got error code {resp.status_code} "
+                f"when trying to receive {used_tindex}."
                 " Make sure tileindex exists, otherwise create, "
                 "see also here https://github.com/mundialis/openNRW/tree/master/dop)"
             )
