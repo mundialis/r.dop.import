@@ -66,6 +66,12 @@
 # % multiple: no
 # %end
 
+# %option
+# % key: hist_year
+# % description: Download historic data for given year (Note: Currently only supported for NW)
+# % required: no
+# %end
+
 # %option G_OPT_R_OUTPUT
 # % description: Name for output raster map
 # %end
@@ -188,6 +194,7 @@ def main():
     )
     local_data_dir = options["local_data_dir"]
     download_dir = check_download_dir(options["download_dir"])
+    hist_year = options["hist_year"]
     output = options["output"]
     nprocs = options["nprocs"]
     memory = options["memory"]
@@ -267,6 +274,8 @@ def main():
                     "flags": r_dop_import_fs_flags,
                     "overwrite": True,
                 }
+                if fs == "NW":
+                    params["hist_year"] = hist_year
                 if grass.find_program(worker_addon, "--help"):
                     params["nprocs"] = nprocs
                 grass.run_command(addon, **params)
