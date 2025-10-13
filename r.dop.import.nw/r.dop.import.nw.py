@@ -192,7 +192,7 @@ def main():
                 f"Got error code {resp.status_code} "
                 f"when trying to receive {used_tindex}."
                 " Make sure tileindex exists, otherwise create, "
-                "see also here https://github.com/mundialis/openNRW/tree/master/dop)"
+                "see also here https://github.com/mundialis/openNRW/tree/master/dop)",
             )
     else:
         used_tindex = TINDEX
