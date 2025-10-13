@@ -21,6 +21,7 @@ lint.ignore = [
     "ANN206",   # missing-return-type-class-method
     "ANN001",   # missing-type-function-argument
     "S113",     # Probable use of `requests` call without timeout
+    "S323",     # (within r.dop.import.worker.rp.py) Python allows using an insecure context via the `_create_unverified_context` that reverts to the previous behavior that does not validate certificates or perform hostname checks.
     "S310",     # suspicious-url-open-usage
     "B909",     # loop-iteration-mutation
     "A002",     # builtin-argument-shadowing
