@@ -43,6 +43,12 @@
 # % multiple: no
 # %end
 
+# %option
+# % key: hist_year
+# % description: Download historic data for given year.
+# % required: no
+# %end
+
 # %option G_OPT_R_OUTPUT
 # % description: Name for output raster map
 # %end
@@ -77,6 +83,7 @@
 import atexit
 import os
 import sys
+import requests
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
@@ -134,6 +141,7 @@ def main():
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
+    hist_year = options["hist_year"]
     output = options["output"]
     fs = "NW"
 
@@ -173,7 +181,22 @@ def main():
     # get tile index
     tindex_vect = f"dop_tindex_{ID}"
     rm_vectors.append(tindex_vect)
-    download_and_import_tindex(TINDEX, tindex_vect, download_dir)
+    if hist_year:
+        used_tindex = TINDEX.replace(
+            "openNRW_DOP10_tileindex",
+            f"openNRW_historic_{hist_year}_DOP10_tileindex",
+        )
+        resp = requests.get(used_tindex)
+        if resp.status_code != 200:
+            grass.fatal(
+                f"Got error code {resp.status_code} "
+                f"when trying to receive {used_tindex}."
+                " Make sure tileindex exists, otherwise create, "
+                "see also here https://github.com/mundialis/openNRW/tree/master/dop)",
+            )
+    else:
+        used_tindex = TINDEX
+    download_and_import_tindex(used_tindex, tindex_vect, download_dir)
 
     # get download urls which overlap with AOI
     # or current region if no AOI is given

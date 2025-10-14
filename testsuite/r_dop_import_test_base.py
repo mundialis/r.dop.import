@@ -68,7 +68,7 @@ class RDopImportTestBase(TestCase):
         """Ensures expected computational region and generated data"""
         if cls.fs != "":
             # switch to location with EPSG code 25832
-            loc, mapset, cls.GISDBASE, cls.ORIG_GISRC = get_current_location()
+            _, _, cls.GISDBASE, cls.ORIG_GISRC = get_current_location()
             if cls.TMP_LOC is None:
                 cls.TMP_LOC, cls.TMP_GISRC = create_tmp_location(epsg=25832)
 
