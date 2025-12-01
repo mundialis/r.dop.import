@@ -85,7 +85,11 @@ def enforce_1_255(prefix, raster_name, extension="num"):
         rastername = f"{prefix}_{raster_name}_{name}"
         grass.run_command(
             "r.mapcalc",
-            expression=f"{rastername} = round(if({raster_name}.{num} < 1, 1, if({raster_name}.{num} > 255, 255, {raster_name}.{num})))",
+            expression=(
+                f"{rastername} = round(if({raster_name}.{num} < 1, "
+                f"1, if({raster_name}.{num} > 255, 255, "
+                f"{raster_name}.{num})))"
+            ),
             quiet=True,
             region="intersect",
         )
