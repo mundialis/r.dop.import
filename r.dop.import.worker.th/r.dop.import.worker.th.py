@@ -104,7 +104,7 @@ if path is None:
     grass.fatal("Unable to find the dop library directory.")
 sys.path.append(path)
 try:
-    from r_dop_import_lib import enforce_1_255
+    from r_dop_import_lib import enforce_1_255, import_dop_from_wms
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
