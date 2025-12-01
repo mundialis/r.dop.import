@@ -160,7 +160,7 @@ def main():
 
     # set region if aoi is given
     if aoi:
-        grass.run_command("g.region", vector=aoi, flags="a")
+        grass.run_command("g.region", vector=aoi, res=ns_res, flags="a")
     # if no aoi save region as aoi
     else:
         aoi = f"region_aoi_{ID}"
@@ -229,6 +229,7 @@ def main():
             if flags["k"]:
                 param["flags"] += "k"
             if flags["r"]:
+                param["flags"] += "r"
                 dop_src = gdal.Open(param["tile_url"])
                 param["resolution_to_import"] = abs(
                     dop_src.GetGeoTransform()[1],
