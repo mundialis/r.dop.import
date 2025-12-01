@@ -38,7 +38,7 @@
 # %option
 # % key: download_dir
 # % label: Path to output folder
-# % description: Path of download folder
+# % description: Path to download folder
 # % required: no
 # % multiple: no
 # %end
@@ -168,7 +168,6 @@ def main():
     reg = grass.region()
     if reg["nsres"] == reg["ewres"]:
         ns_res = reg["nsres"]
-        ew_res = reg["ewres"]
     else:
         grass.fatal("N/S resolution is not the same as E/W resolution!")
 
@@ -196,7 +195,7 @@ def main():
     # create grid with lib function
     rm_vectors, number_tiles, tiles_list = create_grid_and_tiles_list(
         ns_res,
-        ew_res,
+        ns_res,
         tile_size,
         grid,
         rm_vectors,
@@ -230,14 +229,16 @@ def main():
                     f"{fs}_{raster_name}_{item[0]}@{new_mapset}",
                 )
             param = {
-                "flags": "",
                 "tile_key": key,
                 "tile_url": WMS,
                 "raster_name": raster_name,
                 "orig_region": ORIG_REGION,
                 "new_mapset": new_mapset,
+                "flags": "",
             }
-            grass.message(f"raster_name: {raster_name}")
+            grass.message(_(f"raster name: {raster_name}"))
+
+            # modify params
             if aoi:
                 param["aoi"] = aoi
             if options["download_dir"]:

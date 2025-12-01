@@ -175,8 +175,8 @@ def main():
     rm_vectors.append(tindex_vect)
     download_and_import_tindex(TINDEX, tindex_vect, download_dir)
 
-    # get download urls which overlap with aoi
-    # or current region if no aoi is given
+    # get download urls which overlap with AOI
+    # or current region if no AOI is given
     url_tiles = get_list_of_tindex_locations(tindex_vect, aoi)
 
     for count, value in enumerate(url_tiles, start=1):
@@ -193,7 +193,7 @@ def main():
     gisdbase = gisenv["GISDBASE"]
     location = gisenv["LOCATION_NAME"]
 
-    # set queue and variables for worker adddon
+    # set queue and variables for worker addon
     try:
         grass.message(
             _(f"Importing {number_tiles} DOPs for SN in parallel..."),
@@ -220,6 +220,7 @@ def main():
                 "flags": "",
             }
             grass.message(_(f"raster name: {raster_name}"))
+
             # modify params
             if aoi:
                 param["aoi"] = aoi

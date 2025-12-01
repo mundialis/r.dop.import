@@ -64,8 +64,10 @@ def setup_parallel_processing(nprocs):
     return nprocs
 
 
-def rescale_to_1_256(prefix, raster_name, extension="num"):
-    """Rescale raster from 0 to 255 to 1 to 256
+def enforce_1_255(prefix, raster_name, extension="num"):
+    """Enforce raster range of 1 to 255
+       The result fits into a byte type during export and zero can be
+       used as nodata value 
     Args:
         prefix (str): Name of federal state
         raster_name (str): Name of raster prefix
@@ -83,7 +85,7 @@ def rescale_to_1_256(prefix, raster_name, extension="num"):
         rastername = f"{prefix}_{raster_name}_{name}"
         grass.run_command(
             "r.mapcalc",
-            expression=f"{rastername} = {raster_name}.{num} + 1",
+            expression=f"{rastername} = round(if({raster_name}.{num} < 1, 1, if({raster_name}.{num} > 255, 255, {raster_name}.{num})))",
             quiet=True,
             region="intersect",
         )
@@ -217,6 +219,8 @@ def import_dop_from_wms(
     """
     # set region and create variable names
     grass.run_command("g.region", vector=tile_key)
+    if not native_res:
+        grass.run_command("g.region", res=resolution_to_import, flags="a")
     tile_key = tile_key.split("@")[0]
     for name in layer_list:
         if name == cir_band:
@@ -275,9 +279,12 @@ def import_dop_from_wms(
             if not native_res:
                 adjust_raster_resolution(
                     old_name,
-                    new_name,
+                    f"{new_name}_tmp",
                     resolution_to_import,
                 )
+                rm_rast.append(f"{new_name}_tmp")
+                # convert back to integer
+                grass.mapcalc(f"{new_name} = round({new_name}_tmp")
             else:
                 rename_raster(old_name, new_name)
             rm_rast.append(old_name)

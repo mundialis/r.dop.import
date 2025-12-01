@@ -193,7 +193,7 @@ def main():
     gisdbase = gisenv["GISDBASE"]
     location = gisenv["LOCATION_NAME"]
 
-    # set queue and variables for worker adddon
+    # set queue and variables for worker addon
     try:
         grass.message(
             _(f"Importing {number_tiles} DOPs for RP in parallel..."),
