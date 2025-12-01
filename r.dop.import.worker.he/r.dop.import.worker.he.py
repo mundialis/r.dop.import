@@ -134,7 +134,6 @@ def main():
         resolution_to_import = float(options["resolution_to_import"])
     orig_region = options["orig_region"]
     new_mapset = options["new_mapset"]
-    
 
     # output resolution
     if not flags["r"] and not options["resolution_to_import"]:
