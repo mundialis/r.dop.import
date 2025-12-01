@@ -104,7 +104,7 @@ if path is None:
     grass.fatal("Unable to find the dop library directory.")
 sys.path.append(path)
 try:
-    from r_dop_import_lib import enforce_1_255, import_and_reproject
+    from r_dop_import_lib import enforce_1_255
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
@@ -139,7 +139,7 @@ def main():
     if not flags["r"] and not options["resolution_to_import"]:
         grass.fatal(
             "Use native resoltion with the -r flag or specify "
-            "'resolution_to_import'."
+            "'resolution_to_import'.",
         )
 
     # switch to new mapset for parallel processing

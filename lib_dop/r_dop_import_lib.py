@@ -67,7 +67,7 @@ def setup_parallel_processing(nprocs):
 def enforce_1_255(prefix, raster_name, extension="num"):
     """Enforce raster range of 1 to 255
        The result fits into a byte type during export and zero can be
-       used as nodata value 
+       used as nodata value
     Args:
         prefix (str): Name of federal state
         raster_name (str): Name of raster prefix

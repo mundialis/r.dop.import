@@ -140,7 +140,7 @@ def main():
     if not flags["r"] and not options["resolution_to_import"]:
         grass.fatal(
             "Use native resoltion with the -r flag or specify "
-            "'resolution_to_import'."
+            "'resolution_to_import'.",
         )
     # switch to new mapset for parallel processing
     gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
