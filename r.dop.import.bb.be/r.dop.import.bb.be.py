@@ -93,7 +93,6 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
 )
 from grass_gis_helpers.raster import create_vrt
 
-
 # import module library
 path = get_lib_path(modname="r.dop.import")
 if path is None:
