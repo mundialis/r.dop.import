@@ -92,6 +92,37 @@ def rescale_to_1_256(prefix, raster_name, extension="num"):
     return rm_rast
 
 
+def rescale_to_1_255(prefix, raster_name, extension="num"):
+    """Rescale raster from 0 to 255 to 1 to 255
+    Args:
+        prefix (str): Name of federal state
+        raster_name (str): Name of raster prefix
+    """
+    rm_rast = []
+    if extension == "num":
+        band_dict = {
+            "red": 1,
+            "green": 2,
+            "blue": 3,
+            "nir": 4,
+        }
+    for name, num in band_dict.items():
+        grass.run_command("g.region", raster=f"{raster_name}.{num}")
+        rastername = f"{prefix}_{raster_name}_{name}"
+        grass.run_command(
+            "r.mapcalc",
+            expression=(
+                f"{rastername} = int(if({raster_name}.{num} < 1, 1, "
+                f"if({raster_name}.{num} > 255, 255, {raster_name}.{num})))"
+            ),
+            quiet=True,
+            region="intersect",
+        )
+        rm_rast.append(f"{raster_name}.{num}")
+
+    return rm_rast
+
+
 def create_grid_and_tiles_list(
     ns_res,
     ew_res,

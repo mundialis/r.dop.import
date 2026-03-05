@@ -113,7 +113,7 @@ if path is None:
     grass.fatal("Unable to find the dop library directory.")
 sys.path.append(path)
 try:
-    from r_dop_import_lib import rescale_to_1_256, import_and_reproject
+    from r_dop_import_lib import rescale_to_1_255, import_and_reproject
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
@@ -191,7 +191,7 @@ def main():
     grass.message(_(f"Finishing raster import for {raster_name}..."))
 
     # rescale imported DOPs
-    new_rm_rast = rescale_to_1_256("BB_BE", raster_name)
+    new_rm_rast = rescale_to_1_255("BB_BE", raster_name)
     rm_rast.extend(new_rm_rast)
 
     # switch back to original location
