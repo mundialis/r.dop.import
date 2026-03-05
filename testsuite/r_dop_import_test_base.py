@@ -51,7 +51,8 @@ class RDopImportTestBase(TestCase):
         f"{out}_{band}"
         for band, out in zip(
             ["red", "green", "blue", "nir"],
-            4 * [test_output], strict=False,
+            4 * [test_output],
+            strict=False,
         )
     ]
     rm_vec = []
