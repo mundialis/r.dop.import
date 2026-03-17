@@ -38,8 +38,8 @@ from grass_gis_helpers.raster import adjust_raster_resolution, rename_raster
 
 OPEN_DATA_AVAILABILITY = {
     "NO_OPEN_DATA": ["BW", "BY", "HB", "HH", "MV", "SL", "ST", "SH"],
-    "NOT_YET_SUPPORTED": ["NI"],
-    "SUPPORTED": ["BE", "BB", "NW", "SN", "TH", "HE", "RP"],
+    "NOT_YET_SUPPORTED": [],
+    "SUPPORTED": ["BE", "BB", "NW", "SN", "TH", "HE", "RP", "NI"],
 }
 
 RETRIES = 30
