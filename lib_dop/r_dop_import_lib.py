@@ -437,7 +437,7 @@ def import_and_reproject(
 
     tmp_loc = None
     if epsg != int(
-        grass.parse_command("g.proj", flags="g")["srid"].split(":")[1]
+        grass.parse_command("g.proj", flags="g")["srid"].split(":")[1],
     ):
         aoi_map_to_set_region1 = aoi_map
         # get actual location, mapset, ...
