@@ -533,7 +533,7 @@ def import_and_reproject(
             ],
         )
     if epsg != int(
-        grass.parse_command("g.proj", flags="g")["srid"].split(":")[1]
+        grass.parse_command("g.proj", flags="g")["srid"].split(":")[1],
     ):
         # switch location
         os.environ["GISRC"] = str(gisrc)
