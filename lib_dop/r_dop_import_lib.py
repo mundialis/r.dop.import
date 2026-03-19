@@ -435,7 +435,9 @@ def import_and_reproject(
             ),
         )
 
+    gisdbase = None
     tmp_loc = None
+    tmp_gisrc = None
     if epsg != int(
         grass.parse_command("g.proj", flags="g")["srid"].split(":")[1]
     ):
