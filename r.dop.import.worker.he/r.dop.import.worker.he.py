@@ -138,7 +138,7 @@ def main():
     # output resolution
     if not flags["r"] and not options["resolution_to_import"]:
         grass.fatal(
-            "Use native resoltion with the -r flag or specify "
+            "Use native resolution with the -r flag or specify "
             "'resolution_to_import'.",
         )
     # switch to new mapset for parallel processing
@@ -171,7 +171,7 @@ def main():
         for band in [1, 2, 3, 4]:
             raster_name_band = f"{raster_name}.{band}"
             grass.run_command(
-                "g.rename", raster=f"{raster_name_band},{raster_name_band}_tmp"
+                "g.rename", raster=f"{raster_name_band},{raster_name_band}_tmp",
             )
             adjust_raster_resolution(
                 f"{raster_name_band}_tmp",
