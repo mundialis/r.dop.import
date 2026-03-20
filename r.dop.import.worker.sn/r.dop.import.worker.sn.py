@@ -118,7 +118,7 @@ if path is None:
     grass.fatal("Unable to find the dop library directory.")
 sys.path.append(path)
 try:
-    from r_dop_import_lib import enforce_1_255, import_and_reproject
+    from r_dop_import_lib import rescale_to_1_255, import_and_reproject
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
@@ -198,27 +198,23 @@ def main():
         grass.run_command("g.region", res=resolution_to_import, flags="a")
         for band in [1, 2, 3, 4]:
             raster_name_band = f"{raster_name}.{band}"
+            grass.run_command(
+                "g.rename", raster=f"{raster_name_band},{raster_name_band}_tmp"
+            )
             adjust_raster_resolution(
-                raster_name_band,
                 f"{raster_name_band}_tmp",
+                raster_name_band,
                 resolution_to_import,
+                type="CELL",
             )
             rm_rast.append(f"{raster_name_band}_tmp")
-            # convert back to integer
-            grass.run_command(
-                "g.remove",
-                type="raster",
-                name=raster_name_band,
-                flags="f",
-                quiet=True,
-            )
-            grass.mapcalc(f"{raster_name_band} = round({raster_name_band}_tmp")
+
 
     rm_group.append(raster_name)
     grass.message(_(f"Finishing raster import for {raster_name}..."))
 
-    # enforce range of imported DOPs
-    new_rm_rast = enforce_1_255("SN", raster_name)
+    # rescale imported DOPs
+    new_rm_rast = rescale_to_1_255("SN", raster_name)
     rm_rast.extend(new_rm_rast)
 
     # switch back to original location

@@ -38,8 +38,8 @@ from grass_gis_helpers.raster import adjust_raster_resolution, rename_raster
 
 OPEN_DATA_AVAILABILITY = {
     "NO_OPEN_DATA": ["BW", "BY", "HB", "HH", "MV", "SL", "ST", "SH"],
-    "NOT_YET_SUPPORTED": ["NI"],
-    "SUPPORTED": ["BE", "BB", "NW", "SN", "TH", "HE", "RP"],
+    "NOT_YET_SUPPORTED": [],
+    "SUPPORTED": ["BE", "BB", "NW", "SN", "TH", "HE", "RP", "NI"],
 }
 
 RETRIES = 30
@@ -89,6 +89,37 @@ def enforce_1_255(prefix, raster_name, extension="num"):
                 f"{rastername} = round(if({raster_name}.{num} < 1, "
                 f"1, if({raster_name}.{num} > 255, 255, "
                 f"{raster_name}.{num})))"
+            ),
+            quiet=True,
+            region="intersect",
+        )
+        rm_rast.append(f"{raster_name}.{num}")
+
+    return rm_rast
+
+
+def rescale_to_1_255(prefix, raster_name, extension="num"):
+    """Rescale raster from 0 to 255 to 1 to 255
+    Args:
+        prefix (str): Name of federal state
+        raster_name (str): Name of raster prefix
+    """
+    rm_rast = []
+    if extension == "num":
+        band_dict = {
+            "red": 1,
+            "green": 2,
+            "blue": 3,
+            "nir": 4,
+        }
+    for name, num in band_dict.items():
+        grass.run_command("g.region", raster=f"{raster_name}.{num}")
+        rastername = f"{prefix}_{raster_name}_{name}"
+        grass.run_command(
+            "r.mapcalc",
+            expression=(
+                f"{rastername} = int(if({raster_name}.{num} < 1, 1, "
+                f"if({raster_name}.{num} > 255, 255, {raster_name}.{num})))"
             ),
             quiet=True,
             region="intersect",
@@ -415,39 +446,44 @@ def import_and_reproject(
             ),
         )
 
-    aoi_map_to_set_region1 = aoi_map
-
-    # get actual location, mapset, ...
-    loc, mapset, gisdbase, gisrc = get_current_location()
-    if not aoi_map:
-        aoi_map = f"region_aoi_{grass.tempname(8)}"
+    gisdbase = None
+    tmp_loc = None
+    tmp_gisrc = None
+    if epsg != int(
+        grass.parse_command("g.proj", flags="g")["srid"].split(":")[1],
+    ):
         aoi_map_to_set_region1 = aoi_map
-        grass.run_command("v.in.region", output=aoi_map, quiet=True)
-    else:
-        aoi_map_mapset = aoi_map.split("@")
-        aoi_map_to_set_region1 = aoi_map_mapset[0]
-        if len(aoi_map_mapset) == 2:
-            mapset = aoi_map_mapset[1]
+        # get actual location, mapset, ...
+        loc, mapset, gisdbase, gisrc = get_current_location()
+        if not aoi_map:
+            aoi_map = f"region_aoi_{grass.tempname(8)}"
+            aoi_map_to_set_region1 = aoi_map
+            grass.run_command("v.in.region", output=aoi_map, quiet=True)
+        else:
+            aoi_map_mapset = aoi_map.split("@")
+            aoi_map_to_set_region1 = aoi_map_mapset[0]
+            if len(aoi_map_mapset) == 2:
+                mapset = aoi_map_mapset[1]
 
-    # create temporary location with EPSG:25832
-    tmp_loc, tmp_gisrc = create_tmp_location(epsg)
+        # create temporary location with EPSG:25832
+        tmp_loc, tmp_gisrc = create_tmp_location(epsg)
 
-    # reproject aoi
-    v_kwargs = {
-        "mapset": mapset,
-        "input": aoi_map_to_set_region1,
-        "output": aoi_map_to_set_region1,
-        "quiet": True,
-        loc_proj: loc,
-    }
-    if aoi_map:
-        grass.run_command("v.proj", **v_kwargs)
-        grass.run_command(
-            "g.region",
-            vector=aoi_map_to_set_region1,
-            res=resolution_to_import,
-            flags="a",
-        )
+        # reproject aoi
+        v_kwargs = {
+            "mapset": mapset,
+            "input": aoi_map_to_set_region1,
+            "output": aoi_map_to_set_region1,
+            "quiet": True,
+            loc_proj: loc,
+        }
+        if aoi_map:
+            grass.run_command("v.proj", **v_kwargs)
+            grass.run_command(
+                "g.region",
+                vector=aoi_map_to_set_region1,
+                res=resolution_to_import,
+                flags="a",
+            )
 
     # define import parameters
     # set memory manually to 1000
@@ -509,29 +545,32 @@ def import_and_reproject(
                 "nsres"
             ],
         )
-    # switch location
-    os.environ["GISRC"] = str(gisrc)
-    if aoi_map:
-        grass.run_command("g.region", vector=aoi_map, res=res, flags="a")
-    else:
-        grass.run_command("g.region", res=res, flags="a")
+    if epsg != int(
+        grass.parse_command("g.proj", flags="g")["srid"].split(":")[1],
+    ):
+        # switch location
+        os.environ["GISRC"] = str(gisrc)
+        if aoi_map:
+            grass.run_command("g.region", vector=aoi_map, res=res, flags="a")
+        else:
+            grass.run_command("g.region", res=res, flags="a")
 
-    for i in range(1, 5):
-        name = f"{raster_name}.{i}"
-        # set memory manually to 1000
-        # Process stuck, when memory is too large (100000)
-        # GDAL_CACHEMAX is only interpreted as MB, if value is <100000
-        r_kwargs = {
-            "mapset": "PERMANENT",
-            "input": name,
-            "output": name,
-            "resolution": res,
-            "flags": "n",
-            "quiet": True,
-            "memory": 1000,
-            loc_proj: tmp_loc,
-        }
-        grass.run_command("r.proj", **r_kwargs)
+        for i in range(1, 5):
+            name = f"{raster_name}.{i}"
+            # set memory manually to 1000
+            # Process stuck, when memory is too large (100000)
+            # GDAL_CACHEMAX is only interpreted as MB, if value is <100000
+            r_kwargs = {
+                "mapset": "PERMANENT",
+                "input": name,
+                "output": name,
+                "resolution": res,
+                "flags": "n",
+                "quiet": True,
+                "memory": 1000,
+                loc_proj: tmp_loc,
+            }
+            grass.run_command("r.proj", **r_kwargs)
 
     # return temp location parameters to remove it in cleanup
     return gisdbase, tmp_loc, tmp_gisrc
