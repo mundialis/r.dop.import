@@ -78,6 +78,8 @@ import atexit
 import os
 import sys
 
+os.environ["CPL_VSIL_CURL_USE_HEAD"] = "NO"
+
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
@@ -131,6 +133,7 @@ def cleanup():
 def main():
     """Main function of r.dop.import.sn"""
     aoi = options["aoi"]
+
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
