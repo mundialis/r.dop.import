@@ -448,6 +448,13 @@ def import_and_reproject(
                 res=resolution_to_import,
                 flags="a",
             )
+    elif aoi_map:
+        grass.run_command(
+            "g.region",
+            vector=aoi_map,
+            res=resolution_to_import,
+            flags="a",
+        )
 
     # define import parameters
     # set memory manually to 1000

@@ -200,15 +200,15 @@ def main():
             raster_name_band = f"{raster_name}.{band}"
             grass.run_command(
                 "g.rename",
-                raster=f"{raster_name_band},{raster_name_band}_tmp",
+                raster=f"{raster_name_band},{raster_name_band}_tmp1",
             )
             adjust_raster_resolution(
-                f"{raster_name_band}_tmp",
+                f"{raster_name_band}_tmp1",
                 raster_name_band,
                 resolution_to_import,
                 type="CELL",
             )
-            rm_rast.append(f"{raster_name_band}_tmp")
+            rm_rast.append(f"{raster_name_band}_tmp1")
 
     rm_group.append(raster_name)
     grass.message(_(f"Finishing raster import for {raster_name}..."))
