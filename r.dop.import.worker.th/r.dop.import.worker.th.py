@@ -173,7 +173,8 @@ def main():
         for band in [1, 2, 3, 4]:
             raster_name_band = f"{raster_name}.{band}"
             grass.run_command(
-                "g.rename", raster=f"{raster_name_band},{raster_name_band}_tmp",
+                "g.rename",
+                raster=f"{raster_name_band},{raster_name_band}_tmp",
             )
             adjust_raster_resolution(
                 f"{raster_name_band}_tmp",
