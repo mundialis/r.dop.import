@@ -64,40 +64,6 @@ def setup_parallel_processing(nprocs):
     return nprocs
 
 
-def enforce_1_255(prefix, raster_name, extension="num"):
-    """Enforce raster range of 1 to 255
-       The result fits into a byte type during export and zero can be
-       used as nodata value
-    Args:
-        prefix (str): Name of federal state
-        raster_name (str): Name of raster prefix
-    """
-    rm_rast = []
-    if extension == "num":
-        band_dict = {
-            "red": 1,
-            "green": 2,
-            "blue": 3,
-            "nir": 4,
-        }
-    for name, num in band_dict.items():
-        grass.run_command("g.region", raster=f"{raster_name}.{num}")
-        rastername = f"{prefix}_{raster_name}_{name}"
-        grass.run_command(
-            "r.mapcalc",
-            expression=(
-                f"{rastername} = round(if({raster_name}.{num} < 1, "
-                f"1, if({raster_name}.{num} > 255, 255, "
-                f"{raster_name}.{num})))"
-            ),
-            quiet=True,
-            region="intersect",
-        )
-        rm_rast.append(f"{raster_name}.{num}")
-
-    return rm_rast
-
-
 def rescale_to_1_255(prefix, raster_name, extension="num"):
     """Rescale raster from 0 to 255 to 1 to 255
     Args:
