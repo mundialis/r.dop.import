@@ -280,12 +280,10 @@ def import_dop_from_wms(
             if not native_res:
                 adjust_raster_resolution(
                     old_name,
-                    f"{new_name}_tmp",
+                    new_name,
                     resolution_to_import,
+                    type="CELL",
                 )
-                rm_rast.append(f"{new_name}_tmp")
-                # convert back to integer
-                grass.mapcalc(f"{new_name} = round({new_name}_tmp")
             else:
                 rename_raster(old_name, new_name)
             rm_rast.append(old_name)
