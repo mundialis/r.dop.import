@@ -96,6 +96,7 @@ from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.location import switch_back_original_location
 from grass_gis_helpers.mapset import switch_to_new_mapset
+from grass_gis_helpers.raster import adjust_raster_resolution
 
 # import module library
 path = get_lib_path(modname="r.dop.import")
@@ -128,22 +129,23 @@ def main():
     tile_key = options["tile_key"]
     tile_url = options["tile_url"]
     raster_name = options["raster_name"]
+    resolution_to_import = None
+    if options["resolution_to_import"]:
+        resolution_to_import = float(options["resolution_to_import"])
     orig_region = options["orig_region"]
     new_mapset = options["new_mapset"]
-    if not flags["r"]:
-        resolution_to_import = float(options["resolution_to_import"])
-    else:
-        resolution_to_import = None
 
+    # output resolution
+    if not flags["r"] and not options["resolution_to_import"]:
+        grass.fatal(
+            "Use native resolution with the -r flag or specify "
+            "'resolution_to_import'.",
+        )
     # switch to new mapset for parallel processing
     gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
 
     # set region
-    grass.run_command(
-        "g.region",
-        region=f"{orig_region}@{old_mapset}",
-        res=resolution_to_import,
-    )
+    grass.run_command("g.region", region=f"{orig_region}@{old_mapset}")
 
     # import DOP tile with original resolution
     grass.message(
@@ -163,6 +165,24 @@ def main():
         flags["r"],
     )
 
+    # adjust resolution if required
+    if resolution_to_import:
+        grass.run_command("g.region", res=resolution_to_import, flags="a")
+        for band in [1, 2, 3, 4]:
+            raster_name_band = f"{raster_name}.{band}"
+            grass.run_command(
+                "g.rename",
+                raster=f"{raster_name_band},{raster_name_band}_tmp",
+            )
+            adjust_raster_resolution(
+                f"{raster_name_band}_tmp",
+                raster_name_band,
+                resolution_to_import,
+                type="CELL",
+            )
+            rm_rast.append(f"{raster_name_band}_tmp")
+
+    rm_group.append(raster_name)
     grass.message(_(f"Finishing raster import for {raster_name}..."))
 
     # rescale imported DOPs

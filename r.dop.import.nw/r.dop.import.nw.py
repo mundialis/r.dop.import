@@ -168,7 +168,7 @@ def main():
 
     # set region if aoi is given
     if aoi:
-        grass.run_command("g.region", vector=aoi, flags="a")
+        grass.run_command("g.region", vector=aoi, res=ns_res, flags="a")
     # if no aoi save region as aoi
     else:
         aoi = f"region_aoi_{ID}"
@@ -216,7 +216,7 @@ def main():
     gisdbase = gisenv["GISDBASE"]
     location = gisenv["LOCATION_NAME"]
 
-    # set queue and variables for worker adddon
+    # set queue and variables for worker addon
     try:
         grass.message(
             _(f"Importing {number_tiles} DOPs for NW in parallel..."),

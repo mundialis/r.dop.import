@@ -64,34 +64,6 @@ def setup_parallel_processing(nprocs):
     return nprocs
 
 
-def rescale_to_1_256(prefix, raster_name, extension="num"):
-    """Rescale raster from 0 to 255 to 1 to 256
-    Args:
-        prefix (str): Name of federal state
-        raster_name (str): Name of raster prefix
-    """
-    rm_rast = []
-    if extension == "num":
-        band_dict = {
-            "red": 1,
-            "green": 2,
-            "blue": 3,
-            "nir": 4,
-        }
-    for name, num in band_dict.items():
-        grass.run_command("g.region", raster=f"{raster_name}.{num}")
-        rastername = f"{prefix}_{raster_name}_{name}"
-        grass.run_command(
-            "r.mapcalc",
-            expression=f"{rastername} = {raster_name}.{num} + 1",
-            quiet=True,
-            region="intersect",
-        )
-        rm_rast.append(f"{raster_name}.{num}")
-
-    return rm_rast
-
-
 def rescale_to_1_255(prefix, raster_name, extension="num"):
     """Rescale raster from 0 to 255 to 1 to 255
     Args:
@@ -248,6 +220,8 @@ def import_dop_from_wms(
     """
     # set region and create variable names
     grass.run_command("g.region", vector=tile_key)
+    if not native_res:
+        grass.run_command("g.region", res=resolution_to_import, flags="a")
     tile_key = tile_key.split("@")[0]
     for name in layer_list:
         if name == cir_band:
@@ -308,6 +282,7 @@ def import_dop_from_wms(
                     old_name,
                     new_name,
                     resolution_to_import,
+                    type="CELL",
                 )
             else:
                 rename_raster(old_name, new_name)

@@ -37,10 +37,14 @@
 
 # %option
 # % key: download_dir
-# % label: Path of output folder
-# % description: Path of download folder
+# % label: Path to output folder
+# % description: Path to download folder
 # % required: no
 # % multiple: no
+# %end
+
+# %option G_OPT_R_OUTPUT
+# % description: Name for output raster map
 # %end
 
 # %option
@@ -51,10 +55,6 @@
 # % label: Number of parallel processes
 # % description: Number of cores for multiprocessing, -2 is the number of available cores - 1
 # % answer: -2
-# %end
-
-# %option G_OPT_R_OUTPUT
-# % description: Name for output raster map
 # %end
 
 # %option G_OPT_MEMORYMB
@@ -77,6 +77,7 @@
 import atexit
 import os
 import sys
+
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
@@ -103,12 +104,11 @@ try:
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
-# set global varibales
+# set global variables
 TINDEX = (
     "https://github.com/mundialis/tile-indices/raw/main/DOP/"
     "BE_BB/DOP20_tileindex_BE_BB.gpkg.gz"
 )
-
 
 ID = grass.tempname(12)
 ORIG_REGION = f"original_region_{ID}"
@@ -160,7 +160,7 @@ def main():
 
     # set region if aoi is given
     if aoi:
-        grass.run_command("g.region", vector=aoi, flags="a")
+        grass.run_command("g.region", vector=aoi, res=ns_res, flags="a")
     # if no aoi save region as aoi
     else:
         aoi = f"region_aoi_{ID}"
@@ -193,7 +193,7 @@ def main():
     gisdbase = gisenv["GISDBASE"]
     location = gisenv["LOCATION_NAME"]
 
-    # set queue and variables for worker adddon
+    # set queue and variables for worker addon
     try:
         grass.message(
             _(f"Importing {number_tiles} DOPs for BB/BE in parallel..."),
@@ -229,6 +229,7 @@ def main():
             if flags["k"]:
                 param["flags"] += "k"
             if flags["r"]:
+                param["flags"] += "r"
                 dop_src = gdal.Open(param["tile_url"])
                 param["resolution_to_import"] = abs(
                     dop_src.GetGeoTransform()[1],
@@ -275,7 +276,7 @@ def main():
         create_vrt(b_list, out)
         raster_out.append(out)
 
-    grass.message(_(f"Generated following raster maps: {raster_out}."))
+    grass.message(_(f"Generated following raster maps: {raster_out}"))
 
 
 if __name__ == "__main__":
