@@ -15,21 +15,21 @@ The r.dop.import toolset consists of the following modules:
 
 ## Addon coverage for federal states
 
-| federal state | dop import addon | bugs | testsuit | tile-index | data download | resolution |
-|---------------|------------------|------|----------|------------|---------------|------|
-| BB | &#9745; | | | | data download as .zip and .tif | 20cm |
-| BE | &#9745; | | | | data download as .zip and .tif | 20cm |
-| BW | | | | |
-| BY | | | | |
-| HB | | | | |
-| HE | &#9745; | | | not working | |
-| HH | | | | |
-| MV | | | | |
-| NI | &#9745; | | | | data download as .tif | 20cm |
-| NW | &#9745; | | | | data download as .jp2 | 10cm |
-| RP | &#9745; | | | needs regular manually updating | | 20cm |
-| SH | | | | |
-| SL | | | | |
-| SN | &#9745; | | | | data download as .zip and .tif plus .csv | 20cm |
-| ST | | | | |
-| TH | &#9745; | | | not working | |
+| Federal state | DOP Import Addon | Tile-index | Data Download | Resolution | Data Source |
+| - | - | - | - | - | - |
+| BB | &#9745; | &#9745; | data download as .zip and .tif | 20cm | |
+| BE | &#9745; | &#9745; | data download as .zip and .tif | 20cm | |
+| BW | | | | | [Open GeoData Portal](https://opengeodata.lgl-bw.de/#/) |
+| BY | | | | | [Open GeoData](https://geodaten.bayern.de/opengeodata/) |
+| HB | | | | | [Geoportal](https://geoportal.bremen.de/geoportal/#) |
+| HE | (&#9745;) to be fixed | | | |
+| HH | | | | | [Geoportal](https://geoportal-hamburg.de/) |
+| MV | | | | | [Downloadportal](https://laiv.geodaten-mv.de/afgvk/) |
+| NI | &#9745; | &#9745; | data download as .tif | 20cm | |
+| NW | &#9745; | &#9745; | data download as .jp2 | 10cm | |
+| RP | &#9745; | &#9745; (no automatic updating) | | 20cm | |
+| SH | | | | | [Downloadportal](https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/) |
+| SL | | | | | [Geoportal](https://geoportal.saarland.de/) |
+| SN | &#9745; | &#9745; | data download as .zip and .tif plus .csv | 20cm | |
+| ST | | | | | [Geodatenportal](https://www.lvermgeo.sachsen-anhalt.de/de/gdp-open-data.html) |
+| TH | (&#9745;) to be fixed | | | | |

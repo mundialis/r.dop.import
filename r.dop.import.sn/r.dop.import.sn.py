@@ -78,8 +78,6 @@ import atexit
 import os
 import sys
 
-os.environ["CPL_VSIL_CURL_USE_HEAD"] = "NO"
-
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
@@ -95,6 +93,8 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
     check_download_dir,
 )
 from grass_gis_helpers.raster import create_vrt
+
+os.environ["CPL_VSIL_CURL_USE_HEAD"] = "NO"
 
 # import module library
 path = get_lib_path(modname="r.dop.import")
