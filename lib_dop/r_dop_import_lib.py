@@ -413,9 +413,11 @@ def import_and_reproject(
     gisdbase = None
     tmp_loc = None
     tmp_gisrc = None
+    location_switch = False
     if epsg != int(
         grass.parse_command("g.proj", flags="g")["srid"].split(":")[1],
     ):
+        location_switch = True
         aoi_map_to_set_region1 = aoi_map
         # get actual location, mapset, ...
         loc, mapset, gisdbase, gisrc = get_current_location()
@@ -516,9 +518,7 @@ def import_and_reproject(
                 "nsres"
             ],
         )
-    if epsg != int(
-        grass.parse_command("g.proj", flags="g")["srid"].split(":")[1],
-    ):
+    if location_switch:
         # switch location
         os.environ["GISRC"] = str(gisrc)
         if aoi_map:
