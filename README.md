@@ -22,7 +22,7 @@ The r.dop.import toolset consists of the following modules:
 | BW | | | | | [Open GeoData Portal](https://opengeodata.lgl-bw.de/#/) |
 | BY | | | | | [Open GeoData](https://geodaten.bayern.de/opengeodata/) |
 | HB | | | | | [Geoportal](https://geoportal.bremen.de/geoportal/#) |
-| HE | &#9745; | - (via WMS)| | 20cm| |
+| HE | &#9745; | - (via WMS) | | 20cm | |
 | HH | | | | | [Geoportal](https://geoportal-hamburg.de/) |
 | MV | | | | | [Downloadportal](https://laiv.geodaten-mv.de/afgvk/) |
 | NI | &#9745; | &#9745; | data download as .tif | 20cm | |
