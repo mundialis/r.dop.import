@@ -2,11 +2,11 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import.worker.th
+# MODULE:      r.dop.import.worker.bw
 # AUTHOR(S):   Johannes Halbauer & Lina Krisztian
 #
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
-#              in Thüringen
+#              in Baden-Württemberg
 # COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
 #              Team
 #
@@ -23,7 +23,7 @@
 #############################################################################
 
 # %Module
-# % description: Downloads and imports single Digital Orthophotos (DOPs) in Thüringen
+# % description: Downloads and imports single Digital Orthophotos (DOPs) in Baden-Württemberg
 # % keyword: imagery
 # % keyword: download
 # % keyword: DOP
@@ -50,9 +50,15 @@
 # %end
 
 # %option
-# % key: tile_url
+# % key: tile_url_cir
 # % required: yes
-# % description: URL of tile-DOP to import
+# % description: URL of near-infrared tile-DOP to import
+# %end
+
+# %option
+# % key: tile_url_rgb
+# % required: yes
+# % description: URL of RGB tile-DOP to import
 # %end
 
 # %option
@@ -124,10 +130,11 @@ def cleanup():
 
 
 def main():
-    """Main function of r.dop.import.worker.th"""
+    """Main function of r.dop.import.worker.bw"""
     # parser options
     tile_key = options["tile_key"]
-    tile_url = options["tile_url"]
+    tile_url_cir = options["tile_url_cir"]
+    tile_url_rgb = options["tile_url_rgb"]
     raster_name = options["raster_name"]
     resolution_to_import = None
     if options["resolution_to_import"]:
@@ -150,19 +157,20 @@ def main():
 
     # import DOP tile with original resolution
     grass.message(
-        _(f"Started DOP import for key: {tile_key} and URL: {tile_url}"),
+        _(f"Started DOP import for key: {tile_key} and URL: {tile_url_cir} and {tile_url_rgb}"),
     )
 
     # import DOPs from WMS
     import_dop_from_wms(
         f"{tile_key}@{old_mapset}",
         raster_name,
-        [tile_url, tile_url],
+        [tile_url_cir, tile_url_rgb],
         resolution_to_import,
-        ["th_dop20cir", "th_dop"],
+        ["IMAGES_DOP_20_CIR", "IMAGES_DOP_20_RGB"],
         rm_group,
         rm_rast,
         flags["r"],
+        "jpeg"
     )
 
     # adjust resolution if required
@@ -186,14 +194,14 @@ def main():
     grass.message(_(f"Finishing raster import for {raster_name}..."))
 
     # rescale imported DOPs
-    new_rm_rast = rescale_to_1_255("TH", raster_name, extension="num")
+    new_rm_rast = rescale_to_1_255("BW", raster_name, extension="num")
     rm_rast.extend(new_rm_rast)
 
     # switch back to original location
     switch_back_original_location(gisrc)
     grass.utils.try_remove(newgisrc)
     grass.message(
-        _(f"DOP import for key: {tile_key} and URL: {tile_url} done!"),
+        _(f"DOP import for key: {tile_key} and URL: {tile_url_cir} and {tile_url_rgb} done!"),
     )
 
 
