@@ -94,6 +94,8 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
 )
 from grass_gis_helpers.raster import create_vrt
 
+os.environ["CPL_VSIL_CURL_USE_HEAD"] = "NO"
+
 # import module library
 path = get_lib_path(modname="r.dop.import")
 if path is None:
@@ -131,6 +133,7 @@ def cleanup():
 def main():
     """Main function of r.dop.import.sn"""
     aoi = options["aoi"]
+
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
