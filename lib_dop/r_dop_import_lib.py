@@ -204,11 +204,11 @@ def import_dop_from_wms(
     Args:
         tile_key (str): Key of current tile
         rastername (str): Name of resulting raster
-        tile_url_list (list): WMS URLs to get DOPs from. First element CIR,
-                              second element RGB
+        tile_url_list (dict): key is cir/rgb, value is WMS URLs to get DOPs
+                              from. First element CIR, second element RGB
         resolution_to_import (float): Resolution to resample imported raster to
-        layer_list (list): List of WMS layers to use. First element CIR, second
-                           element RGB
+        layer_list (dict): Dict of WMS layers to use. First key CIR, second
+                           key RGB
         rm_group (list): List of elements to remove in cleanup
         rm_rast (list): List of raster maps to remove in cleanup
         native_res (bool): Keep native DOP resolution
@@ -223,15 +223,15 @@ def import_dop_from_wms(
         grass.run_command("g.region", res=resolution_to_import, flags="a")
     tile_key = tile_key.split("@")[0]
 
-    for name_ind, name in enumerate(layer_list):
-        if name_ind == 0:
+    for key, name in layer_list.items():
+        if key == "cir":
             out_tmp = f"{name}_{tile_key}_tmp"
             bands = ["red"]
-            tile_url = tile_url_list[0]
+            tile_url = tile_url_list["cir"]
         else:
             out_tmp = f"{tile_key}_tmp"
             bands = ["red", "green", "blue"]
-            tile_url = tile_url_list[1]
+            tile_url = tile_url_list["rgb"]
         rm_group.append(out_tmp)
         for band in ["red", "green", "blue"]:
             rm_rast.append(f"{out_tmp}.{band}")
@@ -272,7 +272,7 @@ def import_dop_from_wms(
             "blue": 3,
         }
         for band in bands:
-            oband = "4" if name_ind == 0 else band_nums[band]
+            oband = "4" if key == "cir" else band_nums[band]
 
             # create old and new name for adjusting resolution/renaming
             old_name = f"{out_tmp}.{band}"
@@ -291,13 +291,13 @@ def import_dop_from_wms(
             rm_rast.append(old_name)
 
     # drop rest of CIR DOP
-    if name_ind == 0:
-        grass.run_command(
-            "g.remove",
-            type="raster",
-            pattern=f"{name}_*_tmp*",
-            flags="f",
-        )
+    # if key == "cir":
+    #     grass.run_command(
+    #         "g.remove",
+    #         type="raster",
+    #         pattern=f"{name}_*_tmp*",
+    #         flags="f",
+    #     )
 
 
 def keep_data_nw(url, download_dir):

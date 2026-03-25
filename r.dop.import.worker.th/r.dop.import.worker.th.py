@@ -157,9 +157,9 @@ def main():
     import_dop_from_wms(
         f"{tile_key}@{old_mapset}",
         raster_name,
-        [tile_url, tile_url],
+        {"cir": tile_url, "rgb": tile_url},
         resolution_to_import,
-        ["th_dop20cir", "th_dop"],
+        {"cir": "th_dop20cir", "rgb": "th_dop"},
         rm_group,
         rm_rast,
         flags["r"],
