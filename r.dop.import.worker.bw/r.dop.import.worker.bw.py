@@ -158,8 +158,8 @@ def main():
     # import DOP tile with original resolution
     grass.message(
         _(
-            f"Started DOP import for key: {tile_key} and URL: {tile_url_cir} and"
-            f" {tile_url_rgb}",
+            f"Started DOP import for key: {tile_key} and URL: {tile_url_cir}"
+            f" and {tile_url_rgb}",
         ),
     )
 
@@ -205,7 +205,8 @@ def main():
     grass.utils.try_remove(newgisrc)
     grass.message(
         _(
-            f"DOP import for key: {tile_key} and URL: {tile_url_cir} and {tile_url_rgb} done!",
+            f"DOP import for key: {tile_key} and URL: {tile_url_cir} and"
+            f" {tile_url_rgb} done!",
         ),
     )
 
