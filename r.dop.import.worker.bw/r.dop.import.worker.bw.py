@@ -157,7 +157,10 @@ def main():
 
     # import DOP tile with original resolution
     grass.message(
-        _(f"Started DOP import for key: {tile_key} and URL: {tile_url_cir} and {tile_url_rgb}"),
+        _(
+            f"Started DOP import for key: {tile_key} and URL: {tile_url_cir} and"
+            f" {tile_url_rgb}",
+        ),
     )
 
     # import DOPs from WMS
@@ -170,7 +173,7 @@ def main():
         rm_group,
         rm_rast,
         flags["r"],
-        "jpeg"
+        "jpeg",
     )
 
     # adjust resolution if required
@@ -201,7 +204,9 @@ def main():
     switch_back_original_location(gisrc)
     grass.utils.try_remove(newgisrc)
     grass.message(
-        _(f"DOP import for key: {tile_key} and URL: {tile_url_cir} and {tile_url_rgb} done!"),
+        _(
+            f"DOP import for key: {tile_key} and URL: {tile_url_cir} and {tile_url_rgb} done!",
+        ),
     )
 
 

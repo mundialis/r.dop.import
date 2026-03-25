@@ -108,7 +108,9 @@ rm_vectors = []
 download_dir = None
 rm_dirs = []
 
-WMS_CIR = "https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DOP_20_CIR?"
+WMS_CIR = (
+    "https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DOP_20_CIR?"
+)
 WMS_RGB = "https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DOP_20_C?"
 NATIVE_DOP_RES = 0.2
 
