@@ -37,9 +37,9 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
 from grass_gis_helpers.raster import rename_raster
 
 OPEN_DATA_AVAILABILITY = {
-    "NO_OPEN_DATA": ["BY", "HB", "HH", "MV", "SL", "ST", "SH"],
+    "NO_OPEN_DATA": ["HB", "HH", "MV", "SL", "ST", "SH"],
     "NOT_YET_SUPPORTED": [],
-    "SUPPORTED": ["BW", "BE", "BB", "NW", "SN", "TH", "HE", "RP", "NI"],
+    "SUPPORTED": ["BW", "BY", "BE", "BB", "NW", "SN", "TH", "HE", "RP", "NI"],
 }
 
 RETRIES = 30
