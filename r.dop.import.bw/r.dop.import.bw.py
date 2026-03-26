@@ -2,11 +2,11 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import.th
+# MODULE:      r.dop.import.bw
 # AUTHOR(S):   Johannes Halbauer, Anika Weinmann, Leon Louwarts
 #
-# PURPOSE:     Downloads DOPs for Thüringen and AOI
-# COPYRIGHT:   (C) 2024-2026 by mundialis GmbH & Co. KG and the GRASS
+# PURPOSE:     Downloads DOPs for Baden-Württemberg and AOI
+# COPYRIGHT:   (C) 2026 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team
 #
 # This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 ############################################################################
 
 # %module
-# % description: Downloads DOPs for Thüringen and AOI.
+# % description: Downloads DOPs for Baden-Württemberg and AOI.
 # % keyword: raster
 # % keyword: import
 # % keyword: DOP
@@ -108,9 +108,12 @@ rm_vectors = []
 download_dir = None
 rm_dirs = []
 
-WMS = "https://www.geoproxy.geoportal-th.de/geoproxy/services/DOP"
-LAYER_CIR = "th_dop20cir"
-LAYER_RGB = "th_dop"
+WMS_CIR = (
+    "https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DOP_20_CIR?"
+)
+WMS_RGB = "https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DOP_20_C?"
+LAYER_CIR = "IMAGES_DOP_20_CIR"
+LAYER_RGB = "IMAGES_DOP_20_RGB"
 NATIVE_DOP_RES = 0.2
 
 
@@ -125,14 +128,14 @@ def cleanup():
 
 
 def main():
-    """Main function of r.dop.import.th"""
+    """Main function of r.dop.import.bw"""
     global rm_vectors
     aoi = options["aoi"]
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
     output = options["output"]
-    fs = "TH"
+    fs = "BW"
 
     # print warning that memory will be irgnored
     # (no memmory parameter in worker module)
@@ -140,7 +143,7 @@ def main():
         grass.warning(
             _(
                 "<memory> parameter will be ignored, because the worker "
-                "module for TH do not accept a <memory> parameter.",
+                "module for BW do not accept a <memory> parameter.",
             ),
         )
 
@@ -149,7 +152,7 @@ def main():
     if flags["k"]:
         grass.warning(
             _(
-                "-k flag will be ignored, beacuse TH DOPs will be imported "
+                "-k flag will be ignored, beacuse BW DOPs will be imported "
                 "directly from WMS into GRASS. Use r.out.gdal module to "
                 "export DOPs into download directory!",
             ),
@@ -186,13 +189,13 @@ def main():
         )
 
     # create grid for downloading
-    grass.message(_("Creating DOP tiles for TH..."))
+    grass.message(_("Creating DOP tiles for BW..."))
 
     # set tile size in map units (meter)
     tile_size = 1000
 
     # set grid name
-    grid = f"tmp_grid_TH_{ID}"
+    grid = f"tmp_grid_BW_{ID}"
 
     # create grid with lib function
     rm_vectors, number_tiles, tiles_list = create_grid_and_tiles_list(
@@ -219,7 +222,7 @@ def main():
     # set queue and variables for worker addon
     try:
         grass.message(
-            _(f"Importing {number_tiles} DOPs for TH in parallel..."),
+            _(f"Importing {number_tiles} DOPs for BW in parallel..."),
         )
         for tile in tiles_list:
             key = tile
@@ -232,7 +235,8 @@ def main():
                 )
             param = {
                 "tile_key": key,
-                "tile_url": WMS,
+                "tile_url_cir": WMS_CIR,
+                "tile_url_rgb": WMS_RGB,
                 "layer_name_cir": LAYER_CIR,
                 "layer_name_rgb": LAYER_RGB,
                 "raster_name": raster_name,
@@ -265,15 +269,15 @@ def main():
             rm_rasters.append(rm_nir)
 
             # run worker addon in parallel
-            r_dop_import_worker_th = Module(
-                "r.dop.import.worker.th",
+            r_dop_import_worker_bw = Module(
+                "r.dop.import.worker.bw",
                 **param,
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_th.stdout = grass.PIPE
-            r_dop_import_worker_th.stderr = grass.PIPE
-            queue.put(r_dop_import_worker_th)
+            r_dop_import_worker_bw.stdout = grass.PIPE
+            r_dop_import_worker_bw.stderr = grass.PIPE
+            queue.put(r_dop_import_worker_bw)
         queue.wait()
     except Exception:
         for proc_num in range(queue.get_num_run_procs()):

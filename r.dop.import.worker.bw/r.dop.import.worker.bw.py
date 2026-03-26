@@ -2,13 +2,13 @@
 #
 ############################################################################
 #
-# MODULE:      r.dop.import.worker.he
+# MODULE:      r.dop.import.worker.bw
 # AUTHOR(S):   Johannes Halbauer, Lina Krisztian, Leon Louwarts
 #
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
-#              in Hessen
-# COPYRIGHT:   (C) 2024-2026 by mundialis GmbH & Co. KG and the GRASS
-#              Development Team
+#              in Baden-Württemberg
+# COPYRIGHT:   (C) 2026 by mundialis GmbH & Co. KG and the GRASS Development
+#              Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #############################################################################
 
 # %Module
-# % description: Downloads and imports single Digital Orthophotos (DOPs) in Hessen
+# % description: Downloads and imports single Digital Orthophotos (DOPs) in Baden-Württemberg
 # % keyword: imagery
 # % keyword: download
 # % keyword: DOP
@@ -50,9 +50,15 @@
 # %end
 
 # %option
-# % key: tile_url
+# % key: tile_url_cir
 # % required: yes
-# % description: URL of tile-DOP to import
+# % description: URL of near-infrared tile-DOP to import
+# %end
+
+# %option
+# % key: tile_url_rgb
+# % required: yes
+# % description: URL of RGB tile-DOP to import
 # %end
 
 # %option
@@ -136,10 +142,11 @@ def cleanup():
 
 
 def main():
-    """Main function of r.dop.import.he"""
+    """Main function of r.dop.import.worker.bw"""
     # parser options
     tile_key = options["tile_key"]
-    tile_url = options["tile_url"]
+    tile_url_cir = options["tile_url_cir"]
+    tile_url_rgb = options["tile_url_rgb"]
     layer_name_cir = options["layer_name_cir"]
     layer_name_rgb = options["layer_name_rgb"]
     raster_name = options["raster_name"]
@@ -155,6 +162,7 @@ def main():
             "Use native resolution with the -r flag or specify "
             "'resolution_to_import'.",
         )
+
     # switch to new mapset for parallel processing
     gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
 
@@ -163,18 +171,23 @@ def main():
 
     # import DOP tile with original resolution
     grass.message(
-        _(f"Started DOP import for key: {tile_key} and URL: {tile_url}"),
+        _(
+            f"Started DOP import for key: {tile_key} and URL: {tile_url_cir}"
+            f" and {tile_url_rgb}",
+        ),
     )
+
     # import DOPs from WMS
     import_dop_from_wms(
         f"{tile_key}@{old_mapset}",
         raster_name,
-        {"cir": tile_url, "rgb": tile_url},
+        {"cir": tile_url_cir, "rgb": tile_url_rgb},
         resolution_to_import,
         {"cir": layer_name_cir, "rgb": layer_name_rgb},
         rm_group,
         rm_rast,
         flags["r"],
+        "jpeg",
     )
 
     # adjust resolution if required
@@ -198,14 +211,17 @@ def main():
     grass.message(_(f"Finishing raster import for {raster_name}..."))
 
     # rescale imported DOPs
-    new_rm_rast = rescale_to_1_255("HE", raster_name, extension="num")
+    new_rm_rast = rescale_to_1_255("BW", raster_name, extension="num")
     rm_rast.extend(new_rm_rast)
 
     # switch back to original location
     switch_back_original_location(gisrc)
     grass.utils.try_remove(newgisrc)
     grass.message(
-        _(f"DOP import for key: {tile_key} and URL: {tile_url} done!"),
+        _(
+            f"DOP import for key: {tile_key} and URL: {tile_url_cir} and"
+            f" {tile_url_rgb} done!",
+        ),
     )
 
 

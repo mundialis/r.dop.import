@@ -19,7 +19,7 @@ The r.dop.import toolset consists of the following modules:
 | - | - | - | - | - | - |
 | BB | &#9745; | &#9745; | data download as .zip and .tif | 20cm | |
 | BE | &#9745; | &#9745; | data download as .zip and .tif | 20cm | |
-| BW | | | | | [Open GeoData Portal](https://opengeodata.lgl-bw.de/#/) |
+| BW | &#9745; | - (via WMS) | | 20cm | [Open GeoData Portal](https://opengeodata.lgl-bw.de/#/) |
 | BY | | | | | [Open GeoData](https://geodaten.bayern.de/opengeodata/) |
 | HB | | | | | [Geoportal](https://geoportal.bremen.de/geoportal/#) |
 | HE | &#9745; | - (via WMS) | | 20cm | |

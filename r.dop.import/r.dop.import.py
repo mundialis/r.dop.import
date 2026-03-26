@@ -7,7 +7,7 @@
 #
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) wihtin a specified
 #              federal state and area of interest
-# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS
+# COPYRIGHT:   (C) 2024-2026 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team
 #
 # This program is free software; you can redistribute it and/or modify
@@ -43,7 +43,7 @@
 # % multiple: yes
 # % required: no
 # % description: Federal state(s) related to the area of interest, e.g.: "Nordrhein-Westfalen"
-# % options: Berlin,BE,Brandenburg,BB,Nordrhein-Westfalen,NW,Sachsen,SN,Thüringen,TH,Rheinland-Pfalz,RP,Niedersachsen,NI
+# % options: Baden-Württemberg,BW,Berlin,BE,Brandenburg,BB,Nordrhein-Westfalen,NW,Sachsen,SN,Thüringen,TH,Rheinland-Pfalz,RP,Niedersachsen,NI
 # %end
 
 # %option G_OPT_F_INPUT
