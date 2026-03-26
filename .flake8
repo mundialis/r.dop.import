@@ -24,8 +24,6 @@ per-file-ignores =
   ./r.dop.import.worker.nw/r.dop.import.worker.nw.py: E501,F821
   ./r.dop.import.worker.bw/r.dop.import.worker.bw.py: E501,F821
   ./r.dop.import.bw/r.dop.import.bw.py: E501,F821
-  ./r.dop.import.worker.by/r.dop.import.worker.by.py: E501,F821
-  ./r.dop.import.by/r.dop.import.by.py: E501,F821
   ./lib_dop/r_dop_import_lib.py: F821
   ./testsuite/r_dop_import_test_base.py: F821
   ./testsuite/test_r_dop_import_NW.py: F821

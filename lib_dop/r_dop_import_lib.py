@@ -3,10 +3,10 @@
 ############################################################################
 #
 # MODULE:      r_dop_import_lib
-# AUTHOR(S):   Johannes Halbauer
+# AUTHOR(S):   Johannes Halbauer, Leon Louwarts
 #
 # PURPOSE:     Library for r.dop.import
-# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS
+# COPYRIGHT:   (C) 2024-2026 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team
 #
 # This program is free software; you can redistribute it and/or modify
@@ -37,9 +37,9 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
 from grass_gis_helpers.raster import adjust_raster_resolution, rename_raster
 
 OPEN_DATA_AVAILABILITY = {
-    "NO_OPEN_DATA": ["HB", "HH", "MV", "SL", "ST", "SH"],
+    "NO_OPEN_DATA": ["BY", "HB", "HH", "MV", "SL", "ST", "SH"],
     "NOT_YET_SUPPORTED": [],
-    "SUPPORTED": ["BW", "BY", "BE", "BB", "NW", "SN", "TH", "HE", "RP", "NI"],
+    "SUPPORTED": ["BW", "BE", "BB", "NW", "SN", "TH", "HE", "RP", "NI"],
 }
 
 RETRIES = 30
