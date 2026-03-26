@@ -3,12 +3,12 @@
 ############################################################################
 #
 # MODULE:      r.dop.import.worker.he
-# AUTHOR(S):   Johannes Halbauer & Lina Krisztian
+# AUTHOR(S):   Johannes Halbauer, Lina Krisztian, Leon Louwarts
 #
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
 #              in Hessen
-# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS Development
-#              Team
+# COPYRIGHT:   (C) 2024-2026 by mundialis GmbH & Co. KG and the GRASS
+#              Development Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,6 +53,18 @@
 # % key: tile_url
 # % required: yes
 # % description: URL of tile-DOP to import
+# %end
+
+# %option
+# % key: layer_name_cir
+# % required: yes
+# % description: Layer name of CIR tile-DOP to import
+# %end
+
+# %option
+# % key: layer_name_rgb
+# % required: yes
+# % description: Layer name of RGB tile-DOP to import
 # %end
 
 # %option
@@ -128,6 +140,8 @@ def main():
     # parser options
     tile_key = options["tile_key"]
     tile_url = options["tile_url"]
+    layer_name_cir = options["layer_name_cir"]
+    layer_name_rgb = options["layer_name_rgb"]
     raster_name = options["raster_name"]
     resolution_to_import = None
     if options["resolution_to_import"]:
@@ -157,7 +171,7 @@ def main():
         raster_name,
         {"cir": tile_url, "rgb": tile_url},
         resolution_to_import,
-        {"cir": "he_dop20_cir", "rgb": "he_dop20_rgb"},
+        {"cir": layer_name_cir, "rgb": layer_name_rgb},
         rm_group,
         rm_rast,
         flags["r"],

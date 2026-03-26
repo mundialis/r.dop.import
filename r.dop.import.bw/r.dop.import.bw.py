@@ -3,10 +3,10 @@
 ############################################################################
 #
 # MODULE:      r.dop.import.bw
-# AUTHOR(S):   Johannes Halbauer, Anika Weinmann
+# AUTHOR(S):   Johannes Halbauer, Anika Weinmann, Leon Louwarts
 #
 # PURPOSE:     Downloads DOPs for Baden-Württemberg and AOI
-# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS
+# COPYRIGHT:   (C) 2026 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team
 #
 # This program is free software; you can redistribute it and/or modify
@@ -112,6 +112,8 @@ WMS_CIR = (
     "https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DOP_20_CIR?"
 )
 WMS_RGB = "https://owsproxy.lgl-bw.de/owsproxy/ows/WMS_LGL-BW_ATKIS_DOP_20_C?"
+LAYER_CIR = "IMAGES_DOP_20_CIR"
+LAYER_RGB = "IMAGES_DOP_20_RGB"
 NATIVE_DOP_RES = 0.2
 
 
@@ -235,6 +237,8 @@ def main():
                 "tile_key": key,
                 "tile_url_cir": WMS_CIR,
                 "tile_url_rgb": WMS_RGB,
+                "layer_name_cir": LAYER_CIR,
+                "layer_name_rgb": LAYER_RGB,
                 "raster_name": raster_name,
                 "orig_region": ORIG_REGION,
                 "new_mapset": new_mapset,

@@ -3,10 +3,10 @@
 ############################################################################
 #
 # MODULE:      r.dop.import.th
-# AUTHOR(S):   Johannes Halbauer, Anika Weinmann
+# AUTHOR(S):   Johannes Halbauer, Anika Weinmann, Leon Louwarts
 #
 # PURPOSE:     Downloads DOPs for Thüringen and AOI
-# COPYRIGHT:   (C) 2024 by mundialis GmbH & Co. KG and the GRASS
+# COPYRIGHT:   (C) 2024-2026 by mundialis GmbH & Co. KG and the GRASS
 #              Development Team
 #
 # This program is free software; you can redistribute it and/or modify
@@ -109,6 +109,8 @@ download_dir = None
 rm_dirs = []
 
 WMS = "https://www.geoproxy.geoportal-th.de/geoproxy/services/DOP"
+LAYER_CIR = "th_dop20cir"
+LAYER_RGB = "th_dop"
 NATIVE_DOP_RES = 0.2
 
 
@@ -231,6 +233,8 @@ def main():
             param = {
                 "tile_key": key,
                 "tile_url": WMS,
+                "layer_name_cir": LAYER_CIR,
+                "layer_name_rgb": LAYER_RGB,
                 "raster_name": raster_name,
                 "orig_region": ORIG_REGION,
                 "new_mapset": new_mapset,
