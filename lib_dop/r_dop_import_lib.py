@@ -34,7 +34,7 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
     download_data_using_threadpool,
     extract_compressed_files,
 )
-from grass_gis_helpers.raster import adjust_raster_resolution, rename_raster
+from grass_gis_helpers.raster import rename_raster
 
 OPEN_DATA_AVAILABILITY = {
     "NO_OPEN_DATA": ["BY", "HB", "HH", "MV", "SL", "ST", "SH"],
