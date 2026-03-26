@@ -34,7 +34,7 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
     download_data_using_threadpool,
     extract_compressed_files,
 )
-from grass_gis_helpers.raster import adjust_raster_resolution, rename_raster
+from grass_gis_helpers.raster import rename_raster
 
 OPEN_DATA_AVAILABILITY = {
     "NO_OPEN_DATA": ["BY", "HB", "HH", "MV", "SL", "ST", "SH"],
@@ -271,20 +271,12 @@ def import_dop_from_wms(
         for band in bands:
             oband = "4" if key == "cir" else band_nums[band]
 
-            # create old and new name for adjusting resolution/renaming
+            # create old and new name for renaming
             old_name = f"{out_tmp}.{band}"
             new_name = f"{rastername}.{oband}"
 
-            # adjust resolution/rename raster maps
-            if not native_res:
-                adjust_raster_resolution(
-                    old_name,
-                    new_name,
-                    resolution_to_import,
-                    type="CELL",
-                )
-            else:
-                rename_raster(old_name, new_name)
+            # rename raster maps
+            rename_raster(old_name, new_name)
             rm_rast.append(old_name)
 
     # drop rest of CIR DOP
