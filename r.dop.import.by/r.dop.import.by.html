@@ -1,0 +1,29 @@
+<h2>DESCRIPTION</h2>
+
+<em>r.dop.import.by</em> downloads and imports <a href="https://geodaten.bayern.de/opengeodata/">digital orthophotos (DOP)</a>
+for Bayern (BY) and area of interest using the respective <a href="https://geodaten.bayern.de/opengeodata/OpenDataDetail.html?pn=dop20rgb&active=SERVICE">WMS</a>.
+<br>The data can be used when referencing the source: 
+
+<br>id: CC BY 4.0,
+
+<br>name: Namensnennung 4.0 International,
+
+<br>url: https://creativecommons.org/licenses/by/4.0/,
+
+<br>source: (c) Bayerische Vermessungsverwaltung (<a href="hwww.geodaten.bayern.de">Bayerische Vermessungsverwaltung</a>)
+
+
+<h2>EXAMPLES</h2>
+
+<h3>Import DOPs</h3>
+
+Import DOPs with native resolution:
+<div class="code"><pre>
+r.dop.import.by aoi=aoi_BY output=dop_BY -r
+</pre></div>
+
+
+<h2>AUTHORS</h2>
+
+Johannes Halbauer, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a><br>
+Anika Weinmann, <a href="https://www.mundialis.de/">mundialis GmbH &amp; Co. KG</a>
