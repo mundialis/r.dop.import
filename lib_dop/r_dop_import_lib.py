@@ -502,7 +502,6 @@ def import_and_reproject(
         try:
             tries += 1
             grass.run_command("r.import", **kwargs)
-            # import_sucess = True
             trydownload = False
         except Exception:
             if "no overlap with current region":
