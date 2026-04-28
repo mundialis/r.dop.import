@@ -249,7 +249,6 @@ def main():
 
             # run worker addon in parallel
             r_dop_import_worker_hh = Module(
-                # grass.run_command(
                 "r.dop.import.worker.hh",
                 **param,
                 run_=False,
