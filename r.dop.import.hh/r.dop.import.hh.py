@@ -181,8 +181,6 @@ def main():
         urls = [u.strip() for u in entry.split(",")]
         fixed_tiles.append(urls)
 
-    # for count, value in enumerate(url_tiles, start=1):
-    #     url_tiles[count - 1] = (count, [value])
     url_tiles = [(i + 1, urls) for i, urls in enumerate(fixed_tiles)]
     number_tiles = len(url_tiles)
 
