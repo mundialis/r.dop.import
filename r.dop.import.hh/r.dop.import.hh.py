@@ -98,7 +98,7 @@ except Exception as imp_err:
 
 # set global variables
 TINDEX = (
-    "https://github.com/llouwarts/tile-indices/raw/tile-indices.hh/DOP/HH/"
+    "https://github.com/mundialis/tile-indices/raw/main/DOP/HH/"
     "DOP20_tileindex_HH.gpkg.gz"
 )
 
@@ -175,10 +175,8 @@ def main():
     fixed_tiles = []
 
     for entry in url_tiles:
-        if isinstance(entry, list):
-            entry = entry[0]
-
-        urls = [u.strip() for u in entry.split(",")]
+        url_entry = entry[0] if isinstance(entry, list) else entry
+        urls = [u.strip() for u in url_entry.split(",")]
         fixed_tiles.append(urls)
 
     url_tiles = [(i + 1, urls) for i, urls in enumerate(fixed_tiles)]

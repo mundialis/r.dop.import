@@ -224,8 +224,7 @@ def main():
             )
         # cleanup of single parts
         for part in imported_rasters:
-            for band in range(1, 5):
-                rm_group.append(f"{part}.{band}")
+            rm_group.extend(f"{part}.{band}" for band in range(1, 5))
     elif len(imported_rasters) == 1:
         for band in range(1, 5):
             band_input = f"{imported_rasters[0]}.{band}"
@@ -241,10 +240,6 @@ def main():
                 "could be imported successfully.",
             ),
         )
-
-        switch_back_original_location(gisrc)
-        grass.utils.try_remove(newgisrc)
-        sys.exit(0)
 
     # adjust resolution if required
     if resolution_to_import:
