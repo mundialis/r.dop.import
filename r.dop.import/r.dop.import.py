@@ -160,7 +160,7 @@ def import_local_data(aoi, out, local_data_dir, fs, all_dops, native_res_flag):
         native_res_flag,
         all_dops,
         rm_rasters,
-        band_dict=None,
+        band_dict={1: "red", 2: "green", 3: "blue", 4: "nir"},
     )
 
     if not imported_local_data and fs in ["BW"]:
