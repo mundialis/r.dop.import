@@ -170,7 +170,8 @@ def main():
     # import DOP tile with original resolution
     grass.message(
         _(
-            f"Started DOP import for key: {tile_key} with {len(tile_urls)} URL(s).",
+            f"Started DOP import for key: {tile_key} with {len(tile_urls)} "
+            "URL(s).",
         ),
     )
 
