@@ -498,15 +498,6 @@ def import_and_reproject(
     # import data
     trydownload = True
     tries = 0
-    # while not import_sucess:
-    #     tries += 1
-    #     if tries > RETRIES:
-    #         grass.fatal(
-    #             _(
-    #                 f"Importing {kwargs['input']} failed after {RETRIES} "
-    #                 "retries.",
-    #             ),
-    #         )
     while trydownload:
         try:
             tries += 1
