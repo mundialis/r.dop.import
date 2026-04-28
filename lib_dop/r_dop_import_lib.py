@@ -496,7 +496,6 @@ def import_and_reproject(
             )
 
     # import data
-    # import_sucess = False
     trydownload = True
     tries = 0
     # while not import_sucess:
