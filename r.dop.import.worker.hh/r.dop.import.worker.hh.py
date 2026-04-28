@@ -6,7 +6,7 @@
 # AUTHOR(S):   Johannes Halbauer, Lina Krisztian, Leon Louwarts
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) within a specified area
 #              in Hamburg
-# SPDX-FileCopyrightText: (c) 2026by mundialis GmbH & Co. KG and the
+# SPDX-FileCopyrightText: (c) 2026 by mundialis GmbH & Co. KG and the
 #                             GRASS Development Team
 # SPDX-License-Identifier: GPL-3.0-or-later.
 #
