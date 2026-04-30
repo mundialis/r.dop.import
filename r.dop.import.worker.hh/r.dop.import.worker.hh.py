@@ -121,6 +121,7 @@ TMP_LOC = None
 TMP_GISRC = None
 original_nprocs = None
 
+
 def cleanup():
     """Remove all not needed files at the end"""
     cleaning_tmp_location(
