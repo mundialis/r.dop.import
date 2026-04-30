@@ -114,6 +114,8 @@ except Exception as imp_err:
 rm_rast = []
 rm_group = []
 
+original_nprocs = None
+
 RETRIES = 30
 WAITING_TIME = 10
 
@@ -124,6 +126,9 @@ def cleanup():
         rm_rasters=rm_rast,
         rm_groups=rm_group,
     )
+    """Reset nprocs"""
+    if original_nprocs:
+        grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
 
 
 def main():
@@ -139,6 +144,15 @@ def main():
         resolution_to_import = float(options["resolution_to_import"])
     orig_region = options["orig_region"]
     new_mapset = options["new_mapset"]
+
+    # check number of nprocs used and set to 1, write original value in variable
+    try:
+        original_nprocs = grass.read_command("g.gisenv", get="NPROCS").strip()
+        if int(original_nprocs) > 1:
+            grass.run_command("g.gisenv", set="NPROCS=1")
+    except (ValueError, AttributeError):
+        original_nprocs = None
+        grass.run_command("g.gisenv", set="NPROCS=1")
 
     # output resolution
     if not flags["r"] and not options["resolution_to_import"]:
