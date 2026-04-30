@@ -114,6 +114,7 @@ except Exception as imp_err:
 rm_rast = []
 rm_group = []
 
+# pylint: disable=C0103
 original_nprocs = None
 
 RETRIES = 30
@@ -129,10 +130,13 @@ def cleanup():
     """Reset nprocs"""
     if original_nprocs:
         grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
+    else:
+        grass.run_command("g.gisenv", unset="NPROCS")
 
 
 def main():
     """Main function of r.dop.import.worker.th"""
+    global original_nprocs
     # parser options
     tile_key = options["tile_key"]
     tile_url = options["tile_url"]
@@ -145,14 +149,11 @@ def main():
     orig_region = options["orig_region"]
     new_mapset = options["new_mapset"]
 
-    # check number of nprocs used and set to 1, write original value in variable
-    try:
-        original_nprocs = grass.read_command("g.gisenv", get="NPROCS").strip()
-        if int(original_nprocs) > 1:
-            grass.run_command("g.gisenv", set="NPROCS=1")
-    except (ValueError, AttributeError):
-        original_nprocs = None
-        grass.run_command("g.gisenv", set="NPROCS=1")
+    # set nprocs to 1, write original value in variable
+    gisenv = grass.parse_command("g.gisenv", get="")
+    if "NPROCS" in gisenv:
+        original_nprocs = gisenv["NPROCS"]
+    grass.run_command("g.gisenv", set="NPROCS=1")
 
     # output resolution
     if not flags["r"] and not options["resolution_to_import"]:
