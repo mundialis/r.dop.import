@@ -121,6 +121,8 @@ rm_group = []
 gisdbase = None
 TMP_LOC = None
 TMP_GISRC = None
+# pylint: disable=C0103
+original_nprocs = None
 
 
 def cleanup():
@@ -135,11 +137,16 @@ def cleanup():
         rm_rasters=rm_rast,
         rm_groups=rm_group,
     )
+    """Reset nprocs"""
+    if original_nprocs:
+        grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
+    else:
+        grass.run_command("g.gisenv", unset="NPROCS")
 
 
 def main():
     """Main function of r.dop.import.worker.rp"""
-    global gisdbase, TMP_LOC, TMP_GISRC
+    global gisdbase, TMP_LOC, TMP_GISRC, original_nprocs
     # parser options
     tile_key = options["tile_key"]
     tile_url = options["tile_url"]
@@ -151,6 +158,12 @@ def main():
     new_mapset = options["new_mapset"]
     download_dir = options["download_dir"]
     keep_data = flags["k"]
+
+    # check number of nprocs used and set to 1, write original value in variable
+    gisenv = grass.parse_command("g.gisenv", get="")
+    if "NPROCS" in gisenv:
+        original_nprocs = gisenv["NPROCS"]
+    grass.run_command("g.gisenv", set="NPROCS=1")
 
     # output resolution
     if not flags["r"] and not options["resolution_to_import"]:
