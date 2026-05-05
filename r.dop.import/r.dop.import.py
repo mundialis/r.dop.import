@@ -98,6 +98,7 @@
 import atexit
 import os
 import sys
+from datetime import datetime
 
 import grass.script as grass
 from grass.pygrass.utils import get_lib_path
@@ -175,6 +176,211 @@ def import_local_data(aoi, out, local_data_dir, fs, all_dops, native_res_flag):
     return imported_local_data
 
 
+def collect_metadata(fs, dop_list, license_info=None, base_url=None):
+    """Collect metadata for imported DOPs
+
+    Args:
+        fs (str): Federal state abbreviation
+        dop_list (list): List of imported DOP raster names
+        license_info (str): License information (optional)
+        base_url (str): Base URL of the data source (optional)
+
+    Returns:
+        dict: Metadata dictionary for this federal state
+
+    """
+    return {
+        "federal_state": fs,
+        "download_date": datetime.now().strftime("%d.%m.%Y"),
+        "license": license_info,
+        "base_url": base_url,
+        "dop_rasters": dop_list,
+        "count": len(dop_list),
+    }
+
+
+def get_license_and_url_from_addon(fs):
+    """Extract license information and base URL from federal state specific addon
+
+    Args:
+        fs (str): Federal state abbreviation
+
+    Returns:
+        tuple: (license_info, base_url)
+
+    """
+
+    try:
+        if fs in ["BB", "BE"]:
+            addon_name = "r.dop.import.bb.be"
+        else:
+            addon_name = f"r.dop.import.{fs.lower()}"
+
+        import subprocess
+
+        result = subprocess.run(
+            ["g.manual", "-m", addon_name], capture_output=True, text=True
+        )
+
+        license_info = None
+        base_url = None
+
+        if result.returncode == 0:
+            html_path = result.stdout.strip()
+            if os.path.exists(html_path):
+                with open(html_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                    import re
+
+                    license_patterns = [
+                        r"<h[23]>.*?[Ll]icen[sc]e.*?</h[23]>(.*?)<h[23]>",
+                        r"<h[23]>.*?[Ll]izenz.*?</h[23]>(.*?)<h[23]>",
+                        r"[Ll]icen[sc]e:</?\w*>(.*?)</\w+>",
+                        r"[Ll]izenz:</?\w*>(.*?)</\w+>",
+                    ]
+
+                    for pattern in license_patterns:
+                        license_match = re.search(
+                            pattern, content, re.DOTALL | re.IGNORECASE
+                        )
+                        if license_match:
+                            from html.parser import HTMLParser
+
+                            class MLStripper(HTMLParser):
+
+                                def __init__(self):
+                                    super().__init__()
+                                    self.strict = False
+                                    self.convert_charrefs = True
+                                    self.text = []
+
+                                def handle_data(self, d):
+                                    self.text.append(d)
+
+                                def get_data(self):
+                                    return "".join(self.text)
+
+                            s = MLStripper()
+                            s.feed(license_match.group(1))
+                            license_info = s.get_data().strip
+                            if license_info:
+                                break
+
+                    url_patterns = [
+                        r'[Bb]ase\s*URL[:\s]+<?([https]+://[^\s<>"]+)>?',
+                        r'[Dd]ata\s*[Ss]ource[:\s]+<?([https]+://[^\s<>"]+)>?',
+                        r'[Dd]ownload\s*URL[:\s]+<?([https]+://[^\s<>"]+)>?',
+                        r'href=["\'](https?://[^"\']+geoportal[^"\']+)["\']',
+                        r'href=["\'](https?://[^"\']+open.*data[^"\']+)["\']',
+                    ]
+
+                    for pattern in url_patterns:
+                        url_match = re.search(pattern, content, re.IGNORECASE)
+                        if url_match:
+                            base_url = url_match.group(1)
+                            break
+
+        return license_info, base_url
+
+    except Exception as e:
+        grass.warning(f"Could not extract license/URL for {fs}: {e}")
+
+    return None, None
+
+
+def get_federal_state_name(fs):
+    """Get full name of federal state from abbreviation
+
+    Args:
+        fs (str): Federal state abbreviation
+
+    Returns:
+        str: Full federal state name
+
+    """
+
+    federal_state_names = {
+        "BW": "Baden-Württemberg",
+        "BY": "Bayern",
+        "BE": "Berlin",
+        "BB": "Brandenburg",
+        "HB": "Bremen",
+        "HH": "Hamburg",
+        "HE": "Hessen",
+        "MV": "Mecklenburg-Vorpommern",
+        "NI": "Niedersachsen",
+        "NW": "Nordrhein-Westfalen",
+        "RP": "Rheinland-Pfalz",
+        "SL": "Saarland",
+        "SN": "Sachsen",
+        "ST": "Sachsen-Anhalt",
+        "SH": "Schleswig-Holstein",
+        "TH": "Thüringen",
+    }
+    return federal_state_names.get(fs, fs)
+
+
+def write_metadata_markdown(metadata_list, output_name, download_dir):
+    """Write metadata to Markdown file
+
+    Args:
+        metadata_list (list): List of metadata dictionaries
+        output_name (str): Base output name
+        download_dir (str): Directory where metadata file should be saved
+
+    """
+
+    # Get name of mapset
+    mapset = grass.gisenv()["MAPSET"]
+
+    # Create markdown file
+    md_file = os.path.join(download_dir, f"{output_name}_metadata.md")
+
+    with open(md_file, "w", encoding="utf-8") as f:
+        # Header
+        f.write(f"# Metadaten der DOPs im Mapset {mapset}\n\n")
+
+        # Date of Download
+        if metadata_list:
+            f.write(
+                f"**Downloaddatum:** {metadata_list[0]['download_date']}\n\n"
+            )
+
+        # Licenses
+        f.write("## Lizenzen\n\n")
+        unique_licenses = {}
+        for fs_meta in metadata_list:
+            fs_name = get_federal_state_name(fs_meta["federal_state"])
+            if fs_meta["license"] not in unique_licenses.values():
+                unique_licenses[fs_name] = fs_meta["license"]
+
+        for fs_name, license_text in unique_licenses.items():
+            f.write(f"**{fs_name}:** {license_text}\n\n")
+
+        f.write("## Heruntergeladene DOPs\n\n")
+
+        for fs_meta in metadata_list:
+            fs_name = get_federal_state_name(fs_meta["federal_state"])
+            base_url = fs_meta["base_url"]
+
+            f.write(
+                f"### Folgende DOPs wurden aus {fs_name} ({base_url}) "
+                "bezogen:\n\n"
+            )
+
+            for dop in fs_meta["dop_rasters"]:
+                f.write(f"- `{dop}`\n")
+
+            f.write(f"\n**Anzahl:** {fs_meta['count']}\n\n")
+
+        # Additional info
+        f.write("---\n\n")
+        f.write(f"*Erstellt am {datetime.now().strftime('%d.%m.%Y')}\n")
+
+    grass.message(_(f"Metadata file created: {md_file}"))
+
+
 def main():
     """Main function of r.dop.import"""
     aoi = options["aoi"]
@@ -201,8 +407,10 @@ def main():
 
     # loop over federal states and import data
     all_dops = {"red": [], "green": [], "blue": [], "nir": []}
+    metadata_list = []
     for fs in set(federal_states):
         grass.message(_(f"Importing DOPs for {fs}..."))
+        fs_dop_list = []
         # check if local data for federal state given
         imported_local_data = False
         if fs in local_fs_list:
@@ -214,6 +422,13 @@ def main():
                 all_dops,
                 native_res,
             )
+            if imported_local_data:
+                fs_dop_list = [
+                    f"{output}_{fs}_red",
+                    f"{output}_{fs}_green",
+                    f"{output}_{fs}_blue",
+                    f"{output}_{fs}_nir",
+                ]
         elif fs in NO_OPEN_DATA:
             grass.fatal(
                 _(
@@ -274,6 +489,18 @@ def main():
             all_dops["blue"].append(f"{out_fs}_blue")
             all_dops["nir"].append(f"{out_fs}_nir")
 
+            fs_dop_list = [
+                f"{out_fs}_red",
+                f"{out_fs}_green",
+                f"{out_fs}_blue",
+                f"{out_fs}_nir",
+            ]
+
+        # Collect metadata for this federal state
+        license_info, base_url = get_license_and_url_from_addon(fs)
+        fs_metadata = collect_metadata(fs, fs_dop_list, license_info, base_url)
+        metadata_list.append(fs_metadata)
+
     create_vrt(all_dops["red"], f"{output}_red")
     create_vrt(all_dops["green"], f"{output}_green")
     create_vrt(all_dops["blue"], f"{output}_blue")
@@ -289,6 +516,10 @@ def main():
         ],
         overwrite=True,
     )
+
+    # Write metadata file
+    write_metadata_markdown(metadata_list, output, download_dir)
+
     grass.message(_(f"DOP group <{output}> is created."))
 
 
