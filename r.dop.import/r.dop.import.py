@@ -189,7 +189,64 @@ def import_local_data(aoi, out, local_data_dir, fs, all_dops, native_res_flag):
     return imported_local_data
 
 
-def collect_metadata(fs, dop_list, license_info=None, base_url=None):
+# def get_original_dop_filenames(fs, download_dir):
+#     """Get original DOP filenames from download directory
+
+#     Args:
+#         fs (str): Federal state abbreviation
+#         download_dir (str): Download directory path
+
+#     Returns:
+#         list: List of original DOP filenames
+
+#     """
+
+#     original_files = []
+
+#     if not download_dir or not pathlib.Path(download_dir).exists():
+#         return original_files
+
+#     fs_dir = os.path.join(download_dir, fs)
+#     if pathlib.Path(fs_dir).exists():
+#         for root, dirs, files in os.walk(fs_dir):
+#             original_files.extend(
+#                 file
+#                 for file in files
+#                 if file.lower().endswith((".tif", ".tiff", ".jp2", "jpeg"))
+#             )
+
+#     return sorted(original_files)
+
+
+def get_downloaded_dop_files(download_dir):
+    """Get list of downloaded DOP files immediately after download
+
+    Args:
+        download_dir (str): Download directory path
+
+    Returns:
+        list: List of downloaded DOP filenames
+
+    """
+
+    dop_files = []
+
+    if not download_dir or not pathlib.Path(download_dir).exists():
+        return dop_files
+
+    for files in os.walk(download_dir):
+        dop_files.extend(file for file in files if file.lower().endswith((".tif", "tiff", "jp2", "jpeg")))
+
+    return sorted(list(set(dop_files)))
+
+
+def collect_metadata(
+    fs,
+    dop_list,
+    license_info=None,
+    base_url=None,
+    dop_files=None,
+):
     """Collect metadata for imported DOPs
 
     Args:
@@ -197,17 +254,28 @@ def collect_metadata(fs, dop_list, license_info=None, base_url=None):
         dop_list (list): List of imported DOP raster names
         license_info (str): License information (optional)
         base_url (str): Base URL of the data source (optional)
+        dop_files (list): List of original downloaded DOP files (optional)
 
     Returns:
         dict: Metadata dictionary for this federal state
 
     """
+
+    if dop_files:
+        original_files = dop_files
+    else:
+        unique_dops = set()
+        for dop in dop_list:
+            base_name = re.sub(r"_(red|green|blue|nir)$", "", dop)
+            unique_dops.add(base_name)
+        original_files = sorted(list(unique_dops))
+
     return {
         "federal_state": fs,
         "download_date": datetime.now().strftime("%d.%m.%Y"),
         "license": license_info,
         "base_url": base_url,
-        "dop_rasters": dop_list,
+        "dop_rasters": original_files,
         "count": len(dop_list),
     }
 
@@ -229,76 +297,91 @@ def get_license_and_url_from_addon(fs):
         else:
             addon_name = f"r.dop.import.{fs.lower()}"
 
-        # Try and find HTML dokumentation
-        try:
-            html_content = grass.read_command(
-                "g.manual", entry=addon_name, quiet=True,
-            )
-        except Exception as e:
-            grass.debug(f"Could not get manual path for {addon_name}: {e}")
+        # Path to HTML file
+        html_file = os.path.join(
+            pathlib.Path("~").expanduser(),
+            ".grass8",
+            "addons",
+            "docs",
+            "html",
+            f"{addon_name}.html",
+        )
+
+        if not pathlib.Path(html_file).exists():
+            grass.debug(f"HTML file not found: {html_file}")
+            return None, None
+
+        # Read HTML file
+        html_content = pathlib.Path(html_file).read_text(encoding="utf-8")
+
+        if not html_content:
+            grass.debug(f"HTML file is empty: {html_file}")
             return None, None
 
         license_info = None
         base_url = None
 
-        if html_content:
+        # Search for license information
+        id_match = re.search(
+            r"<br>\s*id:\s*([^,\n]+)",
+            html_content,
+            re.IGNORECASE,
+        )
+        name_match = re.search(
+            r"<br>\s*name:\s*([^,\n]+)",
+            html_content,
+            re.IGNORECASE,
+        )
+        url_match = re.search(
+            r"<br>\s*url:\s*(https?://[^,\s\n]+)",
+            html_content,
+            re.IGNORECASE,
+        )
+        source_match = re.search(
+            r"<br>\s*source:\s*(.+?)(?=\n|<h\d>)",
+            html_content,
+            re.DOTALL | re.IGNORECASE,
+        )
 
-                # Search for license information
-                id_match = re.search(
-                    r"<br>\s*id:\s*([^,<]+)", content, re.IGNORECASE,
-                )
-                name_match = re.search(
-                    r"<br>\s*name:\s*([^,<]+)", content, re.IGNORECASE,
-                )
-                url_match = re.search(
-                    r"<br>\s*url:\s*(https?://[^,<\s]+)",
-                    content,
-                    re.IGNORECASE,
-                )
-                source_match = re.search(
-                    r"<br>\s*source:\s*(.+?)(?=</|$)",
-                    content,
-                    re.DOTALL | re.IGNORECASE,
-                )
+        if id_match and name_match and url_match and source_match:
+            license_id = id_match.group(1).strip()
+            license_name = name_match.group(1).strip()
+            license_url = url_match.group(1).strip()
+            source_html = source_match.group(1).strip()
 
-                if id_match and name_match and url_match and source_match:
-                    license_id = id_match.group(1).strip()
-                    license_name = name_match.group(1).strip()
-                    # license_url = url_match.group(1).strip()
-                    source_html = source_match.group(1).strip()
+            # Remove html tags from source info
+            class MLStripper(HTMLParser):
 
-                    # Remove html tags from source info
-                    class MLStripper(HTMLParser):
+                def __init__(self) -> None:
+                    super().__init__()
+                    self.strict = False
+                    self.convert_charrefs = True
+                    self.text = []
 
-                        def __init__(self):
-                            super().__init__()
-                            self.strict = False
-                            self.convert_charrefs = True
-                            self.text = []
+                def handle_data(self, data) -> None:
+                    self.text.append(data)
 
-                        def handle_data(self, data):
-                            self.text.append(data)
+                def get_data(self) -> None:
+                    return "".join(self.text)
 
-                        def get_data(self):
-                            return "".join(self.text)
+            s = MLStripper()
+            s.feed(source_html)
+            source_clean = s.get_data().strip()
 
-                    s = MLStripper()
-                    s.feed(source_html)
-                    source_clean = s.get_data().strip()
+            # Create formatted license information
+            license_info = (
+                f"{license_name} ({license_id}), "
+                f"{license_url}, "
+                f"Quelle: {source_clean}"
+            )
 
-                    # Create formatted license information
-                    license_info = (
-                        f"{license_name} ({license_id}), "
-                        f"{license_id}, "
-                        f"Quelle: {source_clean}"
-                    )
-
-                    # Get base URL from source
-                    source_link_match = re.search(
-                        r'href=["\']([^"\']+)["\']', source_html,
-                    )
-                    if source_link_match:
-                        base_url = source_link_match.group(1).strip()
+            # Get base URL from source
+            source_link_match = re.search(
+                r'href=["\']([^"\']+)["\']',
+                source_html,
+            )
+            if source_link_match:
+                base_url = source_link_match.group(1).strip()
 
         return license_info, base_url
 
@@ -330,7 +413,6 @@ def write_metadata_markdown(metadata_list, metadata_path=None):
 
     Args:
         metadata_list (list): List of metadata dictionaries
-        output_name (str): Base output name
         metadata_path (str): Full path to metadata file (optional)
 
     """
@@ -348,7 +430,7 @@ def write_metadata_markdown(metadata_list, metadata_path=None):
 
     # Create directory if it does not exist yet
     metadata_dir = os.path.dirname(metadata_path)
-    if metadata_dir and not pathlib.Path(metadata_dir).exists:
+    if metadata_dir and not pathlib.Path(metadata_dir).exists():
         try:
             pathlib.Path(metadata_dir).mkdir(parents=True)
             grass.message(_(f"Created directory: {metadata_dir}"))
@@ -356,11 +438,13 @@ def write_metadata_markdown(metadata_list, metadata_path=None):
             grass.warning(_(f"Could not create directory {metadata_dir}: {e}"))
             return
 
+    mapset = grass.gisenv()["MAPSET"]
+
     # Create markdown file
     try:
         with pathlib.Path(metadata_path).open("w", encoding="utf-8") as f:
             # Header
-            f.write("# Metadaten der heruntergeladenen DOPs\n\n")
+            f.write(f"# Metadaten der DOPs im Mapset {mapset}\n\n")
 
             if metadata_list:
                 f.write(
@@ -389,8 +473,6 @@ def write_metadata_markdown(metadata_list, metadata_path=None):
                     "bezogen:\n\n",
                 )
 
-                # for dop in fs_meta["dop_rasters"]:
-                #     f.write(f"- `{dop}`\n")
                 f.writelines(f"- `{dop}`\n" for dop in fs_meta["dop_rasters"])
 
                 f.write(f"\n**Anzahl:** {fs_meta['count']}\n\n")
@@ -436,6 +518,7 @@ def main():
     for fs in set(federal_states):
         grass.message(_(f"Importing DOPs for {fs}..."))
         fs_dop_list = []
+        downloaded_files = []
         # check if local data for federal state given
         imported_local_data = False
         if fs in local_fs_list:
@@ -454,6 +537,13 @@ def main():
                     f"{output}_{fs}_blue",
                     f"{output}_{fs}_nir",
                 ]
+                local_fs_dir = os.path.join(local_data_dir, fs)
+                if pathlib.Path(local_fs_dir).exists():
+                    for files in os.walk(local_fs_dir):
+                        downloaded_files.extend(file for file in files if file.lower().endswith(
+                                (".tif", ".tiff", ".jp2", ".jpeg"),
+                            ))
+
         elif fs in NO_OPEN_DATA:
             grass.fatal(
                 _(
@@ -508,7 +598,31 @@ def main():
                     params["hist_year"] = hist_year
                 if grass.find_program(worker_addon, "--help"):
                     params["nprocs"] = nprocs
+
+                # Collect file names after download and before addon is run
+                # Snapshot of already existing files
+                files_before = set()
+                if pathlib.Path(download_dir).exists():
+                    for files in os.walk(download_dir):
+                        for file in files:
+                            if file.lower().endswith(
+                                (".tif", ".tiff", ".jp2", ".jpeg"),
+                            ):
+                                files_before.add(file)
+
+                # Run addon
                 grass.run_command(addon, **params)
+
+                # Collect files after download
+                files_after = set()
+                if pathlib.Path(download_dir).exists():
+                    for files in os.walk(download_dir):
+                        for file in files:
+                            if file.lower().endswith((".tif", ".tiff", ".jp2", ".jpeg")):
+                                files_after.add(file)
+
+                downloaded_files = sorted(list(files_after - files_before))
+
             all_dops["red"].append(f"{out_fs}_red")
             all_dops["green"].append(f"{out_fs}_green")
             all_dops["blue"].append(f"{out_fs}_blue")
@@ -523,7 +637,13 @@ def main():
 
         # Collect metadata for this federal state
         license_info, base_url = get_license_and_url_from_addon(fs)
-        fs_metadata = collect_metadata(fs, fs_dop_list, license_info, base_url)
+        fs_metadata = collect_metadata(
+            fs,
+            fs_dop_list,
+            license_info,
+            base_url,
+            downloaded_files,
+        )
         metadata_list.append(fs_metadata)
 
     create_vrt(all_dops["red"], f"{output}_red")
@@ -543,7 +663,7 @@ def main():
     )
 
     # Write metadata file
-    write_metadata_markdown(metadata_list, output, metadata_path)
+    write_metadata_markdown(metadata_list, metadata_path)
 
     grass.message(_(f"DOP group <{output}> is created."))
 
