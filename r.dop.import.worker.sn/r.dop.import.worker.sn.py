@@ -157,9 +157,9 @@ def main():
     keep_data = flags["k"]
 
     # check number of nprocs used and set to 1, write original value in variable
-    gisenv = grass.parse_command("g.gisenv", get="")
+    gisenv = grass.gisenv()
     if "NPROCS" in gisenv:
-        original_nprocs = gisenv["NPROCS"]
+        original_nprocs = int(gisenv["NPROCS"])
     grass.run_command("g.gisenv", set="NPROCS=1")
 
     # output resolution
