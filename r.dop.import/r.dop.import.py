@@ -109,6 +109,7 @@ import os
 import sys
 import re
 import pathlib
+import traceback
 from datetime import datetime
 from html.parser import HTMLParser
 
@@ -189,55 +190,116 @@ def import_local_data(aoi, out, local_data_dir, fs, all_dops, native_res_flag):
     return imported_local_data
 
 
-# def get_original_dop_filenames(fs, download_dir):
-#     """Get original DOP filenames from download directory
-
-#     Args:
-#         fs (str): Federal state abbreviation
-#         download_dir (str): Download directory path
-
-#     Returns:
-#         list: List of original DOP filenames
-
-#     """
-
-#     original_files = []
-
-#     if not download_dir or not pathlib.Path(download_dir).exists():
-#         return original_files
-
-#     fs_dir = os.path.join(download_dir, fs)
-#     if pathlib.Path(fs_dir).exists():
-#         for root, dirs, files in os.walk(fs_dir):
-#             original_files.extend(
-#                 file
-#                 for file in files
-#                 if file.lower().endswith((".tif", ".tiff", ".jp2", "jpeg"))
-#             )
-
-#     return sorted(original_files)
-
-
-def get_downloaded_dop_files(download_dir):
-    """Get list of downloaded DOP files immediately after download
+def get_dop_urls_from_tindex(fs):
+    """Extract DOP download URLs from tile index vector
 
     Args:
-        download_dir (str): Download directory path
+        fs (str): Federal state abbreviation
 
     Returns:
-        list: List of downloaded DOP filenames
+        list: List of download URLs
 
     """
 
-    dop_files = []
+    dop_urls = []
 
-    if not download_dir or not pathlib.Path(download_dir).exists():
-        return dop_files
+    # Search for TINDEX in all mapsets
+    tindex_found = None
+    mapsets = grass.read_command("g.mapsets", flags="p").strip().split()
 
-    for files in os.walk(download_dir):
-        dop_files.extend(file for file in files if file.lower().endswith((".tif", "tiff", "jp2", "jpeg")))
+    for mapset in mapsets:
+        vectors = grass.list_grouped("vector").get(mapset, [])
+        matching = [v for v in vectors if "tindex" in v.lower()]
+        if matching:
+            tindex_found = f"{matching[0]}@{mapset}"
+            grass.debug(f"Found TINDEX: {tindex_found}")
+            break
 
-    return sorted(list(set(dop_files)))
+    if not tindex_found:
+        grass.debug(f"No TINDEX found for {fs}")
+        return dop_urls
+
+    # Read attributes of TINDEX
+    try:
+        columns_info = grass.vector_colums(tindex_found)
+
+        if "location" not in columns_info:
+            grass.debug(
+                f"'location' column not found in TINDEX {tindex_found}",
+            )
+            grass.debug(f"Available columns: {list(columns_info.keys())}")
+            return dop_urls
+
+        grass.debug("Using 'location' column from TINDEX")
+
+        # Read URLs from table
+        result = grass.read_command(
+            "v.db.select",
+            map=tindex_found,
+            columns="location",
+            flags="c",
+        ).strip()
+
+        if result:
+            for line in result.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+
+                # Parse URLs from location attribute
+                urls_in_line = []
+
+                if "," in line:
+                    parts = [p.strip() for p in line.split(",")]
+                else:
+                    parts = [line]
+
+                for part in parts:
+                    https_urls = re.findall(r"https://[^\s,]+", part)
+                    urls_in_line.extend(https_urls)
+
+            dop_urls.extend(urls_in_line)
+
+        seen = set()
+        dop_urls = [
+            url for url in dop_urls if not (url in seen or seen.add(url))
+        ]
+
+        grass.debug(f"Extracted {len(dop_urls)} URLs from TINDEX")
+
+    except Exception as e:
+        grass.debug(f"Error reading TINDEX {tindex_found}: {e}")
+
+        grass.debug(traceback.format_exc())
+
+    return dop_urls
+
+
+def extract_dop_info_from_url(url):
+    """Extract DOP filename from download URL
+
+    Args:
+        url (str): Download URL
+
+    Returns:
+        str: DOP filename
+
+    """
+
+    url_clean = url.split("?")[0]
+
+    filename = os.path.basename(url_clean)
+
+    if ".zip" in url_clean:
+        match = re.search(
+            r"([^/]+\.(?:tif|tiff|jp2))(?:/|\.zip|$)",
+            url_clean,
+            re.IGNORECASE,
+        )
+        if match:
+            filename = match.group(1)
+
+    return filename.replace("/vsizip/", "").replace("vsicurl/", "")
 
 
 def collect_metadata(
@@ -245,7 +307,8 @@ def collect_metadata(
     dop_list,
     license_info=None,
     base_url=None,
-    dop_files=None,
+    dop_names=None,
+    dop_urls=None,
 ):
     """Collect metadata for imported DOPs
 
@@ -254,15 +317,18 @@ def collect_metadata(
         dop_list (list): List of imported DOP raster names
         license_info (str): License information (optional)
         base_url (str): Base URL of the data source (optional)
-        dop_files (list): List of original downloaded DOP files (optional)
+        dop_names (list): List of original downloaded DOP names/files (optional)
+        dop_urls (list): List of download URLs (optional)
 
     Returns:
         dict: Metadata dictionary for this federal state
 
     """
 
-    if dop_files:
-        original_files = dop_files
+    if dop_names and len(dop_names) > 0:
+        original_files = dop_names
+    elif dop_urls and len(dop_urls) > 0:
+        original_files = [extract_dop_info_from_url(url) for url in dop_urls]
     else:
         unique_dops = set()
         for dop in dop_list:
@@ -275,8 +341,9 @@ def collect_metadata(
         "download_date": datetime.now().strftime("%d.%m.%Y"),
         "license": license_info,
         "base_url": base_url,
-        "dop_rasters": original_files,
-        "count": len(dop_list),
+        "dop_rasters": sorted(list(set(original_files))),
+        "dop_urls": dop_urls or [],
+        "count": len(original_files),
     }
 
 
@@ -473,6 +540,27 @@ def write_metadata_markdown(metadata_list, metadata_path=None):
                     "bezogen:\n\n",
                 )
 
+                # Show file name with link if URLs are found
+                if fs_meta.get("dop_urls") and len(fs_meta["dop_urls"]) > 0:
+                    for url in fs_meta["dop_urls"]:
+                        filename = extract_dop_info_from_url(url)
+                        f.write(f"- [{filename}]({url})\n")
+                    f.write(f"\n**Anzahl:** {fs_meta['count']}\n\n")
+
+                else:
+                    for dop in fs_meta["dop_rasters"]:
+                        if "DOP-Kacheln" in dop or "via WMS" in dop:
+                            f.write(f"{dop}\n\n")
+                        else:
+                            f.write(f"- `{dop}`\n")
+
+                    if not any(
+                        "DOP-Kacheln" in dop for dop in fs_meta["dop_rasters"]
+                    ):
+                        f.write(f"\n**Anzahl:** {fs_meta['count']}\n\n")
+                    else:
+                        f.write("\n")
+
                 f.writelines(f"- `{dop}`\n" for dop in fs_meta["dop_rasters"])
 
                 f.write(f"\n**Anzahl:** {fs_meta['count']}\n\n")
@@ -518,7 +606,9 @@ def main():
     for fs in set(federal_states):
         grass.message(_(f"Importing DOPs for {fs}..."))
         fs_dop_list = []
-        downloaded_files = []
+        dop_names = []
+        dop_urls = []
+
         # check if local data for federal state given
         imported_local_data = False
         if fs in local_fs_list:
@@ -540,9 +630,13 @@ def main():
                 local_fs_dir = os.path.join(local_data_dir, fs)
                 if pathlib.Path(local_fs_dir).exists():
                     for files in os.walk(local_fs_dir):
-                        downloaded_files.extend(file for file in files if file.lower().endswith(
-                                (".tif", ".tiff", ".jp2", ".jpeg"),
-                            ))
+                        dop_names.extend(
+                            file
+                            for file in files
+                            if file.lower().endswith(
+                                ".tif", ".tiff", ".jp2", ".jpeg",
+                            )
+                        )
 
         elif fs in NO_OPEN_DATA:
             grass.fatal(
@@ -599,29 +693,49 @@ def main():
                 if grass.find_program(worker_addon, "--help"):
                     params["nprocs"] = nprocs
 
-                # Collect file names after download and before addon is run
-                # Snapshot of already existing files
-                files_before = set()
-                if pathlib.Path(download_dir).exists():
-                    for files in os.walk(download_dir):
-                        for file in files:
-                            if file.lower().endswith(
-                                (".tif", ".tiff", ".jp2", ".jpeg"),
-                            ):
-                                files_before.add(file)
-
                 # Run addon
                 grass.run_command(addon, **params)
 
-                # Collect files after download
-                files_after = set()
-                if pathlib.Path(download_dir).exists():
-                    for files in os.walk(download_dir):
-                        for file in files:
-                            if file.lower().endswith((".tif", ".tiff", ".jp2", ".jpeg")):
-                                files_after.add(file)
+                dop_urls = get_dop_urls_from_tindex(fs)
 
-                downloaded_files = sorted(list(files_after - files_before))
+                if not dop_urls and (
+                    keep_data
+                    and download_dir
+                    and pathlib.Path(download_dir).exists()
+                ):
+                    for files in os.walk(download_dir):
+                        dop_names.extend(
+                            file
+                            for file in files
+                            if file.lower().endswith(
+                                ".tif", ".tiff", ".jp2", ".jpeg",
+                            )
+                        )
+
+                if not dop_urls and not dop_names:
+                    imported_rasters = grass.list_grouped("raster").get(
+                        grass.gisenv()["MAPSET"],
+                        [],
+                    )
+                    matching_rasters = [
+                        r for r in imported_rasters if r.startswith(out_fs)
+                    ]
+                    num_dop_tiles = (
+                        len(matching_rasters) // 4
+                        if len(matching_rasters) >= 4
+                        else 0
+                    )
+
+                    if num_dop_tiles > 0:
+                        if fs in ["BW"]:
+                            dop_names = [
+                                (
+                                    f"{num_dop_tiles} DOP-Kacheln "
+                                    "(via WMS heruntergeladen)"
+                                ),
+                            ]
+                        else:
+                            dop_names = [f"{num_dop_tiles} DOP-Kacheln"]
 
             all_dops["red"].append(f"{out_fs}_red")
             all_dops["green"].append(f"{out_fs}_green")
@@ -642,7 +756,8 @@ def main():
             fs_dop_list,
             license_info,
             base_url,
-            downloaded_files,
+            dop_names,
+            dop_urls,
         )
         metadata_list.append(fs_metadata)
 
