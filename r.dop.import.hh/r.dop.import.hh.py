@@ -47,6 +47,13 @@
 # % answer: -2
 # %end
 
+# %option
+# % key: metadata_file
+# % type: string
+# % required: no
+# % description: Temporary file for metadata URLs
+# %end
+
 # %option G_OPT_MEMORYMB
 # %end
 
@@ -299,6 +306,26 @@ def main():
             "No rasters were successfully imported!"
             "Check if AOI overlaps with available DOP tiles.",
         )
+
+    metadata_file = options.get("metadata_file")
+
+    if metadata_file:
+        try:
+            all_urls = []
+
+            for tile in url_tiles:
+                urls = tile[1]
+                if urls:
+                    all_urls.extend(urls)
+
+            with open(metadata_file, "w", encoding="utf-8") as f:
+                for url in sorted(set(all_urls)):
+                    f.write(f"{url}\n")
+
+            grass.debug(f"Wrote {len(all_urls)} URLs to tempfile")
+
+        except Exception as e:
+            grass.warning(f"Cound not write tempfile metadata: {e}")
 
     # create one vrt per band of all imported DOPs
     raster_out = []
