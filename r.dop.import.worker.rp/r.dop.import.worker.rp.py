@@ -223,6 +223,7 @@ def main():
                 f"{raster_name_band}_tmp1",
                 raster_name_band,
                 resolution_to_import,
+                interp_method="bicubic",
                 type="CELL",
             )
             rm_rast.append(f"{raster_name_band}_tmp1")
