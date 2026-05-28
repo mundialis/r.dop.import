@@ -74,6 +74,7 @@
 import atexit
 import os
 import sys
+import pathlib
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
@@ -308,24 +309,36 @@ def main():
         )
 
     metadata_file = options.get("metadata_file")
+    used_urls = []
+    for proc in queue.get_finished_modules():
+        stderr_output = proc.outputs["stderr"].value.strip()
+        # import pdb; pdb.set_trace
+        for line in stderr_output.split("\n"):
+            if line.startswith("METADATA_DOP_URL:"):
+                url = line.replace("METADATA_DOP_URL:", "").strip()
+                used_urls.append(url)
+    used_urls = list(dict.fromkeys(used_urls))
+    grass.debug(f"Collected {len(used_urls)} URLs from worker stderr")
 
-    if metadata_file:
+    if metadata_file and used_urls:
         try:
-            all_urls = []
+            with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
+                written_urls = set()
+                for tile in url_tiles:
+                    tile_urls_for_tile = tile[1]
+                    matched = [
+                        u
+                        for u in tile_urls_for_tile
+                        if u in used_urls and u not in written_urls
+                    ]
+                    if matched:
+                        f.write(f"{','.join(matched)}\n")
+                        written_urls.update(matched)
 
-            for tile in url_tiles:
-                urls = tile[1]
-                if urls:
-                    all_urls.extend(urls)
-
-            with open(metadata_file, "w", encoding="utf-8") as f:
-                for url in sorted(set(all_urls)):
-                    f.write(f"{url}\n")
-
-            grass.debug(f"Wrote {len(all_urls)} URLs to tempfile")
+            grass.debug("Wrote tile URL groups to tempfile")
 
         except Exception as e:
-            grass.warning(f"Cound not write tempfile metadata: {e}")
+            grass.warning(f"Could not write tempfile metadata: {e}")
 
     # create one vrt per band of all imported DOPs
     raster_out = []
@@ -343,7 +356,7 @@ def main():
     grass.message(
         _(
             f"Successfully generated {len(raster_out)} raster maps:"
-            "{raster_out}",
+            f"{raster_out}",
         ),
     )
 

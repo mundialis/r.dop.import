@@ -561,8 +561,6 @@ def write_metadata_markdown(metadata_list, metadata_path=None):
                     else:
                         f.write("\n")
 
-                f.write(f"\n**Anzahl:** {fs_meta['count']}\n\n")
-
             # Additional info
             f.write("---\n\n")
             f.write(f"*Erstellt am {datetime.now().strftime('%d.%m.%Y')}\n")
@@ -627,12 +625,12 @@ def main():
                 ]
                 local_fs_dir = os.path.join(local_data_dir, fs)
                 if pathlib.Path(local_fs_dir).exists():
-                    for root, dirs, files in os.walk(local_fs_dir):
+                    for _root, _dirs, files in os.walk(local_fs_dir):
                         dop_names.extend(
                             file
                             for file in files
                             if file.lower().endswith(
-                                (".tif", ".tiff", ".jp2", ".jpeg")
+                                (".tif", ".tiff", ".jp2", ".jpeg"),
                             )
                         )
 
@@ -698,24 +696,27 @@ def main():
                 grass.run_command(addon, **params)
 
                 # Read URLs from tempfile
-                if os.path.exists(metadata_tmpfile):
+                if pathlib.Path(metadata_tmpfile).exists():
                     try:
-                        with open(
-                            metadata_tmpfile, "r", encoding="utf-8"
+                        tile_url_groups = []
+                        with pathlib.Path(metadata_tmpfile).open(
+                            "r",
+                            encoding="utf-8",
                         ) as f:
-                            dop_urls = [
-                                line.strip() for line in f if line.strip()
-                            ]
+                            for line in f:
+                                line = line.strip()
+                                if line:
+                                    tile_url_groups.append(line.split(","))
 
+                        dop_urls = [group[0] for group in tile_url_groups]
                         grass.debug(
-                            f"Loaded {len(dop_urls)} URLs from tempfile"
+                            f"Loaded {len(tile_url_groups)} tile groups "
+                            f"({sum(len(g) for g in tile_url_groups)} total URLs) from tempfile",
                         )
-
-                        os.remove(metadata_tmpfile)
-
+                        pathlib.Path(metadata_tmpfile).unlink()
                     except Exception as e:
                         grass.warning(
-                            f"Could not read tempfile {metadata_tmpfile} : {e}"
+                            f"Could not read tempfile {metadata_tmpfile} : {e}",
                         )
                         dop_urls = []
 
@@ -727,12 +728,12 @@ def main():
                     and download_dir
                     and pathlib.Path(download_dir).exists()
                 ):
-                    for root, dirs, files in os.walk(download_dir):
+                    for _root, _dirs, files in os.walk(download_dir):
                         dop_names.extend(
                             file
                             for file in files
                             if file.lower().endswith(
-                                (".tif", ".tiff", ".jp2", ".jpeg")
+                                (".tif", ".tiff", ".jp2", ".jpeg"),
                             )
                         )
 
@@ -740,24 +741,24 @@ def main():
                     all_rasters = []
 
                     for mapset, rasters in grass.list_grouped(
-                        "raster"
+                        "raster",
                     ).items():
                         matching = [r for r in rasters if r.startswith(out_fs)]
                         all_rasters.extend(matching)
                         if matching:
                             grass.debug(
-                                f"Found {len(matching)} rasters in mapset {mapset}"
+                                f"Found {len(matching)} rasters in mapset {mapset}",
                             )
 
                     num_dop_tiles = (
                         len(all_rasters) // 4 if len(all_rasters) >= 4 else 0
                     )
                     grass.debug(
-                        f"Total rasters: {len(all_rasters)}, DOP tiles: {num_dop_tiles}"
+                        f"Total rasters: {len(all_rasters)}, DOP tiles: {num_dop_tiles}",
                     )
 
                     if num_dop_tiles > 0:
-                        if fs in ["BW"]:
+                        if fs in ["BW", "BY", "HE", "TH"]:
                             dop_names = [
                                 (
                                     f"{num_dop_tiles} DOP-Kachel(n) "
