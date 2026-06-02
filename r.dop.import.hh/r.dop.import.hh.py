@@ -260,8 +260,9 @@ def main():
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_hh.stdout = grass.PIPE
-            r_dop_import_worker_hh.stderr = grass.PIPE
+            # underscore at the end is important for parsing!
+            r_dop_import_worker_hh.stdout_ = grass.PIPE
+            r_dop_import_worker_hh.stderr_ = grass.PIPE
             queue.put(r_dop_import_worker_hh)
         queue.wait()
     except Exception:

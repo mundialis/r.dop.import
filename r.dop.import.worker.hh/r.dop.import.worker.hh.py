@@ -259,7 +259,7 @@ def main():
     for i, url in enumerate(tile_urls):
         part_name = f"{raster_name}_part{i}"
         if part_name in imported_rasters:
-            grass.warning(f"METADATA_DOP_URL:{url}\n")
+            sys.stderr.write(f"METADATA_DOP_URL:{url}\n")
 
     # adjust resolution if required
     if resolution_to_import:

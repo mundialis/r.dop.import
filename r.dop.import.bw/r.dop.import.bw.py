@@ -47,6 +47,13 @@
 # % answer: -2
 # %end
 
+# %option
+# % key: metadata_file
+# % type: string
+# % required: no
+# % description: Temporary file for metadata URLs
+# %end
+
 # %option G_OPT_MEMORYMB
 # %end
 
@@ -67,6 +74,7 @@
 import atexit
 import os
 import sys
+import pathlib
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
@@ -279,6 +287,15 @@ def main():
                 grass.fatal(
                     _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"),
                 )
+                
+    metadata_file = options.get("metadata_file")
+    if metadata_file:
+        try:
+            with open(metadata_file, "w", encoding="utf-8") as f:
+                f.write(f"WMS_RGB:{WMS_RGB}|LAYER:{LAYER_RGB}\n")
+                f.write(f"WMS_CIR:{WMS_CIR}|LAYER:{LAYER_CIR}\n")
+        except Exception as e:
+            grass.warning(f"Could not write tempfile metadate: {e}")
 
     # create one vrt per band of all imported DOPs
     raster_out = []

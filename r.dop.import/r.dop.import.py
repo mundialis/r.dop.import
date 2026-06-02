@@ -549,7 +549,21 @@ def write_metadata_markdown(metadata_list, metadata_path=None):
 
                 else:
                     for dop in fs_meta["dop_rasters"]:
-                        if "DOP-Kacheln" in dop or "via WMS" in dop:
+                        if dop.startswith("WMS"):
+                            parts = dict(
+                                item.split(":", 1)
+                                for item in dop.split("|")
+                                if ":" in item
+                            )
+                            wms_type = next(
+                                (k.replace("WMS", "") for k in parts if k.startswith("WMS")), "WMS",
+                            )
+                            wms_url = next(
+                                (v for k, v in parts.items() if k.startswith("WMS")), "",
+                            )
+                            layer = parts.get("LAYER", "")
+                            f.write(f"- WMS {wms_type}: [{layer}]({wms_url})\n")
+                        elif "DOP-Kacheln" in dop or "via WMS" in dop:
                             f.write(f"{dop}\n\n")
                         else:
                             f.write(f"- `{dop}`\n")
