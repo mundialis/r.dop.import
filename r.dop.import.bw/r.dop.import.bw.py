@@ -287,11 +287,11 @@ def main():
                 grass.fatal(
                     _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"),
                 )
-                
+
     metadata_file = options.get("metadata_file")
     if metadata_file:
         try:
-            with open(metadata_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
                 f.write(f"WMS_RGB:{WMS_RGB}|LAYER:{LAYER_RGB}\n")
                 f.write(f"WMS_CIR:{WMS_CIR}|LAYER:{LAYER_CIR}\n")
         except Exception as e:

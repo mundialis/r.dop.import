@@ -74,6 +74,7 @@
 import atexit
 import os
 import sys
+import pathlib
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
@@ -286,7 +287,7 @@ def main():
     metadata_file = options.get("metadata_file")
     if metadata_file:
         try:
-            with open(metadata_file, "w", encoding="utf-8") as f:
+            with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
                 f.write(f"WMS_RGB:{WMS}|LAYER:{LAYER_RGB}\n")
                 f.write(f"WMS_CIR:{WMS}|LAYER:{LAYER_CIR}\n")
         except Exception as e:
