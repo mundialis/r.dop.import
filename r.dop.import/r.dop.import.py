@@ -118,12 +118,10 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
 )
 from grass_gis_helpers.open_geodata_germany.federal_state import (
     get_federal_states,
-    FS_ABBREVIATION,
 )
 from grass_gis_helpers.open_geodata_germany.metadata import (
     collect_metadata,
     get_license_and_url_from_addon,
-    get_urls_from_tindex,
     write_metadata_markdown,
 )
 from grass_gis_helpers.raster import create_vrt
@@ -136,6 +134,7 @@ if path is None:
 sys.path.append(path)
 try:
     from r_dop_import_lib import OPEN_DATA_AVAILABILITY
+    from r_dop_import_metadata_lib import get_download_urls_and_names
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
 
@@ -249,10 +248,7 @@ def main():
             )
             if imported_local_data:
                 fs_dop_list = [
-                    f"{output}_{fs}_red",
-                    f"{output}_{fs}_green",
-                    f"{output}_{fs}_blue",
-                    f"{output}_{fs}_nir",
+                    f"{output}{fs}_{band}" for band in DOP_BAND_SUFFIXES
                 ]
                 local_fs_dir = os.path.join(local_data_dir, fs)
                 if pathlib.Path(local_fs_dir).exists():
@@ -320,85 +316,22 @@ def main():
                 if grass.find_program(worker_addon, "--help"):
                     params["nprocs"] = nprocs
 
-                metadata_tmpfile = grass.tempfile()
-                params["metadata_file"] = metadata_tmpfile
+                metadata_tmpfile = None
+                if metadata_path:
+                    metadata_tmpfile = grass.tempfile()
+                    params["metadata_file"] = metadata_tmpfile
 
                 # Run addon
                 grass.run_command(addon, **params)
 
-                # Read URLs from tempfile
-                if pathlib.Path(metadata_tmpfile).exists():
-                    try:
-                        tile_url_groups = []
-                        with pathlib.Path(metadata_tmpfile).open(
-                            "r",
-                            encoding="utf-8",
-                        ) as f:
-                            for line in f:
-                                line = line.strip()
-                                if line:
-                                    tile_url_groups.append(line.split(","))
-
-                        dop_urls = [group[0] for group in tile_url_groups]
-                        grass.debug(
-                            f"Loaded {len(tile_url_groups)} tile groups "
-                            f"({sum(len(g) for g in tile_url_groups)} "
-                            "total URLs) from tempfile",
-                        )
-                        pathlib.Path(metadata_tmpfile).unlink()
-                    except Exception as e:
-                        grass.warning(
-                            f"Could not read tempfile {metadata_tmpfile} : {e}",
-                        )
-                        dop_urls = []
-
-                if not dop_urls:
-                    dop_urls = get_urls_from_tindex(data_type="DOP")
-
-                if not dop_urls and (
-                    keep_data
-                    and download_dir
-                    and pathlib.Path(download_dir).exists()
-                ):
-                    for _root, _dirs, files in os.walk(download_dir):
-                        dop_names.extend(
-                            file
-                            for file in files
-                            if file.lower().endswith(
-                                (".tif", ".tiff", ".jp2", ".jpeg"),
-                            )
-                        )
-
-                if not dop_urls and not dop_names:
-                    all_rasters = []
-
-                    for mapset, rasters in grass.list_grouped(
-                        "raster",
-                    ).items():
-                        matching = [r for r in rasters if r.startswith(out_fs)]
-                        all_rasters.extend(matching)
-                        if matching:
-                            grass.debug(
-                                f"Found {len(matching)} rasters in mapset {mapset}",
-                            )
-
-                    num_dop_tiles = (
-                        len(all_rasters) // 4 if len(all_rasters) >= 4 else 0
+                if metadata_tmpfile:
+                    dop_urls, dop_names = get_download_urls_and_names(
+                        metadata_tmpfile=metadata_tmpfile,
+                        keep_data=keep_data,
+                        download_dir=download_dir,
+                        out_fs=out_fs,
+                        fs=fs,
                     )
-                    grass.debug(
-                        f"Total rasters: {len(all_rasters)}, DOP tiles: {num_dop_tiles}",
-                    )
-
-                    if num_dop_tiles > 0:
-                        if fs in ["BW", "BY", "HE", "TH"]:
-                            dop_names = [
-                                (
-                                    f"{num_dop_tiles} DOP-Kachel(n) "
-                                    "(via WMS heruntergeladen)"
-                                ),
-                            ]
-                        else:
-                            dop_names = [f"{num_dop_tiles} DOP-Kachel(n)"]
 
             for band in ("red", "green", "blue", "nir"):
                 all_dops[band].append(f"{out_fs}_{band}")
@@ -440,7 +373,6 @@ def main():
     write_metadata_markdown(
         metadata_list=metadata_list,
         metadata_path=metadata_path,
-        fs_abbreviation_map=FS_ABBREVIATION,
         data_label="DOP",
     )
 

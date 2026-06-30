@@ -137,6 +137,7 @@ def main():
     nprocs = setup_parallel_processing(nprocs)
     output = options["output"]
     fs = "HH"
+    metadata_file = options.get("metadata_file")
 
     # set memory to input if possible
     options["memory"] = test_memory(options["memory"])
@@ -309,11 +310,13 @@ def main():
             "Check if AOI overlaps with available DOP tiles.",
         )
 
-    metadata_file = options.get("metadata_file")
     used_urls = []
+
+    # Filter output from worker as for HH not necessarily all "tile_urls"
+    # are actually imported
+    # Check which are actually imported and thus should be written to metadata
     for proc in queue.get_finished_modules():
         stderr_output = proc.outputs["stderr"].value.strip()
-        # import pdb; pdb.set_trace
         for line in stderr_output.split("\n"):
             if line.startswith("METADATA_DOP_URL:"):
                 url = line.replace("METADATA_DOP_URL:", "").strip()
@@ -340,6 +343,19 @@ def main():
 
         except Exception as e:
             grass.warning(f"Could not write tempfile metadata: {e}")
+
+    # if metadata_file and used_urls:
+    #     try:
+    #         with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
+    #             written_urls = set()
+    #             for tile in url_tiles:
+    #                 tile_urls = [u for u in tile[1] if u in used_urls and u not in written_urls]
+    #             if tile_urls:
+    #                     f.write(f"{','.join(tile_urls)}\n")
+    #                     written_urls.update(tile_urls)
+    #         grass.debug("Wrote tile URL groups to tempfile")
+    #     except Exception as e:
+    #         grass.warning(f"Could not write tempfile metadata: {e}")
 
     # create one vrt per band of all imported DOPs
     raster_out = []

@@ -80,8 +80,9 @@
 import atexit
 import os
 import sys
-import requests
 import pathlib
+import requests
+
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue

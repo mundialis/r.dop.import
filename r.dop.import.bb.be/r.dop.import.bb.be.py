@@ -134,6 +134,7 @@ def main():
     nprocs = setup_parallel_processing(nprocs)
     output = options["output"]
     fs = "BB_BE"
+    metadata_file = options["metadata_file"]
 
     # set memory to input if possible
     options["memory"] = test_memory(options["memory"])
@@ -267,23 +268,26 @@ def main():
                     _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"),
                 )
 
-    metadata_file = options.get("metadata_file")
     if metadata_file:
-        try:
-            all_urls = []
+        all_urls = [tile[1][0] for tile in url_tiles if tile[1][0]]
+        with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
+            f.writelines(f"{url}\n" for url in sorted(set(all_urls)))
+        grass.debug(f"Wrote {len(all_urls)} URLs to tempfile")
+        # try:
+        #     all_urls = []
 
-            for tile in url_tiles:
-                urls = tile[1]
-                if urls:
-                    all_urls.extend(urls)
+        #     for tile in url_tiles:
+        #         urls = tile[1]
+        #         if urls:
+        #             all_urls.extend(urls)
 
-            with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
-                f.writelines(f"{url}\n" for url in sorted(set(all_urls)))
+        #     with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
+        #         f.writelines(f"{url}\n" for url in sorted(set(all_urls)))
 
-            grass.debug(f"Wrote {len(all_urls)} URLs to tempfile")
+        #     grass.debug(f"Wrote {len(all_urls)} URLs to tempfile")
 
-        except Exception as e:
-            grass.warning(f"Cound not write tempfile metadata: {e}")
+        # except Exception as e:
+        #     grass.warning(f"Cound not write tempfile metadata: {e}")
 
     # create one vrt per band of all imported DOPs
     raster_out = []
