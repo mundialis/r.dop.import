@@ -273,21 +273,6 @@ def main():
         with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
             f.writelines(f"{url}\n" for url in sorted(set(all_urls)))
         grass.debug(f"Wrote {len(all_urls)} URLs to tempfile")
-        # try:
-        #     all_urls = []
-
-        #     for tile in url_tiles:
-        #         urls = tile[1]
-        #         if urls:
-        #             all_urls.extend(urls)
-
-        #     with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
-        #         f.writelines(f"{url}\n" for url in sorted(set(all_urls)))
-
-        #     grass.debug(f"Wrote {len(all_urls)} URLs to tempfile")
-
-        # except Exception as e:
-        #     grass.warning(f"Cound not write tempfile metadata: {e}")
 
     # create one vrt per band of all imported DOPs
     raster_out = []

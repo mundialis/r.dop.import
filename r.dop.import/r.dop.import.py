@@ -248,7 +248,7 @@ def main():
             )
             if imported_local_data:
                 fs_dop_list = [
-                    f"{output}{fs}_{band}" for band in DOP_BAND_SUFFIXES
+                    f"{output}_{fs}{band}" for band in DOP_BAND_SUFFIXES
                 ]
                 local_fs_dir = os.path.join(local_data_dir, fs)
                 if pathlib.Path(local_fs_dir).exists():
@@ -316,6 +316,9 @@ def main():
                 if grass.find_program(worker_addon, "--help"):
                     params["nprocs"] = nprocs
 
+                # Only create a tempfile for URL/metadata exchange with the
+                # state-specific addon if a metadata file was actually
+                # requested by the user
                 metadata_tmpfile = None
                 if metadata_path:
                     metadata_tmpfile = grass.tempfile()
@@ -325,6 +328,10 @@ def main():
                 grass.run_command(addon, **params)
 
                 if metadata_tmpfile:
+                    # Reads URLs from the tempfile written by the addon, with
+                    # fallbacks to the download directory and raster count
+                    # if no URLs could be determined (see
+                    # r_dop_import_metadata_lib.py)
                     dop_urls, dop_names = get_download_urls_and_names(
                         metadata_tmpfile=metadata_tmpfile,
                         keep_data=keep_data,
@@ -339,7 +346,8 @@ def main():
                 f"{out_fs}_{band}" for band in ("red", "green", "blue", "nir")
             ]
 
-        # Collect metadata for this federal state
+        # Collect metadata for this federal state (license/source info comes
+        # from the addon's HTML documentation, file/URL info from above)
         addon_name = get_addon_name(fs)
         license_info, base_url = get_license_and_url_from_addon(addon_name)
         fs_metadata = collect_metadata(
@@ -353,6 +361,8 @@ def main():
         )
         metadata_list.append(fs_metadata)
 
+    # Build one VRT per band across all federal states, then group them into
+    # the final multi-band output
     create_vrt(all_dops["red"], f"{output}_red")
     create_vrt(all_dops["green"], f"{output}_green")
     create_vrt(all_dops["blue"], f"{output}_blue")
@@ -369,7 +379,7 @@ def main():
         overwrite=True,
     )
 
-    # Write metadata file
+    # Write metadata file if metadata_path was set
     write_metadata_markdown(
         metadata_list=metadata_list,
         metadata_path=metadata_path,

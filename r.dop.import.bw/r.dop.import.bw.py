@@ -293,12 +293,6 @@ def main():
         with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
             f.write(f"WMS_RGB:{WMS_RGB}|LAYER:{LAYER_RGB}\n")
             f.write(f"WMS_CIR:{WMS_CIR}|LAYER:{LAYER_CIR}\n")
-        # try:
-        #     with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
-        #         f.write(f"WMS_RGB:{WMS_RGB}|LAYER:{LAYER_RGB}\n")
-        #         f.write(f"WMS_CIR:{WMS_CIR}|LAYER:{LAYER_CIR}\n")
-        # except Exception as e:
-        #     grass.warning(f"Could not write tempfile metadate: {e}")
 
     # create one vrt per band of all imported DOPs
     raster_out = []

@@ -34,12 +34,6 @@ def get_download_urls_and_names(
         download_dir (str): Path to download directory
         out_fs (str): Prefix of output raster names in current mapset
         fs (str): Federal state abbreviation
-        num_bands (int): Number of bands per DOP tile, used for tile count
-            fallback
-        wms_states (list | None): Federal states where data is downloaded via
-            WMS. Defaults to ["BW", "BY", "HE", "TH"]
-        file_extensions (tuple): File extensions to scan for in download_dir
-            fallback
 
     Returns:
         tuple[list, list]: (dop_urls, dop_names)
@@ -51,7 +45,8 @@ def get_download_urls_and_names(
     dop_urls = []
     dop_names = []
 
-    # Read URLs from tempfile
+    # Primary source: tempfile written by the state-specific addon, containing
+    # one or more comma-separated URLs per tile (one tile per line)
     if metadata_tmpfile and pathlib.Path(metadata_tmpfile).exists():
         try:
             tile_url_groups = []
@@ -77,6 +72,8 @@ def get_download_urls_and_names(
             )
             dop_urls = []
 
+    # Fallback 1: tempfile was missing/empty -> scan the download directory
+    # for locally kept files (only possible if -k flag was set)
     if not dop_urls and (
         keep_data and download_dir and pathlib.Path(download_dir).exists()
     ):
@@ -89,6 +86,9 @@ def get_download_urls_and_names(
                 )
             )
 
+    # Fallback 2: neither URLs nor local files found -> count the imported
+    # raster bands already present in the mapset to at least report a number
+    # of tiles (used e.g. for WMS-based states where no URLs/files exist)
     if not dop_urls and not dop_names:
         all_rasters = []
 
@@ -102,6 +102,7 @@ def get_download_urls_and_names(
                     f"Found {len(matching)} rasters in mapset {mapset}",
                 )
 
+        # Each DOP tile consists of 4 bands (red, green, blue, nir)
         num_dop_tiles = len(all_rasters) // 4 if len(all_rasters) >= 4 else 0
         grass.debug(
             f"Total rasters: {len(all_rasters)}, DOP tiles: {num_dop_tiles}",

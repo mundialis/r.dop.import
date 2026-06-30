@@ -344,19 +344,6 @@ def main():
         except Exception as e:
             grass.warning(f"Could not write tempfile metadata: {e}")
 
-    # if metadata_file and used_urls:
-    #     try:
-    #         with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
-    #             written_urls = set()
-    #             for tile in url_tiles:
-    #                 tile_urls = [u for u in tile[1] if u in used_urls and u not in written_urls]
-    #             if tile_urls:
-    #                     f.write(f"{','.join(tile_urls)}\n")
-    #                     written_urls.update(tile_urls)
-    #         grass.debug("Wrote tile URL groups to tempfile")
-    #     except Exception as e:
-    #         grass.warning(f"Could not write tempfile metadata: {e}")
-
     # create one vrt per band of all imported DOPs
     raster_out = []
     for band, b_list in all_raster.items():
