@@ -47,6 +47,13 @@
 # % answer: -2
 # %end
 
+# %option
+# % key: metadata_file
+# % type: string
+# % required: no
+# % description: Temporary file for metadata URLs
+# %end
+
 # %option G_OPT_MEMORYMB
 # %end
 
@@ -67,6 +74,7 @@
 import atexit
 import os
 import sys
+import pathlib
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
@@ -127,6 +135,7 @@ def main():
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
+    metadata_file = options["metadata_file"]
     output = options["output"]
     fs = "HH"
 
@@ -252,8 +261,9 @@ def main():
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_hh.stdout = grass.PIPE
-            r_dop_import_worker_hh.stderr = grass.PIPE
+            # underscore at the end is important for parsing!
+            r_dop_import_worker_hh.stdout_ = grass.PIPE
+            r_dop_import_worker_hh.stderr_ = grass.PIPE
             queue.put(r_dop_import_worker_hh)
         queue.wait()
     except Exception:
@@ -300,6 +310,40 @@ def main():
             "Check if AOI overlaps with available DOP tiles.",
         )
 
+    used_urls = []
+
+    # Filter output from worker as for HH not necessarily all "tile_urls"
+    # are actually imported
+    # Check which are actually imported and thus should be written to metadata
+    for proc in queue.get_finished_modules():
+        stderr_output = proc.outputs["stderr"].value.strip()
+        for line in stderr_output.split("\n"):
+            if line.startswith("METADATA_DOP_URL:"):
+                url = line.replace("METADATA_DOP_URL:", "").strip()
+                used_urls.append(url)
+    used_urls = list(dict.fromkeys(used_urls))
+    grass.debug(f"Collected {len(used_urls)} URLs from worker stderr")
+
+    if metadata_file and used_urls:
+        try:
+            with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
+                written_urls = set()
+                for tile in url_tiles:
+                    tile_urls_for_tile = tile[1]
+                    matched = [
+                        u
+                        for u in tile_urls_for_tile
+                        if u in used_urls and u not in written_urls
+                    ]
+                    if matched:
+                        f.write(f"{','.join(matched)}\n")
+                        written_urls.update(matched)
+
+            grass.debug("Wrote tile URL groups to tempfile")
+
+        except Exception as e:
+            grass.warning(f"Could not write tempfile metadata: {e}")
+
     # create one vrt per band of all imported DOPs
     raster_out = []
     for band, b_list in all_raster.items():
@@ -316,7 +360,7 @@ def main():
     grass.message(
         _(
             f"Successfully generated {len(raster_out)} raster maps:"
-            "{raster_out}",
+            f"{raster_out}",
         ),
     )
 

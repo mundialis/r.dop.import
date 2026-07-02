@@ -255,6 +255,12 @@ def main():
             ),
         )
 
+    # Only get successfully imported URLS for meta data
+    for i, url in enumerate(tile_urls):
+        part_name = f"{raster_name}_part{i}"
+        if part_name in imported_rasters:
+            sys.stderr.write(f"METADATA_DOP_URL:{url}\n")
+
     # adjust resolution if required
     if resolution_to_import:
         grass.run_command("g.region", res=resolution_to_import, flags="a")

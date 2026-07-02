@@ -47,6 +47,13 @@
 # % answer: -2
 # %end
 
+# %option
+# % key: metadata_file
+# % type: string
+# % required: no
+# % description: Temporary file for metadata URLs
+# %end
+
 # %option G_OPT_MEMORYMB
 # %end
 
@@ -67,6 +74,7 @@
 import atexit
 import os
 import sys
+import pathlib
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
@@ -124,6 +132,7 @@ def main():
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
+    metadata_file = options["metadata_file"]
     output = options["output"]
     fs = "NI"
 
@@ -243,8 +252,8 @@ def main():
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_ni.stdout = grass.PIPE
-            r_dop_import_worker_ni.stderr = grass.PIPE
+            r_dop_import_worker_ni.stdout_ = grass.PIPE
+            r_dop_import_worker_ni.stderr_ = grass.PIPE
             queue.put(r_dop_import_worker_ni)
         queue.wait()
     except Exception:
@@ -257,6 +266,23 @@ def main():
                 grass.fatal(
                     _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"),
                 )
+
+    if metadata_file:
+        try:
+            all_urls = []
+
+            for tile in url_tiles:
+                urls = tile[1]
+                if urls:
+                    all_urls.extend(urls)
+
+            with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
+                f.writelines(f"{url}\n" for url in sorted(set(all_urls)))
+
+            grass.debug(f"Wrote {len(all_urls)} URLs to tempfile")
+
+        except Exception as e:
+            grass.warning(f"Cound not write tempfile metadata: {e}")
 
     # create one vrt per band of all imported DOPs
     raster_out = []

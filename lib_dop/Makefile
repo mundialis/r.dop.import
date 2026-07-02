@@ -5,7 +5,7 @@ PGM = r.dop.import
 include $(MODULE_TOPDIR)/include/Make/Other.make
 include $(MODULE_TOPDIR)/include/Make/Python.make
 
-MODULES = r_dop_import_lib __init__
+MODULES = r_dop_import_lib r_dop_import_metadata_lib __init__
 
 ETCDIR = $(ETC)/$(PGM)
 

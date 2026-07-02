@@ -47,6 +47,13 @@
 # % answer: -2
 # %end
 
+# %option
+# % key: metadata_file
+# % type: string
+# % required: no
+# % description: Temporary file for metadata URLs
+# %end
+
 # %option G_OPT_MEMORYMB
 # %end
 
@@ -67,6 +74,7 @@
 import atexit
 import os
 import sys
+import pathlib
 
 import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
@@ -121,6 +129,7 @@ def main():
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
+    metadata_file = options["metadata_file"]
     output = options["output"]
     fs = "BY"
 
@@ -261,8 +270,8 @@ def main():
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_by.stdout = grass.PIPE
-            r_dop_import_worker_by.stderr = grass.PIPE
+            r_dop_import_worker_by.stdout_ = grass.PIPE
+            r_dop_import_worker_by.stderr_ = grass.PIPE
             queue.put(r_dop_import_worker_by)
         queue.wait()
     except Exception:
@@ -275,6 +284,14 @@ def main():
                 grass.fatal(
                     _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"),
                 )
+
+    if metadata_file:
+        try:
+            with pathlib.Path(metadata_file).open("w", encoding="utf-8") as f:
+                f.write(f"WMS_RGB:{WMS}|LAYER:{LAYER_RGB}\n")
+                f.write(f"WMS_CIR:{WMS}|LAYER:{LAYER_CIR}\n")
+        except Exception as e:
+            grass.warning(f"Could not write tempfile metadate: {e}")
 
     # create one vrt per band of all imported DOPs
     raster_out = []
