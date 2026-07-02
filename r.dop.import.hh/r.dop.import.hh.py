@@ -135,9 +135,9 @@ def main():
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
+    metadata_file = options["metadata_file"]
     output = options["output"]
     fs = "HH"
-    metadata_file = options.get("metadata_file")
 
     # set memory to input if possible
     options["memory"] = test_memory(options["memory"])

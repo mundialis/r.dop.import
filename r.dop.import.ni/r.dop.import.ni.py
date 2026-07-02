@@ -132,6 +132,7 @@ def main():
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
+    metadata_file = options["metadata_file"]
     output = options["output"]
     fs = "NI"
 
@@ -251,8 +252,8 @@ def main():
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_ni.stdout = grass.PIPE
-            r_dop_import_worker_ni.stderr = grass.PIPE
+            r_dop_import_worker_ni.stdout_ = grass.PIPE
+            r_dop_import_worker_ni.stderr_ = grass.PIPE
             queue.put(r_dop_import_worker_ni)
         queue.wait()
     except Exception:
@@ -266,7 +267,6 @@ def main():
                     _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"),
                 )
 
-    metadata_file = options.get("metadata_file")
     if metadata_file:
         try:
             all_urls = []

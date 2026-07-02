@@ -132,9 +132,9 @@ def main():
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
+    metadata_file = options["metadata_file"]
     output = options["output"]
     fs = "BB_BE"
-    metadata_file = options["metadata_file"]
 
     # set memory to input if possible
     options["memory"] = test_memory(options["memory"])
@@ -253,8 +253,8 @@ def main():
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_bb_be.stdout = grass.PIPE
-            r_dop_import_worker_bb_be.stderr = grass.PIPE
+            r_dop_import_worker_bb_be.stdout_ = grass.PIPE
+            r_dop_import_worker_bb_be.stderr_ = grass.PIPE
             queue.put(r_dop_import_worker_bb_be)
         queue.wait()
     except Exception:

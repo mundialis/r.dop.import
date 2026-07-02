@@ -141,6 +141,7 @@ def main():
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
     hist_year = options["hist_year"]
+    metadata_file = options["metadata_file"]
     output = options["output"]
     fs = "NW"
 
@@ -275,8 +276,8 @@ def main():
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_nw.stdout = grass.PIPE
-            r_dop_import_worker_nw.stderr = grass.PIPE
+            r_dop_import_worker_nw.stdout_ = grass.PIPE
+            r_dop_import_worker_nw.stderr_ = grass.PIPE
             queue.put(r_dop_import_worker_nw)
         queue.wait()
     except Exception:
@@ -290,7 +291,6 @@ def main():
                     _(f"\nERROR by processing <{proc.get_bash()}>: {errmsg}"),
                 )
 
-    metadata_file = options.get("metadata_file")
     if metadata_file:
         try:
             all_urls = []

@@ -132,9 +132,9 @@ def main():
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
     nprocs = setup_parallel_processing(nprocs)
+    metadata_file = options["metadata_file"]
     output = options["output"]
     fs = "BW"
-    metadata_file = options["metadata_file"]
 
     # print warning that memory will be irgnored
     # (no memmory parameter in worker module)
@@ -274,8 +274,8 @@ def main():
                 run_=False,
             )
             # catch all GRASS output to stdout and stderr
-            r_dop_import_worker_bw.stdout = grass.PIPE
-            r_dop_import_worker_bw.stderr = grass.PIPE
+            r_dop_import_worker_bw.stdout_ = grass.PIPE
+            r_dop_import_worker_bw.stderr_ = grass.PIPE
             queue.put(r_dop_import_worker_bw)
         queue.wait()
     except Exception:
