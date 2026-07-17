@@ -8,7 +8,7 @@ include $(MODULE_TOPDIR)/include/Make/Python.make
 default: script $(PGM).md $(PGM).html
 
 $(PGM).md: README.md
-	cp README.md $(PGM).md
+	$(INSTALL_DATA)  README.md $(PGM).md
 
 $(PGM).html: $(PGM).md
 	echo "Creating extensions html file..."
