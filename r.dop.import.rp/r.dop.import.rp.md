@@ -1,8 +1,7 @@
+<!-- markdownlint-disable MD041 -->
 ## DESCRIPTION
 
-*r.dop.import.rp* downloads and imports [digital orthophotos
-(DOP)](https://geobasis-rlp.de/data/dop20rgbi/current) for
-Rhineland-Palatine (RP) and area of interest.
+*r.dop.import.rp* downloads and imports [digital orthophotos (DOP)](https://geobasis-rlp.de/data/dop20rgbi/current) for Rhineland-Palatine (RP) and area of interest.
 The data can be used when referencing the source:
 id: dl-by-de/2.0,
 name: Datenlizenz Deutschland - Zero - Version 2.0,
@@ -23,5 +22,4 @@ r.dop.import.rp aoi=aoi output=dop_RP -r
 
 ## AUTHORS
 
-Victoria-Leandra Brunn, [mundialis GmbH & Co.
-KG](https://www.mundialis.de/)
+Victoria-Leandra Brunn, [mundialis GmbH & Co. KG](https://www.mundialis.de/)
