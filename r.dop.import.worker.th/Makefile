@@ -5,4 +5,13 @@ PGM = r.dop.import.worker.th
 include $(MODULE_TOPDIR)/include/Make/Python.make
 include $(MODULE_TOPDIR)/include/Make/Script.make
 
-default: script
+default: script $(PGM).md $(PGM).html
+
+$(PGM).md: README.md
+	cp README.md $(PGM).md
+
+$(PGM).html: $(PGM).md
+	echo "Creating extensions html file..."
+	pandoc -f markdown+hard_line_breaks -t html $(PGM).md -o $(PGM).html
+	sed -i 's+<br />+<br>+g' $(PGM).html
+	sed -i 's+"image-alt" />+"image-alt">+g' $(PGM).html
