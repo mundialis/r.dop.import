@@ -1,12 +1,11 @@
+<!-- markdownlint-disable MD041 -->
 [![image-alt](grass_logo.png)](https://grass.osgeo.org/grass-stable/manuals/index.html)
 
 ------------------------------------------------------------------------
 
 ## NAME
 
-***r.dop.import*** - Toolset for the import of digital orthophotos
-(DOPs). It includes import addons for the open geodata digital
-orthophotos for Germany.
+***r.dop.import*** - Toolset for the import of digital orthophotos (DOPs). It includes import addons for the open geodata digital orthophotos for Germany.
 
 ## KEYWORDS
 
@@ -15,9 +14,7 @@ orthophotos for Germany.
 
 ## DESCRIPTION
 
-The *r.dop.import* toolset downloads digital orthophotos for a specified
-AOI and multiple federal states of Germany. Overview of the available
-digital orthophotos (at least 20 cm spatial resolution):
+The *r.dop.import* toolset downloads digital orthophotos for a specified AOI and multiple federal states of Germany. Overview of the available digital orthophotos (at least 20 cm spatial resolution):
 
 | Federal state               | DOP                |
 |-----------------------------|--------------------|
@@ -44,10 +41,8 @@ digital orthophotos (at least 20 cm spatial resolution):
 
 ## AUTHORS
 
-Johannes Halbauer, [mundialis GmbH & Co.
-KG](https://www.mundialis.de/)  
-Anika Weinmann, [mundialis GmbH & Co. KG](https://www.mundialis.de/)  
-Julia Haas, [mundialis GmbH & Co. KG](https://www.mundialis.de/)  
+Johannes Halbauer, [mundialis GmbH & Co. KG](https://www.mundialis.de/)
+Anika Weinmann, [mundialis GmbH & Co. KG](https://www.mundialis.de/)
+Julia Haas, [mundialis GmbH & Co. KG](https://www.mundialis.de/)
 Lina Krisztian, [mundialis GmbH & Co. KG](https://www.mundialis.de/)
-Victoria-Leandra Brunn, [mundialis GmbH & Co.
-KG](https://www.mundialis.de/)
+Victoria-Leandra Brunn, [mundialis GmbH & Co. KG](https://www.mundialis.de/)
