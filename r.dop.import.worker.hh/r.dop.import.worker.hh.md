@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD041 -->
 ## DESCRIPTION
 
 *r.dop.import.worker.hh* is used within *r.dop.import.hh* to import the DOPs in parallel.
