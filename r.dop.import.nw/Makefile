@@ -12,5 +12,5 @@ $(PGM).md: README.md
 
 $(PGM).html: $(PGM).md
 	echo "Creating extensions html file..."
-	pandoc -f markdown -t html $(PGM).md -o $(PGM).html
-	sed -i 's+<br />+\n<br>+g' $(PGM).html
+	pandoc -f markdown+hard_line_breaks -t html $(PGM).md -o $(PGM).html
+	sed -i 's+<br />+<br>+g' $(PGM).html
