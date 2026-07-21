@@ -27,13 +27,14 @@ from grass_gis_helpers.open_geodata_germany.download_data import (
 from grass_gis_helpers.raster import rename_raster
 
 OPEN_DATA_AVAILABILITY = {
-    "NO_OPEN_DATA": ["HB", "MV", "SL", "ST", "SH"],
+    "NO_OPEN_DATA": ["MV", "SL", "ST", "SH"],
     "NOT_YET_SUPPORTED": [],
     "SUPPORTED": [
         "BW",
         "BY",
         "BE",
         "BB",
+        "HB",
         "HH",
         "NW",
         "SN",
@@ -81,7 +82,11 @@ def rescale_to_1_255(prefix, raster_name, extension="num"):
         }
     for name, num in band_dict.items():
         grass.run_command("g.region", raster=f"{raster_name}.{num}")
-        rastername = f"{prefix}_{raster_name}_{name}"
+        rastername = (
+            f"{prefix}_{raster_name}_{name}"
+            if prefix
+            else f"{raster_name}_{name}"
+        )
         grass.run_command(
             "r.mapcalc",
             expression=(
