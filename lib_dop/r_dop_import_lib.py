@@ -632,7 +632,7 @@ def import_local_data(
                 # replace region ns_res with alignment raster ns_res
                 ns_res = float(
                     grass.parse_command(
-                        "r.info", map=alignment_raster, flags="g"
+                        "r.info", map=alignment_raster, flags="g",
                     )["nsres"],
                 )
             else:
