@@ -627,12 +627,16 @@ def import_local_data(
             if alignment_raster:
                 # set extent from imported data, and align with alignment raster
                 grass.run_command(
-                    "g.region", raster=vrt, align=alignment_raster,
+                    "g.region",
+                    raster=vrt,
+                    align=alignment_raster,
                 )
                 # replace region ns_res with alignment raster ns_res
                 ns_res = float(
                     grass.parse_command(
-                        "r.info", map=alignment_raster, flags="g",
+                        "r.info",
+                        map=alignment_raster,
+                        flags="g",
                     )["nsres"],
                 )
             else:
