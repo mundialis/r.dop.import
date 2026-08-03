@@ -589,8 +589,8 @@ def import_local_data(
         grass.fatal(
             _(
                 "Alignment raster can only be used if data are resampled "
-                "(i.e. native resolution is not kept)."
-            )
+                "(i.e. native resolution is not kept).",
+            ),
         )
     imported_local_data = import_local_raster_data(
         aoi,
