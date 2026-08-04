@@ -219,7 +219,8 @@ def main():
                 alignment_raster=None,
             )
             if imported_local_data:
-                all_dops.append(out_fs)
+                for band in ("red", "green", "blue", "nir"):
+                    all_dops[band].append(f"{out_fs}_{band}")
                 fs_dop_list = [
                     f"{output}_{fs}{band}" for band in DOP_BAND_SUFFIXES
                 ]
