@@ -206,9 +206,10 @@ def main():
         imported_local_data = False
         if fs in local_fs_list:
             all_dops_local = []
+            out_fs = f"dop_{fs}_{ID}"
             imported_local_data = import_local_data(
                 aoi,
-                output,
+                out_fs,
                 local_data_dir,
                 fs,
                 all_dops_local,
@@ -218,6 +219,7 @@ def main():
                 alignment_raster=None,
             )
             if imported_local_data:
+                all_dops.append(out_fs)
                 fs_dop_list = [
                     f"{output}_{fs}{band}" for band in DOP_BAND_SUFFIXES
                 ]
