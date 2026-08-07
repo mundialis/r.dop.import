@@ -144,6 +144,7 @@ except Exception as imp_err:
 ID = grass.tempname(12)
 ORIG_REGION = f"original_region_{ID}"
 rm_rasters = []
+rm_groups = []
 SUPPORTED = OPEN_DATA_AVAILABILITY["SUPPORTED"]
 NO_OPEN_DATA = OPEN_DATA_AVAILABILITY["NO_OPEN_DATA"]
 NOT_YET_SUPPORTED = OPEN_DATA_AVAILABILITY["NOT_YET_SUPPORTED"]
@@ -157,6 +158,7 @@ def cleanup():
     general_cleanup(
         orig_region=ORIG_REGION,
         rm_rasters=rm_rasters,
+        rm_groups=rm_groups,
     )
 
 
@@ -214,11 +216,12 @@ def main():
                 fs,
                 all_dops_local,
                 rm_rasters,
+                rm_groups,
                 native_res,
                 ns_res,
-                alignment_raster=None,
             )
             if imported_local_data:
+                rm_rasters.append(f"{out_fs}.*")
                 for band in ("red", "green", "blue", "nir"):
                     all_dops[band].append(f"{out_fs}_{band}")
                 fs_dop_list = [

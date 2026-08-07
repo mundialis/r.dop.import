@@ -88,7 +88,9 @@ def rescale_to_1_255(prefix, raster_name, extension="num"):
         }
     for name, num in band_dict.items():
         grass.run_command("g.region", raster=f"{raster_name}.{num}")
-        rastername = f"{prefix}_{raster_name}_{name}"
+        rastername = f"{raster_name}_{name}"
+        if prefix:
+            rastername = f"{prefix}_{rastername}"
         grass.run_command(
             "r.mapcalc",
             expression=(
@@ -563,9 +565,9 @@ def import_local_data(
     fs,
     all_dops,
     rm_rasters,
+    rm_groups,
     native_res,
     ns_res,
-    alignment_raster=None,
 ):
     """Import local DOP data
 
@@ -578,28 +580,21 @@ def import_local_data(
         all_dops (list): empty list where the imported DOP rasters
                          will be appended
         rm_rasters (list): List of rasters for cleanup, will be appended
+        rm_groups (list): List of groups for cleanup, will be appended
         native_res (bool): Flag to keep native resolution of imported data
                            (True, if resolution kept)
         ns_res (float): Resolution to resample imported raster to
-        alignment_raster (str): If data should be resampled,
-                                raster to align imported data to
 
     """
-    if alignment_raster and native_res:
-        grass.fatal(
-            _(
-                "Alignment raster can only be used if data are resampled "
-                "(i.e. native resolution is not kept).",
-            ),
-        )
     imported_local_data = import_local_raster_data(
         aoi,
-        f"{out}_{fs}",
+        out,
         os.path.join(local_data_dir, fs),
         all_dops,
         rm_rasters,
         band_dict={1: "red", 2: "green", 3: "blue", 4: "nir"},
     )
+    rm_groups.append(out)
 
     if not imported_local_data and fs in ["BW"]:
         grass.fatal(_("Local data does not overlap with AOI."))
@@ -614,40 +609,28 @@ def import_local_data(
     if imported_local_data:
         # Create VRT of tiles
         # (dont copy raster maps -> create real raster in the next steps)
-        vrt = f"vrt_local_dop_{out}_{os.getpid()}"
-        rm_rasters.append(vrt)
-        rm_rasters.extend(all_dops)
-        create_vrt(all_dops, vrt, copy_raster_maps=False)
+        for band in [1, 2, 3, 4]:
+            vrt = f"vrt_local_dop_{out}_{os.getpid()}.{band}"
+            rm_rasters.append(vrt)
+            rm_rasters.extend(all_dops)
+            create_vrt(all_dops, vrt, copy_raster_maps=False)
 
-        # Check resolution and resample / interpolate data if needed
-        # resample / interpolate whole VRT
-        # (interpolating single files leads to empty rows and columns)
-        if not native_res:
-            grass.message(_("Resampling / interpolating data..."))
-            if alignment_raster:
-                # set extent from imported data, and align with alignment raster
-                grass.run_command(
-                    "g.region",
-                    raster=vrt,
-                    align=alignment_raster,
-                )
-                # replace region ns_res with alignment raster ns_res
-                ns_res = float(
-                    grass.parse_command(
-                        "r.info",
-                        map=alignment_raster,
-                        flags="g",
-                    )["nsres"],
-                )
-            else:
-                # if no alignemnt raster is given,
+            # Check resolution and resample / interpolate data if needed
+            # resample / interpolate whole VRT
+            # (interpolating single files leads to empty rows and columns)
+            out_band = f"{out}.{band}"
+            if not native_res:
+                grass.message(_("Resampling / interpolating data..."))
                 # use extent of imported data and
                 # set and align with current region resolution
                 grass.run_command("g.region", raster=vrt)
                 grass.run_command("g.region", res=ns_res, flags="a")
-            adjust_raster_resolution(vrt, out, ns_res)
-        else:
-            # Note: Want real raster/no VRT as output
-            vrt_to_raster(vrt, out)
+                adjust_raster_resolution(vrt, out_band, ns_res)
+            else:
+                # Note: Want real raster/no VRT as output
+                vrt_to_raster(vrt, out_band)
+
+    rasters_rescale = rescale_to_1_255("", out)
+    rm_rasters.extend(rasters_rescale)
 
     return imported_local_data
