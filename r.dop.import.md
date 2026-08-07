@@ -22,8 +22,8 @@ The *r.dop.import* toolset downloads digital orthophotos for a specified AOI and
 | Bayern (BY)                 | r.dop.import fs=BY |
 | Berlin (BE)                 | r.dop.import fs=BE |
 | Brandenburg (BB)            | r.dop.import fs=BB |
-| Bremen (HB)                 | Coming soon        |
-| Hamburg (HH)                | Coming soon        |
+| Bremen (HB)                 | r.dop.import fs=HB |
+| Hamburg (HH)                | r.dop.import fs=HH |
 | Hessen (HE)                 | r.dop.import fs=HE |
 | Mecklenburg-Vorpommern (MV) | Coming soon        |
 | Niedersachsen (NI)          | r.dop.import fs=NI |

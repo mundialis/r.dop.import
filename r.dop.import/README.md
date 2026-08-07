@@ -7,6 +7,8 @@
 - Bayern (BY)
 - Berlin (BE)
 - Brandenburg (BB)
+- Bremen (HB)
+- Hamburg (HH)
 - Hessen (HE)
 - Niedersachsen (NI)
 - Nordrhein-Westfalen (NW)
