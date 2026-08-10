@@ -595,9 +595,9 @@ def import_local_data(
         os.path.join(local_data_dir, fs),
         all_dops,
         rm_rasters,
+        rm_groups,
         band_dict={1: "red", 2: "green", 3: "blue", 4: "nir"},
     )
-    rm_groups.append(out)
 
     if not imported_local_data and fs in ["BW"]:
         grass.fatal(_("Local data does not overlap with AOI."))

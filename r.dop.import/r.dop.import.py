@@ -221,7 +221,6 @@ def main():
                 ns_res,
             )
             if imported_local_data:
-                rm_rasters.append(f"{out_fs}.*")
                 for band in ("red", "green", "blue", "nir"):
                     all_dops[band].append(f"{out_fs}_{band}")
                 fs_dop_list = [
