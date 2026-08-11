@@ -612,16 +612,29 @@ def import_local_data(
     if imported_local_data:
         # Create VRT of tiles
         # (dont copy raster maps -> create real raster in the next steps)
-        for band in [1, 2, 3, 4]:
-            vrt = f"vrt_local_dop_{out}_{os.getpid()}.{band}"
+        for band_num, band_string in {
+            1: "red",
+            2: "green",
+            3: "blue",
+            4: "nir",
+        }.items():
+            vrt = f"vrt_local_dop_{out}_{os.getpid()}.{band_num}"
             rm_rasters.append(vrt)
             rm_rasters.extend(all_dops)
-            create_vrt(all_dops, vrt, copy_raster_maps=False)
+            create_vrt(
+                [
+                    item
+                    for item in all_dops
+                    if item.endswith(f".{band_string}")
+                ],
+                vrt,
+                copy_raster_maps=False,
+            )
 
             # Check resolution and resample / interpolate data if needed
             # resample / interpolate whole VRT
             # (interpolating single files leads to empty rows and columns)
-            out_band = f"{out}.{band}"
+            out_band = f"{out}.{band_num}"
             if not native_res:
                 grass.message(_("Resampling / interpolating data..."))
                 # use extent of imported data and
