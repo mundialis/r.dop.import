@@ -98,10 +98,16 @@
 # % description: Use native data resolution
 # %end
 
+# %flag
+# % key: o
+# % description: For local data import: if no matching local data found, try to access via Open Data portal
+# %end
+
 # %rules
 # % required: federal_state, federal_state_file
 # % excludes: federal_state_file, federal_state
 # % requires_all: -k, download_dir
+# % requires: -o, local_data_dir
 # %end
 
 import atexit
@@ -219,6 +225,7 @@ def main():
                 rm_groups,
                 native_res,
                 ns_res,
+                flags["o"],
             )
             if imported_local_data:
                 for band in ("red", "green", "blue", "nir"):

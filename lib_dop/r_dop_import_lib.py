@@ -571,6 +571,7 @@ def import_local_data(
     rm_groups,
     native_res,
     ns_res,
+    opendata_flag,
 ):
     """Import local DOP data
 
@@ -587,6 +588,8 @@ def import_local_data(
         native_res (bool): Flag to keep native resolution of imported data
                            (True, if resolution kept)
         ns_res (float): Resolution to resample imported raster to
+        opendata_flag (boolean): Flag to indicate if data should be downloaded
+                                 from Open Data portal if local data dont match
 
     """
     imported_local_data = import_local_raster_data(
@@ -599,9 +602,9 @@ def import_local_data(
         band_dict={1: "red", 2: "green", 3: "blue", 4: "nir"},
     )
 
-    if not imported_local_data and fs in ["BW"]:
+    if not imported_local_data and not opendata_flag:
         grass.fatal(_("Local data does not overlap with AOI."))
-    elif not imported_local_data:
+    elif not imported_local_data and opendata_flag:
         grass.message(
             _(
                 "Local data does not overlap with AOI. Data will be downloaded"
