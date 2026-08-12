@@ -605,7 +605,7 @@ def import_local_data(
     if not imported_local_data and not opendata_flag:
         grass.fatal(
             _(
-                "Local data does not overlap with AOI."
+                "Local data does not overlap with AOI. "
                 "Check local_data_dir or consider using o-flag.",
             ),
         )
@@ -654,7 +654,7 @@ def import_local_data(
                 # Note: Want real raster/no VRT as output
                 vrt_to_raster(vrt, out_band)
 
-    rasters_rescale = rescale_to_1_255("", out)
-    rm_rasters.extend(rasters_rescale)
+        rasters_rescale = rescale_to_1_255("", out)
+        rm_rasters.extend(rasters_rescale)
 
     return imported_local_data
