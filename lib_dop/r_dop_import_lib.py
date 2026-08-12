@@ -603,7 +603,12 @@ def import_local_data(
     )
 
     if not imported_local_data and not opendata_flag:
-        grass.fatal(_("Local data does not overlap with AOI."))
+        grass.fatal(
+            _(
+                "Local data does not overlap with AOI."
+                "Check local_data_dir or consider using o-flag.",
+            )
+        )
     elif not imported_local_data and opendata_flag:
         grass.message(
             _(
