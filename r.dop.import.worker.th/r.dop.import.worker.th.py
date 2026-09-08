@@ -75,18 +75,13 @@
 
 # %option
 # % key: resolution_to_import
-# % required: no
-# % description: Resolution of region, for which DOP will be imported (only if flag r not set)
+# % required: yes
+# % description: Native resolution for downloading DOP tiles from WMS
 # %end
 
 # %option G_OPT_R_OUTPUT
 # % key: raster_name
 # % description: Name of raster output
-# %end
-
-# %flag
-# % key: r
-# % description: Use native DOP resolution
 # %end
 
 
@@ -99,7 +94,6 @@ from grass.pygrass.utils import get_lib_path
 from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.location import switch_back_original_location
 from grass_gis_helpers.mapset import switch_to_new_mapset
-from grass_gis_helpers.raster import adjust_raster_resolution
 
 # import module library
 path = get_lib_path(modname="r.dop.import")
@@ -142,10 +136,8 @@ def main():
     tile_url = options["tile_url"]
     layer_name_cir = options["layer_name_cir"]
     layer_name_rgb = options["layer_name_rgb"]
+    resolution_to_import = float(options["resolution_to_import"])
     raster_name = options["raster_name"]
-    resolution_to_import = None
-    if options["resolution_to_import"]:
-        resolution_to_import = float(options["resolution_to_import"])
     orig_region = options["orig_region"]
     new_mapset = options["new_mapset"]
 
@@ -154,13 +146,6 @@ def main():
     if "NPROCS" in gisenv:
         original_nprocs = int(gisenv["NPROCS"])
     grass.run_command("g.gisenv", set="NPROCS=1")
-
-    # output resolution
-    if not flags["r"] and not options["resolution_to_import"]:
-        grass.fatal(
-            "Use native resolution with the -r flag or specify "
-            "'resolution_to_import'.",
-        )
 
     # switch to new mapset for parallel processing
     gisrc, newgisrc, old_mapset = switch_to_new_mapset(new_mapset)
@@ -182,26 +167,7 @@ def main():
         {"cir": layer_name_cir, "rgb": layer_name_rgb},
         rm_group,
         rm_rast,
-        flags["r"],
     )
-
-    # adjust resolution if required
-    if resolution_to_import:
-        grass.run_command("g.region", res=resolution_to_import, flags="a")
-        for band in [1, 2, 3, 4]:
-            raster_name_band = f"{raster_name}.{band}"
-            grass.run_command(
-                "g.rename",
-                raster=f"{raster_name_band},{raster_name_band}_tmp1",
-            )
-            adjust_raster_resolution(
-                f"{raster_name_band}_tmp1",
-                raster_name_band,
-                resolution_to_import,
-                interp_method="bicubic",
-                type="CELL",
-            )
-            rm_rast.append(f"{raster_name_band}_tmp1")
 
     rm_group.append(raster_name)
     grass.message(_(f"Finishing raster import for {raster_name}..."))

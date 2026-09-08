@@ -90,7 +90,11 @@ from grass_gis_helpers.general import test_memory
 from grass_gis_helpers.open_geodata_germany.download_data import (
     check_download_dir,
 )
-from grass_gis_helpers.raster import create_vrt
+from grass_gis_helpers.raster import (
+    adjust_raster_resolution,
+    create_vrt,
+    vrt_to_raster,
+)
 
 os.environ["CPL_VSIL_CURL_USE_HEAD"] = "NO"
 
@@ -230,19 +234,16 @@ def main():
                 param["download_dir"] = download_dir
             if flags["k"]:
                 param["flags"] += "k"
-            if flags["r"]:
-                dop_src = gdal.Open(param["tile_url"])
-                param["resolution_to_import"] = abs(
-                    dop_src.GetGeoTransform()[1],
-                )
-            else:
-                param["resolution_to_import"] = ns_res
+            # worker always imports in native resolution;
+            # resampling occurs in main script
+            dop_src = gdal.Open(param["tile_url"])
+            param["resolution_to_import"] = abs(dop_src.GetGeoTransform()[1])
 
             # append raster bands to download to remove list
-            rm_red = f"{raster_name}_red"
-            rm_green = f"{raster_name}_green"
-            rm_blue = f"{raster_name}_blue"
-            rm_nir = f"{raster_name}_nir"
+            rm_red = f"{fs}_{raster_name}_red"
+            rm_green = f"{fs}_{raster_name}_green"
+            rm_blue = f"{fs}_{raster_name}_blue"
+            rm_nir = f"{fs}_{raster_name}_nir"
             rm_rasters.append(rm_red)
             rm_rasters.append(rm_green)
             rm_rasters.append(rm_blue)
@@ -290,9 +291,21 @@ def main():
     # create one vrt per band of all imported DOPs
     raster_out = []
     for band, b_list in all_raster.items():
-        out = f"{output}_{band}"
-        create_vrt(b_list, out)
-        raster_out.append(out)
+        vrt = f"vrt_{output}_{band}_{ID}"
+        rm_rasters.append(vrt)
+        rm_rasters.extend([r.split("@")[0] for r in b_list])
+        create_vrt(b_list, vrt)
+
+        out_band = f"{output}_{band}"
+        if flags["r"]:
+            # Note: Want real raster/no VRT as output
+            vrt_to_raster(vrt, out_band)
+        else:
+            grass.message(_(f"Resampling / interpolating {band} band..."))
+            grass.run_command("g.region", raster=vrt)
+            grass.run_command("g.region", res=ns_res, flags="a")
+            adjust_raster_resolution(vrt, out_band, ns_res)
+        raster_out.append(out_band)
 
     grass.message(_(f"Generated following raster maps: {raster_out}"))
 

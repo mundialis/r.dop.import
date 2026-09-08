@@ -209,7 +209,6 @@ def import_dop_from_wms(
     layer_dict,
     rm_group,
     rm_rast,
-    native_res,
     data_format="tiff",
     retries=30,
 ):
@@ -218,11 +217,10 @@ def import_dop_from_wms(
         tile_key (str): Key of current tile
         rastername (str): Name of resulting raster
         tile_url_dict (dict): Key is cir/rgb, value is WMS URLs to get DOPs
-        resolution_to_import (float): Resolution to resample imported raster to
+        resolution_to_import (float): Resolution used for importing raster
         layer_dict (dict): Key is cir/rgb, value is WMS layer to get DOPs
         rm_group (list): List of elements to remove in cleanup
         rm_rast (list): List of raster maps to remove in cleanup
-        native_res (bool): Keep native DOP resolution
         retries (int): Set how often function is retried
 
     Returns:
@@ -231,8 +229,7 @@ def import_dop_from_wms(
     """
     # set region and create variable names
     grass.run_command("g.region", vector=tile_key)
-    if not native_res:
-        grass.run_command("g.region", res=resolution_to_import, flags="a")
+    grass.run_command("g.region", res=resolution_to_import, flags="a")
     tile_key = tile_key.split("@")[0]
 
     for key, name in layer_dict.items():
@@ -501,25 +498,41 @@ def import_and_reproject(
     trydownload = True
     tries = 0
     while trydownload:
-        try:
-            tries += 1
-            grass.run_command("r.import", **kwargs)
+        tries += 1
+        process = grass.start_command(
+            "r.import",
+            stderr=grass.PIPE,
+            **kwargs,
+        )
+        _stdout, stderr_output = process.communicate()
+        stderr_text = stderr_output or ""
+
+        if process.returncode == 0:
             trydownload = False
-        except Exception:
-            if "no overlap with current region":
-                grass.warning("No overlap with current region")
-                if location_switch:
-                    os.environ["GISRC"] = str(gisrc)
-                return gisdbase, tmp_loc, tmp_gisrc
-            if tries > retries:
-                grass.fatal(
-                    _(
-                        f"Importing {kwargs['input']} failed after {retries} "
-                        "retries.",
-                    ),
-                )
-            grass.message(_(f"retry download: {tries}/{retries}"))
-            sleep(WAITING_TIME)
+            continue
+        if (
+            "does not overlap" in stderr_text
+            or "Nothing to import" in stderr_text
+        ):
+            grass.warning("No overlap with current region")
+            if location_switch:
+                os.environ["GISRC"] = str(gisrc)
+            return gisdbase, tmp_loc, tmp_gisrc
+        if tries > retries:
+            grass.fatal(
+                _(
+                    f"Importing {kwargs['input']} failed after {retries} "
+                    f"retries: {stderr_text.strip()}",
+                ),
+            )
+        backoff = min(WAITING_TIME * (2 ** (tries - 1)), 120)
+        grass.message(
+            _(
+                f"retry download: {tries}/{retries} "
+                f"({stderr_text.strip()[-300:]})",
+            ),
+        )
+        sleep(backoff)
     if not aoi_map:
         grass.run_command("g.region", raster=f"{raster_name}.1")
 

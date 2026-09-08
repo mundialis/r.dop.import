@@ -84,7 +84,11 @@ from grass_gis_helpers.cleanup import general_cleanup
 from grass_gis_helpers.open_geodata_germany.download_data import (
     check_download_dir,
 )
-from grass_gis_helpers.raster import create_vrt
+from grass_gis_helpers.raster import (
+    create_vrt,
+    adjust_raster_resolution,
+    vrt_to_raster,
+)
 
 # import module library
 path = get_lib_path(modname="r.dop.import")
@@ -246,6 +250,7 @@ def main():
                 "orig_region": ORIG_REGION,
                 "new_mapset": new_mapset,
                 "used_layer_file": used_layers_file,
+                "resolution_to_import": NATIVE_DOP_RES,
                 "flags": "",
             }
             grass.message(_(f"raster name: {raster_name}"))
@@ -257,10 +262,6 @@ def main():
                 param["download_dir"] = download_dir
             if flags["k"]:
                 param["flags"] += "k"
-            if flags["r"]:
-                param["resolution_to_import"] = NATIVE_DOP_RES
-            else:
-                param["resolution_to_import"] = ns_res
 
             # append raster bands to download to remove list
             rm_red = f"{raster_name}_red"
@@ -313,9 +314,21 @@ def main():
     # create one vrt per band of all imported DOPs
     raster_out = []
     for band, b_list in all_raster.items():
-        out = f"{output}_{band}"
-        create_vrt(b_list, out)
-        raster_out.append(out)
+        vrt = f"vrt_{output}_{band}_{ID}"
+        rm_rasters.append(vrt)
+        rm_rasters.extend([r.split("@")[0] for r in b_list])
+        create_vrt(b_list, vrt)
+
+        out_band = f"{output}_{band}"
+        if flags["r"]:
+            # Note: Want real raster/no VRT as output
+            vrt_to_raster(vrt, out_band)
+        else:
+            grass.message(_(f"Resampling / interpolating {band} band..."))
+            grass.run_command("g.region", raster=vrt)
+            grass.run_command("g.region", res=ns_res, flags="a")
+            adjust_raster_resolution(vrt, out_band, ns_res)
+        raster_out.append(out_band)
 
     grass.message(_(f"Generated following raster maps: {raster_out}"))
 

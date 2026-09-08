@@ -64,7 +64,7 @@
 # %option
 # % key: resolution_to_import
 # % required: no
-# % description: Resolution of region, for which DOP will be imported (only if flag r not set)
+# % description: Resolution of region, for which DOP will be imported
 # %end
 
 # %option G_OPT_R_OUTPUT
@@ -74,11 +74,6 @@
 
 # %option G_OPT_MEMORYMB
 # % description: Memory which is used by all processes (it is divided by nprocs for each single parallel process)
-# %end
-
-# %flag
-# % key: r
-# % description: Use native DOP resolution
 # %end
 
 # %flag
@@ -101,7 +96,6 @@ from grass_gis_helpers.cleanup import general_cleanup, cleaning_tmp_location
 from grass_gis_helpers.general import test_memory
 from grass_gis_helpers.location import switch_back_original_location
 from grass_gis_helpers.mapset import switch_to_new_mapset
-from grass_gis_helpers.raster import adjust_raster_resolution
 
 # import module library
 path = get_lib_path(modname="r.dop.import")
@@ -162,13 +156,6 @@ def main():
     if "NPROCS" in gisenv:
         original_nprocs = int(gisenv["NPROCS"])
     grass.run_command("g.gisenv", set="NPROCS=1")
-
-    # output resolution
-    if not flags["r"] and not options["resolution_to_import"]:
-        grass.fatal(
-            "Use native resolution with the -r flag or specify "
-            "'resolution_to_import'.",
-        )
 
     # set memory to input if possible
     options["memory"] = test_memory(options["memory"])
@@ -260,24 +247,6 @@ def main():
         part_name = f"{raster_name}_part{i}"
         if part_name in imported_rasters:
             sys.stderr.write(f"METADATA_DOP_URL:{url}\n")
-
-    # adjust resolution if required
-    if resolution_to_import:
-        grass.run_command("g.region", res=resolution_to_import, flags="a")
-        for band in [1, 2, 3, 4]:
-            raster_name_band = f"{raster_name}.{band}"
-            grass.run_command(
-                "g.rename",
-                raster=f"{raster_name_band},{raster_name_band}_tmp1",
-            )
-            adjust_raster_resolution(
-                f"{raster_name_band}_tmp1",
-                raster_name_band,
-                resolution_to_import,
-                interp_method="bicubic",
-                type="CELL",
-            )
-            rm_rast.append(f"{raster_name_band}_tmp1")
 
     rm_group.append(raster_name)
     grass.message(_(f"Finishing raster import for {raster_name}..."))
