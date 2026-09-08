@@ -14,6 +14,7 @@
 - Nordrhein-Westfalen (NW)
 - Rheinland-Pfalz (RP)
 - Sachsen (SN)
+- Schleswig-Holstein (SH)
 - Thüringen (TH)
 
 ## EXAMPLE

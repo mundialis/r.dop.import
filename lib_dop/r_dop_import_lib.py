@@ -34,7 +34,7 @@ from grass_gis_helpers.raster import (
 from grass_gis_helpers.data_import import import_local_raster_data
 
 OPEN_DATA_AVAILABILITY = {
-    "NO_OPEN_DATA": ["MV", "SL", "ST", "SH"],
+    "NO_OPEN_DATA": ["MV", "SL", "ST"],
     "NOT_YET_SUPPORTED": [],
     "SUPPORTED": [
         "BW",
@@ -42,13 +42,14 @@ OPEN_DATA_AVAILABILITY = {
         "BE",
         "BB",
         "HB",
+        "HE",
         "HH",
+        "NI",
         "NW",
+        "RP",
+        "SH",
         "SN",
         "TH",
-        "HE",
-        "RP",
-        "NI",
     ],
 }
 
