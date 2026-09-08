@@ -109,7 +109,7 @@ def get_download_urls_and_names(
         )
 
         if num_dop_tiles > 0:
-            if fs in ["BW", "BY", "HE", "TH"]:
+            if fs in ["BW", "BY", "HB", "HE", "TH"]:
                 dop_names = [
                     (
                         f"{num_dop_tiles} DOP-Kachel(n) "
