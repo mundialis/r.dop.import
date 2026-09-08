@@ -209,7 +209,6 @@ def import_dop_from_wms(
     layer_dict,
     rm_group,
     rm_rast,
-    # native_res,
     data_format="tiff",
     retries=30,
 ):
@@ -218,11 +217,10 @@ def import_dop_from_wms(
         tile_key (str): Key of current tile
         rastername (str): Name of resulting raster
         tile_url_dict (dict): Key is cir/rgb, value is WMS URLs to get DOPs
-        resolution_to_import (float): Resolution to resample imported raster to
+        resolution_to_import (float): Resolution used for importing raster
         layer_dict (dict): Key is cir/rgb, value is WMS layer to get DOPs
         rm_group (list): List of elements to remove in cleanup
         rm_rast (list): List of raster maps to remove in cleanup
-        native_res (bool): Keep native DOP resolution
         retries (int): Set how often function is retried
 
     Returns:
@@ -231,8 +229,6 @@ def import_dop_from_wms(
     """
     # set region and create variable names
     grass.run_command("g.region", vector=tile_key)
-    # if not native_res:
-    #     grass.run_command("g.region", res=resolution_to_import, flags="a")
     grass.run_command("g.region", res=resolution_to_import, flags="a")
     tile_key = tile_key.split("@")[0]
 
