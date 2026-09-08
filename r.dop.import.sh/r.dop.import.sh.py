@@ -131,7 +131,7 @@ def cleanup():
 
 
 def main():
-    """Main function of r.dop.import.ni"""
+    """Main function of r.dop.import.sh"""
     aoi = options["aoi"]
     download_dir = check_download_dir(options["download_dir"])
     nprocs = int(options["nprocs"])
