@@ -31,7 +31,7 @@ ______________________________________________________________________
 | Bremen | HB | &#9745; | (via WMS) | | 10cm | [Geoportal](https://geoportal.bremen.de/geoportal/#) |
 | Hamburg | HH | &#9745; | &#9745; | data download as .zip and .tif | 20cm | [Geoportal](https://geoportal-hamburg.de/) |
 | Hessen | HE | &#9745; | (via WMS) | | 20cm | |
-| Mecklenburg-Vorpommern | MV | | | | | [Downloadportal](https://laiv.geodaten-mv.de/afgvk/) |
+| Mecklenburg-Vorpommern | MV | &#9745; | &#9745; | data download as .tif | 20cm | [Downloadportal](https://laiv.geodaten-mv.de/afgvk/) |
 | Niedersachsen | NI | &#9745; | &#9745; | data download as .tif | 20cm | |
 | Nordrhein-Westfalen | NW | &#9745; | &#9745; | data download as .jp2 | 10cm | |
 | Rheinland-Pfalz | RP | &#9745; | &#9745; (no automatic updating) | | 20cm | |
