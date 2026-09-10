@@ -70,6 +70,7 @@ lint.ignore = [
 "r.dop.import.worker.hb/r.dop.import.worker.hb.py" = ["PLW0603"]
 "r.dop.import.worker.he/r.dop.import.worker.he.py" = ["PLW0603"]
 "r.dop.import.worker.hh/r.dop.import.worker.hh.py" = ["PLW0603"]
+"r.dop.import.worker.mv/r.dop.import.worker.mv.py" = ["PLW0603"]
 "r.dop.import.worker.ni/r.dop.import.worker.ni.py" = ["PLW0603"]
 "r.dop.import.worker.nw/r.dop.import.worker.nw.py" = ["PLW0603"]
 "r.dop.import.worker.rp/r.dop.import.worker.rp.py" = ["PLW0603"]

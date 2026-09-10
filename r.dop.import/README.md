@@ -10,6 +10,7 @@
 - Bremen (HB)
 - Hamburg (HH)
 - Hessen (HE)
+- Mecklenburg-Vorpommern (MV)
 - Niedersachsen (NI)
 - Nordrhein-Westfalen (NW)
 - Rheinland-Pfalz (RP)

@@ -3,7 +3,7 @@
 ############################################################################
 #
 # MODULE:      r.dop.import
-# AUTHOR(S):   Johannes Halbauer, Lina Krisztian, Anika Weinmann, Julia Haas
+# AUTHOR(S):   Johannes Halbauer, Lina Krisztian, Anika Weinmann, Julia Haas, Leon Louwarts
 # PURPOSE:     Downloads Digital Orthophotos (DOPs) wihtin a specified
 #              federal state and area of interest
 # SPDX-FileCopyrightText: (c) 2024-2026 by mundialis GmbH & Co. KG and the
@@ -33,7 +33,7 @@
 # % multiple: yes
 # % required: no
 # % description: Federal state(s) related to the area of interest, e.g.: "Nordrhein-Westfalen"
-# % options: Baden-Württemberg,BW,Bayern,BY,Berlin,BE,Brandenburg,BB,Bremen,HB,Hessen,HE,Hamburg,HH,Niedersachsen,NI,Nordrhein-Westfalen,NW,Rheinland-Pfalz,RP,Sachsen,SN,Schleswig-Holstein,SH,Thüringen,TH
+# % options: Baden-Württemberg,BW,Bayern,BY,Berlin,BE,Brandenburg,BB,Bremen,HB,Hessen,HE,Hamburg,HH,Mecklenburg-Vorpommern,MV,Niedersachsen,NI,Nordrhein-Westfalen,NW,Rheinland-Pfalz,RP,Sachsen,SN,Schleswig-Holstein,SH,Thüringen,TH
 # %end
 
 # %option G_OPT_F_INPUT
