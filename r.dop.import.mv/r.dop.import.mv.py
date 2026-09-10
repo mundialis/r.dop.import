@@ -76,8 +76,8 @@ import os
 import sys
 import pathlib
 
-import grass.script as grass
 from urllib.parse import urlparse, parse_qs
+import grass.script as grass
 from grass.pygrass.modules import Module, ParallelModuleQueue
 from grass.pygrass.utils import get_lib_path
 from osgeo import gdal
