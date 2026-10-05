@@ -103,11 +103,17 @@
 # % description: For local data import: if no matching local data found, try to access via open data portal
 # %end
 
+# %flag
+# % key: n
+# % description: For local data import: no federal state folder in local_data_dir needed (works only if not for another federal state data should be downloaded)
+# %end
+
 # %rules
 # % required: federal_state, federal_state_file
 # % excludes: federal_state_file, federal_state
 # % requires_all: -k, download_dir
 # % requires: -o, local_data_dir
+# % requires: -n, local_data_dir
 # %end
 
 import atexit
@@ -201,6 +207,11 @@ def main():
     if local_data_dir and local_data_dir != "":
         local_fs_list = os.listdir(local_data_dir)
 
+    # remove federal states when local data dir and n-flag is set
+    if local_data_dir and local_data_dir != "" and flags["n"]:
+        if len(federal_states) > 1:
+            federal_states = ["all"]
+
     # loop over federal states and import data
     all_dops = {"red": [], "green": [], "blue": [], "nir": []}
     metadata_list = []
@@ -215,24 +226,24 @@ def main():
         if (
             local_data_dir
             and local_data_dir != ""
-            and fs not in local_fs_list
+            and (fs not in local_fs_list and not flags["n"])
             and not flags["o"]
         ):
             grass.fatal(
                 _(
                     f"Missing federal state folder '{fs}' "
                     f"within local_data_dir: '{local_data_dir}'. "
-                    "Check local_data_dir or consider using o-flag.",
+                    "Check local_data_dir or consider using o-flag or n-flag.",
                 ),
             )
-        elif fs in local_fs_list:
+        elif fs in local_fs_list or flags["n"]:
             all_dops_local = []
             out_fs = f"dop_{fs}_{ID}"
             imported_local_data = import_local_data(
                 aoi,
                 out_fs,
                 local_data_dir,
-                fs,
+                fs if not flags["n"] else "",
                 all_dops_local,
                 rm_rasters,
                 rm_groups,
