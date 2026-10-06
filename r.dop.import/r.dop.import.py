@@ -208,9 +208,13 @@ def main():
         local_fs_list = os.listdir(local_data_dir)
 
     # remove federal states when local data dir and n-flag is set
-    if local_data_dir and local_data_dir != "" and flags["n"]:
-        if len(federal_states) > 1:
-            federal_states = ["all"]
+    if (
+        local_data_dir
+        and local_data_dir != ""
+        and flags["n"]
+        and len(federal_states) > 1
+    ):
+        federal_states = ["all"]
 
     # loop over federal states and import data
     all_dops = {"red": [], "green": [], "blue": [], "nir": []}
