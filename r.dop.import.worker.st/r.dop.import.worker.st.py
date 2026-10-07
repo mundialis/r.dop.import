@@ -162,7 +162,7 @@ def cleanup():
 
 def main():
     """Main function of r.dop.import.worker.st"""
-    # pylint: disable=FURB154
+    # pylint: disable=C0301
     global gisdbase, TMP_LOC, TMP_GISRC, original_nprocs, tmp_download_dir, keep_data
 
     # parser options
