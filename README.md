@@ -37,7 +37,7 @@ ______________________________________________________________________
 | Rheinland-Pfalz | RP | &#9745; | &#9745; (no automatic updating) | | 20cm | |
 | Saarland | SL | | | | | [Geoportal](https://geoportal.saarland.de/) |
 | Sachsen | SN | &#9745; | &#9745; | data download as .zip and .tif plus .csv | 20cm | |
-| Sachsen-Anhalt | ST | | | | | [Geodatenportal](https://www.lvermgeo.sachsen-anhalt.de/de/gdp-open-data.html) |
+| Sachsen-Anhalt | ST | &#9745; | &#9745; | data download as .tif | 20cm | [Geodatenportal](https://www.lvermgeo.sachsen-anhalt.de/de/gdp-open-data.html) |
 | Schleswig-Holstein | SH | &#9745; | &#9745; | data download as .tif | 20cm | [Downloadportal](https://geodaten.schleswig-holstein.de/gaialight-sh/_apps/dladownload/) |
 | Thüringen | TH | &#9745; | (via WMS) | | 20cm | |
 

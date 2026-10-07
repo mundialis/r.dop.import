@@ -15,6 +15,7 @@
 - Nordrhein-Westfalen (NW)
 - Rheinland-Pfalz (RP)
 - Sachsen (SN)
+- Sachsen-Anhalt (ST)
 - Schleswig-Holstein (SH)
 - Thüringen (TH)
 
