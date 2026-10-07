@@ -162,7 +162,8 @@ def cleanup():
 
 def main():
     """Main function of r.dop.import.worker.st"""
-    global gisdbase, TMP_LOC, TMP_GISRC, original_nprocs, tmp_download_dir, keep_data
+    global gisdbase, TMP_LOC, TMP_GISRC, original_nprocs, tmp_download_dir, \
+        keep_data
 
     # parser options
     tile_key = options["tile_key"]

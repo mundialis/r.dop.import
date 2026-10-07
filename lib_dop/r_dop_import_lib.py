@@ -13,9 +13,9 @@
 
 import os
 from time import sleep
-import requests
 import zipfile
 import pathlib
+import requests
 import grass.script as grass
 
 from grass_gis_helpers.general import set_nprocs
