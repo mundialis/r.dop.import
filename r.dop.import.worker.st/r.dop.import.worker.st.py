@@ -88,10 +88,11 @@
 
 import atexit
 import sys
-import tempfile
-import shutil
 import pathlib
 import contextlib
+import os
+import zipfile
+import requests
 
 import grass.script as grass
 from grass.pygrass.utils import get_lib_path
@@ -110,7 +111,6 @@ try:
     from r_dop_import_lib import (
         rescale_to_1_255,
         import_and_reproject,
-        download_dop_st,
     )
 except Exception as imp_err:
     grass.fatal(f"r.dop.import library could not be imported: {imp_err}")
@@ -126,6 +126,8 @@ TMP_GISRC = None
 original_nprocs = None
 tmp_download_dir = None
 keep_data = False
+
+EPSG = 25833
 
 
 def cleanup():
@@ -146,13 +148,6 @@ def cleanup():
         for f in rm_files:
             with contextlib.suppress(FileNotFoundError):
                 pathlib.Path(f).unlink()
-            # try:
-            #     pathlib.Path(f).unlink()
-            # except FileNotFoundError:
-            #     pass
-    # Remove auto-created temp download dir unless user asked to keep it
-    if tmp_download_dir and not keep_data:
-        shutil.rmtree(tmp_download_dir, ignore_errors=True)
     # Reset nprocs
     if original_nprocs:
         grass.run_command("g.gisenv", set=f"NPROCS={original_nprocs}")
@@ -160,10 +155,75 @@ def cleanup():
         grass.run_command("g.gisenv", unset="NPROCS")
 
 
+def download_dop_st(item_id, download_dir):
+    """Download and extract a single ST DOP tile via the two-step
+    prepare/download mechanism of the LVermGeo mapdownloader.
+
+    Args:
+        item_id (str): Numeric tile ID from the ST tindex
+        download_dir (str): Local directory to download/extract into
+
+    Returns:
+        tuple: Path to the extracted .tif, list of all created file paths for
+               later cleanup
+    """
+    # Server needs a browser-like User-Agent; default/non-browser UA strings
+    # will be blocked with HTTP 503
+    pathlib.Path(download_dir).mkdir(exist_ok=True, parents=True)
+    session = requests.Session()
+    session.headers.update(
+        {
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64; rv:155.0) "
+                "Gecko/20100101 Firefox/155.0"
+            ),
+        },
+    )
+    base_url = "https://www.lvermgeo.sachsen-anhalt.de/"
+    session.get(base_url)
+
+    prepare_url = (
+        f"{base_url}de/mod/4,1962,501/ajax/1/prepare/"
+        f"?items={item_id}&format=zip"
+    )
+    resp = session.get(
+        prepare_url,
+        headers={"X-Requested-With": "XMLHttpRequest"},
+    )
+    resp.raise_for_status()
+    download_url = resp.text.strip()
+    if not download_url.startswith("http"):
+        grass.fatal(
+            _(
+                f"Unexpected prepare response for item {item_id}: "
+                f"{download_url}",
+            ),
+        )
+
+    dl_resp = session.get(download_url)
+    dl_resp.raise_for_status()
+
+    zip_path = os.path.join(download_dir, f"dop20_st_{item_id}.zip")
+    pathlib.Path(zip_path).write_bytes(dl_resp.content)
+
+    created_files = [zip_path]
+    with zipfile.ZipFile(zip_path) as zf:
+        tif_names = [n for n in zf.namelist() if n.lower().endswith(".tif")]
+        if not tif_names:
+            grass.fatal(
+                _(f"No .tif found in ZIP for item {item_id}"),
+            )
+        zf.extractall(download_dir)
+        created_files.extend(
+            os.path.join(download_dir, n) for n in zf.namelist()
+        )
+
+    return os.path.join(download_dir, tif_names[0]), created_files
+
+
 def main():
     """Main function of r.dop.import.worker.st"""
-    # pylint: disable=C0301
-    global gisdbase, TMP_LOC, TMP_GISRC, original_nprocs, tmp_download_dir, keep_data
+    global gisdbase, TMP_LOC, TMP_GISRC, original_nprocs, keep_data
 
     # parser options
     tile_key = options["tile_key"]
@@ -176,12 +236,6 @@ def main():
     new_mapset = options["new_mapset"]
     download_dir = options["download_dir"]
     keep_data = flags["k"]
-
-    # A real download dir is required to store/extract the zip, even without
-    # -k; create a temp on if the userr didn't give one
-    if not download_dir:
-        tmp_download_dir = tempfile.mkdtemp(prefix="rdop_import_st_")
-        download_dir = tmp_download_dir
 
     # set nprocs to 1, write original value in variable
     gisenv = grass.gisenv()
@@ -218,7 +272,7 @@ def main():
         "ST",
         aoi_map,
         download_dir,
-        epsg=25833,
+        EPSG,
         keep_data=keep_data,
     )
 

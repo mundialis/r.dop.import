@@ -207,7 +207,6 @@ def main():
                 f"tmp_mapset_rdop_import_tile_{tile_key}_{os.getpid()}"
             )
             rm_dirs.append(os.path.join(gisdbase, location, new_mapset))
-            # b_name = parse_qs(urlparse(tile[1][0]).query)["file"][0]
             raster_name = f"dop20_{item_id}_{os.getpid()}"
             for item in all_raster.items():
                 item[1].append(f"{fs}_{raster_name}_{item[0]}@{new_mapset}")
@@ -219,6 +218,7 @@ def main():
                 "memory": 1000,
                 "new_mapset": new_mapset,
                 "resolution_to_import": NATIVE_DOP_RES,
+                "download_dir": download_dir,
                 "flags": "",
             }
             grass.message(_(f"raster name: {raster_name}"))
@@ -226,8 +226,6 @@ def main():
             # modify params
             if aoi:
                 param["aoi"] = aoi
-            if options["download_dir"]:
-                param["download_dir"] = download_dir
             if flags["k"]:
                 param["flags"] += "k"
 
@@ -235,8 +233,6 @@ def main():
                 f"{fs}_{raster_name}{band}"
                 for band in ("red", "green", "blue", "nir")
             )
-            # for band in ("red", "green", "blue", "nir"):
-            #     rm_rasters.append(f"{fs}_{raster_name}{band}")
 
             # run worker addon in parallel
             r_dop_import_worker_st = Module(

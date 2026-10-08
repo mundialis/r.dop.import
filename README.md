@@ -43,7 +43,7 @@ ______________________________________________________________________
 
 ## REQUIREMENTS
 
-[grass-gis-helpers\>=4.0.0](https://pypi.org/project/grass-gis-helpers/)
+[grass-gis-helpers\>=4.3.1](https://pypi.org/project/grass-gis-helpers/)
 
 ## SEE ALSO
 

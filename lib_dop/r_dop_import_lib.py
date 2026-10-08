@@ -13,9 +13,6 @@
 
 import os
 from time import sleep
-import zipfile
-import pathlib
-import requests
 import grass.script as grass
 
 from grass_gis_helpers.general import set_nprocs
@@ -374,73 +371,6 @@ def keep_data_ni(url, download_dir):
     download_data_using_threadpool([url], download_dir, None)
 
     return os.path.join(download_dir, basename)
-
-
-def download_dop_st(item_id, download_dir):
-    """Download and extract a single ST DOP tile via the two-step
-    prepare/download mechanism of the LVermGeo mapdownloader.
-
-    Args:
-        item_id (str): Numeric tile ID from the ST tindex
-        download_dir (str): Local directory to download/extract into
-
-    Returns:
-        tuple: Path to the extracted .tif, list of all created file paths for
-               later cleanup
-    """
-    pathlib.Path(download_dir).mkdir(exist_ok=True, parents=True)
-    # os.makedirs(download_dir, exist_ok=True)
-    session = requests.Session()
-    session.headers.update(
-        {
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64; rv:155.0) "
-                "Gecko/20100101 Firefox/155.0"
-            ),
-        },
-    )
-    base_url = "https://www.lvermgeo.sachsen-anhalt.de/"
-    session.get(base_url)
-
-    prepare_url = (
-        f"{base_url}de/mod/4,1962,501/ajax/1/prepare/"
-        f"?items={item_id}&format=zip"
-    )
-    resp = session.get(
-        prepare_url,
-        headers={"X-Requested-With": "XMLHttpRequest"},
-    )
-    resp.raise_for_status()
-    download_url = resp.text.strip()
-    if not download_url.startswith("http"):
-        grass.fatal(
-            _(
-                f"Unexpected prepare response for item {item_id}: "
-                f"{download_url}",
-            ),
-        )
-
-    dl_resp = session.get(download_url)
-    dl_resp.raise_for_status()
-
-    zip_path = os.path.join(download_dir, f"dop20_st_{item_id}.zip")
-    pathlib.Path(zip_path).write_bytes(dl_resp.content)
-    # with open(zip_path, "wb") as f:
-    #     f.write(dl_resp.content)
-
-    created_files = [zip_path]
-    with zipfile.ZipFile(zip_path) as zf:
-        tif_names = [n for n in zf.namelist() if n.lower().endswith(".tif")]
-        if not tif_names:
-            grass.fatal(
-                _(f"No .tif found in ZIP for item {item_id}"),
-            )
-        zf.extractall(download_dir)
-        created_files.extend(
-            os.path.join(download_dir, n) for n in zf.namelist()
-        )
-
-    return os.path.join(download_dir, tif_names[0]), created_files
 
 
 def import_and_reproject(
