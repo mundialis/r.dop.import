@@ -113,8 +113,8 @@ def rescale_to_1_255(prefix, raster_name, extension="num"):
 
 
 def create_grid_and_tiles_list(
-    ns_res,
-    ew_res,
+    ns_size,
+    ew_size,
     tile_size,
     grid,
     rm_vectors,
@@ -125,8 +125,8 @@ def create_grid_and_tiles_list(
     """Check if aoi is smaller than grid tile size and create grid if not.
     Also create a list containing tiles which overlap with the aoi.
     Args:
-        ns_res (float): Vertical resolution
-        ew_res (float): Horizontal resolution
+        ns_size (float): Vertical extent of aoi
+        ew_size (float): Horizontal extent of aoi
         tile_size (int): Size of grid tiles to create
         grid (str): Name of grid to create
         rm_vectors (list): List of vectors to remove in cleanup
@@ -139,8 +139,8 @@ def create_grid_and_tiles_list(
         nummber_tiles (str): Number of tiles overlapping with aoi
         tiles_list (list): List of tile names overlapping with aoi
     """
-    # check if aoi is smaller than tile size
-    if ns_res <= float(tile_size) and ew_res <= float(tile_size):
+    # check if aoi is smaller than tile size and add table / make grid
+    if ns_size <= float(tile_size) and ew_size <= float(tile_size):
         grass.run_command("v.in.region", output=grid, quiet=True)
         rm_vectors.append(grid)
         grass.run_command(
@@ -151,6 +151,7 @@ def create_grid_and_tiles_list(
         )
     else:
         grass.run_command("g.region", res=tile_size, flags="a", quiet=True)
+        rm_vectors.append(grid)
 
         # create grid
         grass.run_command(

@@ -188,6 +188,11 @@ def main():
             quiet=True,
         )
 
+    # get size of aoi from region extent
+    aoi_ext = grass.region()
+    ns_size = aoi_ext["n"] - aoi_ext["s"]
+    ew_size = aoi_ext["e"] - aoi_ext["w"]
+
     # create grid for downloading
     grass.message(_("Creating DOP tiles for SL..."))
 
@@ -199,8 +204,8 @@ def main():
 
     # create grid with lib function
     rm_vectors, number_tiles, tiles_list = create_grid_and_tiles_list(
-        ns_res,
-        ns_res,
+        ns_size,
+        ew_size,
         tile_size,
         grid,
         rm_vectors,
